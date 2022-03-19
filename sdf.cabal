@@ -27,7 +27,7 @@ executable sdf
                      , deepseq
                      -- , directory
                      -- , cryptohash-md5
-                     -- , mtl
+                     , mtl
                      , pretty-simple
                      , random
                      , text
