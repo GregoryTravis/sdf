@@ -75,14 +75,30 @@ void main() {
 
   //gl_FragColor = vec4( vec3( color * 0.5, sin( color + time / 2.5 ) * 0.75, color ), 1.0 );
   // gl_FragColor = vec4(vec3(uv.x*2.0, uv.y*2.0, 0.0), 1.0);
-  float dx = uv.x - 0.5;
-  float dy = uv.y - 0.5;
-  float dist = sqrt(dx*dx + dy*dy);
-  if (dist < 0.5) {
+
+  // circle
+  // float dx = uv.x - 0.5;
+  // float dy = uv.y - 0.5;
+  // float dist = sqrt(dx*dx + dy*dy);
+  // if (dist < 0.25) {
+  //   gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
+  // } else {
+  //   gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
+  // }
+
+  // square
+  float dist = max(abs(uv.x - 0.5), abs(uv.y - 0.5));
+  if (dist < 0.25) {
     gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
   } else {
     gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
   }
+
+  // if (uv.y < 0.5) {
+  //   gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
+  // } else {
+  //   gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
+  // }
 }
   </script>
   <script type="module">
