@@ -29,7 +29,6 @@ share e =
   let (e', (_, refs, revRefs)) = runState (share' e) initState 
    in eesp revRefs (e', refs)
 
--- runState :: State s a -> s -> (a, s)
 share' :: E -> State RefState E
 share' (Sh e) = do
   e' <- share' e
@@ -65,24 +64,6 @@ share' (V2 a b) = do
   b' <- share' b
   return $ V2 a' b'
 share' x = return x
--- share' e = do
---   x <- get
---   put x
---   return e
-
--- -- Replace each Sh with a ShRef and return the new tree and the ref mapping.
--- share :: E -> (Refs, E)
--- share e =
---   let (_, refs, e') = share' 0 M.empty e
---    in (refs, e')
-
--- share' :: Int -> Refs -> E -> (Int, Refs, E)
--- share' n refs (Sh e) =
---   let (n', refs', e') = share' n refs e
---       refs'' = M.insert n' e' refs'
---    in (n' + 1, refs'', ShRef n')
--- -- share' (Add e e)
--- -- share' n 
 
 circle =
   let yeah = Sh $ U (UF "yeah")
@@ -98,5 +79,5 @@ sharing =
 
 main = do
   msp circle
-  msp $ share sharing
+  msp $ share circle
   msp "hi"
