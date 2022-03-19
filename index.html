@@ -65,8 +65,17 @@ uniform vec2 resolution;
 uniform float time;
 uniform float yeah;
 
+// TODO slow
+float linmap(float a, float b, float c, float d, float x) {
+  return ((x - a) * ((d - c) / (b - a))) + c;
+}
+
 void main() {
-  vec2 uv = gl_FragCoord.xy / resolution;
+  //vec2 uv = gl_FragCoord.xy / min(resolution.x, resolution.y);
+  // Assumes horizontal
+  float m = (resolution.x - resolution.y) / 2.0;
+  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, gl_FragCoord.x),
+                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, gl_FragCoord.y));
   float color = 0.0;
   // lifted from glslsandbox.com
   color += sin( uv.x * cos( time / 3.0 ) * 60.0 ) + cos( uv.y * cos( time / 2.80 ) * 10.0 );
@@ -124,10 +133,11 @@ void main() {
   }
 
   // if (uv.y < 0.5) {
-  //   gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
-  // } else {
-  //   gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
-  // }
+  if (uv.x > -0.9 && uv.x < 0.9 && uv.y > -0.9 && uv.y < 0.9) {
+    gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
+  } else {
+    gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
+  }
 }
   </script>
   <script type="module">
@@ -141,7 +151,6 @@ void main() {
     const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
     function render(time) {
-    console.log(time);
       twgl.resizeCanvasToDisplaySize(gl.canvas);
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
