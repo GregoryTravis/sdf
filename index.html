@@ -73,7 +73,13 @@ void main() {
   color += sin( uv.x * sin( time / 1.0 ) * 10.0 ) + sin( uv.y * sin( time / 3.50 ) * 80.0 );
   color *= sin( time / 10.0 ) * 0.5;
 
-  gl_FragColor = vec4( vec3( color * 0.5, sin( color + time / 2.5 ) * 0.75, color ), 1.0 );
+  //gl_FragColor = vec4( vec3( color * 0.5, sin( color + time / 2.5 ) * 0.75, color ), 1.0 );
+  // gl_FragColor = vec4(vec3(uv.x*2.0, uv.y*2.0, 0.0), 1.0);
+  if (uv.x < 0.5) {
+    gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
+  } else {
+    gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
+  }
 }
   </script>
   <script type="module">
