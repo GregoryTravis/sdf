@@ -77,9 +77,12 @@ void main() {
   // gl_FragColor = vec4(vec3(uv.x*2.0, uv.y*2.0, 0.0), 1.0);
 
   // circle
-  // float dx = uv.x - 0.5;
-  // float dy = uv.y - 0.5;
-  // float dist = sqrt(dx*dx + dy*dy);
+  vec2 center = vec2(0.7, 0.7);
+  float radius = 0.2;
+  float dx = uv.x - center.x;
+  float dy = uv.y - center.y;
+  float cdist = (sqrt(dx*dx + dy*dy) / radius) - 1.0;
+
   // if (dist < 0.25) {
   //   gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
   // } else {
@@ -87,8 +90,33 @@ void main() {
   // }
 
   // square
-  float dist = max(abs(uv.x - 0.5), abs(uv.y - 0.5));
-  if (dist < 0.25) {
+  vec2 scenter = vec2(0.5, 0.5);
+  float sdx = uv.x - scenter.x;
+  float sdy = uv.y - scenter.y;
+  float sdist = (max(abs(sdx), abs(sdy)) / radius) - 1.0;
+
+  // circle
+  // float dist = cdist;
+  // square
+  // float dist = sdist;
+  // intersection
+  // float dist = max(cdist, sdist);
+  // union
+  // float dist = min(cdist, sdist);
+  // difference: s - c
+  float dist = max(sdist, -cdist);
+
+    // let r = 0.3;
+    // let d0 = self.shape0.dist(x, y);
+    // let d1 = self.shape1.dist(x, y);
+    // let md0 = (d0 - r).min(0.0);
+    // let md1 = (d1 - r).min(0.0);
+    // let inside_distance = -length(md0, md1);
+    // let simple_union = d0.min(d1);
+    // let outside_distance = simple_union.max(r);
+    // inside_distance + outside_distance
+
+  if (dist < 0.0) {
     gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
   } else {
     gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
