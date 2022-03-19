@@ -71,20 +71,10 @@ float linmap(float a, float b, float c, float d, float x) {
 }
 
 void main() {
-  //vec2 uv = gl_FragCoord.xy / min(resolution.x, resolution.y);
   // Assumes horizontal
   float m = (resolution.x - resolution.y) / 2.0;
   vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, gl_FragCoord.x),
                  linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, gl_FragCoord.y));
-  float color = 0.0;
-  // lifted from glslsandbox.com
-  color += sin( uv.x * cos( time / 3.0 ) * 60.0 ) + cos( uv.y * cos( time / 2.80 ) * 10.0 );
-  color += sin( uv.y * sin( time / 2.0 ) * 40.0 ) + cos( uv.x * sin( time / 1.70 ) * 40.0 );
-  color += sin( uv.x * sin( time / 1.0 ) * 10.0 ) + sin( uv.y * sin( time / 3.50 ) * 80.0 );
-  color *= sin( time / 10.0 ) * 0.5;
-
-  //gl_FragColor = vec4( vec3( color * 0.5, sin( color + time / 2.5 ) * 0.75, color ), 1.0 );
-  // gl_FragColor = vec4(vec3(uv.x*2.0, uv.y*2.0, 0.0), 1.0);
 
   // circle
   vec2 center = vec2(0.7 + yeah, 0.7);
@@ -92,12 +82,6 @@ void main() {
   float dx = uv.x - center.x;
   float dy = uv.y - center.y;
   float cdist = (sqrt(dx*dx + dy*dy) / radius) - 1.0;
-
-  // if (dist < 0.25) {
-  //   gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
-  // } else {
-  //   gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
-  // }
 
   // square
   vec2 scenter = vec2(0.5, 0.5);
@@ -132,7 +116,6 @@ void main() {
     gl_FragColor = vec4(vec3(0.0, 1.0, 0.0), 1.0);
   }
 
-  // if (uv.y < 0.5) {
   if (uv.x > -0.9 && uv.x < 0.9 && uv.y > -0.9 && uv.y < 0.9) {
     gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
   } else {
