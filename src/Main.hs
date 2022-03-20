@@ -17,6 +17,15 @@ data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length 
        | Abs E | Max E E | X E | Y E
   deriving (Eq, Show, Read, Ord)
 
+infixl 6 +.
+(+.) = Add
+infixl 6 -.
+(-.) = Sub
+infixl 7 *.
+(*.) = Mul
+infixl 7 /.
+(/.) = Div
+
 type Refs = M.Map Int E
 type RevRefs = M.Map E Int
 type RefState = (Int, Refs, RevRefs)
@@ -158,16 +167,16 @@ compileGroup (top, refs) topName = compileBindings refs bindings
 
 circle =
   let yeah = Sh $ U (UF "yeah")
-      center = Sh $ V2 (Add (KF 0.2) yeah) (KF 0.2)
+      center = Sh $ V2 (KF 0.2 +. yeah) (KF 0.2)
       radius = Sh $ KF 0.2
-      dist = Sub (Div (Length (Sub XY center)) radius) (KF 1.0)
+      dist = (Length (XY -. center) /. radius) -. KF 1.0
    in dist
 
 square =
   let center = Sh $ V2 (KF 0.0) (KF 0.0)
       radius = Sh $ KF 0.2
-      sd = Sh $ Abs (Sub XY center)
-      dist = Sh $ Sub (Div (Max (X sd) (Y sd)) radius) (KF 1.0)
+      sd = Sh $ Abs (XY -. center)
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
    in dist
 
 -- // circle
@@ -176,7 +185,7 @@ square =
 -- float cdist = (length(uv-center) / radius) - 1.0;
 
 main = do
-  let c = compileGroup (share square) "dist"
+  let c = compileGroup (share circle) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
   msp "hi"
