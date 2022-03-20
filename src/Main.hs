@@ -280,7 +280,7 @@ type BinOp = Prim -> Prim -> Prim
 transform :: Transformer -> Prim -> Prim
 transform transformer p = p . transformer
 
-square :: Transform -> E
+square :: Prim
 square (Transform xy _) =
   let center = Sh $ V2 0.0 0.0
       radius = Sh 0.2
@@ -288,13 +288,14 @@ square (Transform xy _) =
       dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
-circle :: Transform -> E
+circle :: Prim
 circle (Transform xy _) =
   let dist = Length xy - 1.0
    in dist
 
 idTransform :: Transform
 idTransform = Transform XY time
+
 time :: E
 time = (U (UF "yeah"))
 
