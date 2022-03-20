@@ -26,8 +26,6 @@ data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length 
 infixl 7 /.
 (/.) = Div
 
--- (+), (*), abs, signum, fromInteger, (negate | (-))
-
 instance Num E where
   (+) = Add
   (*) = Mul
@@ -35,6 +33,11 @@ instance Num E where
   signum = error "signum not implemented"
   fromInteger i = KF (fromInteger i)
   negate = Neg
+
+-- fromRational, (recip | (/))
+instance Fractional E where
+  fromRational i = KF (fromRational i)
+  (/) = Div
 
 type Refs = M.Map Int E
 type RevRefs = M.Map E Int
@@ -223,24 +226,24 @@ scos = Fun1 "cos" TF TF
 
 circle =
   let yeah = Sh $ U (UF "yeah")
-      center = Sh $ V2 (KF 0.2 + yeah) (KF 0.2)
-      radius = Sh $ KF 0.2
-      dist = (Length (XY - center) /. radius) - KF 1.0
+      center = Sh $ V2 (0.2 + yeah) 0.2
+      radius = Sh $ 0.2
+      dist = (Length (XY - center) /. radius) - 1.0
    in dist
 
 square =
-  let center = Sh $ V2 (KF 0.0) (KF 0.0)
-      radius = Sh $ KF 0.2
+  let center = Sh $ V2 0.0 0.0
+      radius = Sh $ 0.2
       sd = Sh $ Abs (XY - center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) - 1.0
    in dist
 
 tsquare :: E -> E -> E
 tsquare xy _ =
-  let center = Sh $ V2 (KF 0.0) (KF 0.0)
-      radius = Sh $ KF 0.2
+  let center = Sh $ V2 0.0 0.0
+      radius = Sh $ 0.2
       sd = Sh $ Abs (xy - center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) - 1.0
    in dist
 
 rotMat :: E -> E
@@ -275,9 +278,9 @@ smoothUnion' :: E -> E -> E
 smoothUnion' usd0 usd1 =
   let d0 = Sh usd0
       d1 = Sh usd1
-      r = KF 0.3
-      md0 = Sh $ Min (d0 - r) (KF 0.0)
-      md1 = Sh $ Min (d1 - r) (KF 0.0)
+      r = 0.3
+      md0 = Sh $ Min (d0 - r) 0.0
+      md1 = Sh $ Min (d1 - r) 0.0
       inside_distance = Neg $ ssqrt $ (md0 * md0) + (md1 * md1)
       simple_union = Min d0 d1
       outside_distance = Max simple_union r
@@ -308,15 +311,15 @@ transform transformer p = p . transformer
 
 psquare :: Transform -> E
 psquare (Transform xy _) =
-  let center = Sh $ V2 (KF 0.0) (KF 0.0)
-      radius = Sh $ KF 0.2
+  let center = Sh $ V2 0.0 0.0
+      radius = Sh 0.2
       sd = Sh $ Abs (xy - center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) - 1.0
    in dist
 
 pcircle :: Transform -> E
 pcircle (Transform xy _) =
-  let dist = Length xy - KF 1.0
+  let dist = Length xy - 1.0
    in dist
 
 idTransform :: Transform
@@ -331,8 +334,8 @@ main = do
   let t = U (UF "yeah")
   -- let rotXY = rotMat t *. XY
 
-  let rot = rotation $ KF 50.0 * t
-      slide = translation (V2 (t * KF 0.8) (KF 0.0))
+  let rot = rotation $ 50.0 * t
+      slide = translation (V2 (t * 0.8) 0.0)
       -- p = transform rot psquare
       srp = transform rot $ transform slide psquare
       rsp = transform slide $ transform rot psquare
@@ -342,8 +345,8 @@ main = do
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = transform (translation (V2 (Neg (t * KF 0.8)) (KF 0.0))) $ transform (scale $ KF 0.15) pcircle
-      smaller = transform (translation (V2 (Neg (t * KF 0.8)) (KF 0.0))) $ transform (scale $ KF 0.03) pcircle
+  let cir = transform (translation (V2 (Neg (t * 0.8)) 0.0)) $ transform (scale 0.15) pcircle
+      smaller = transform (translation (V2 (Neg (t * 0.8)) 0.0)) $ transform (scale 0.03) pcircle
       both = smoothUnion psquare cir
       p' = difference both cir
       p3 = union p' smaller
