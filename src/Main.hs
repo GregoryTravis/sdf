@@ -17,14 +17,24 @@ data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length 
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Mat2 [E]
   deriving (Eq, Show, Read, Ord)
 
-infixl 6 +.
-(+.) = Add
+-- infixl 6 +.
+-- (+.) = Add
 infixl 6 -.
 (-.) = Sub
-infixl 7 *.
-(*.) = Mul
+-- infixl 7 *.
+-- (*.) = Mul
 infixl 7 /.
 (/.) = Div
+
+-- (+), (*), abs, signum, fromInteger, (negate | (-))
+
+instance Num E where
+  (+) = Add
+  (*) = Mul
+  abs = Abs
+  signum = error "signum not implemented"
+  fromInteger i = KF (fromInteger i)
+  negate = Neg
 
 type Refs = M.Map Int E
 type RevRefs = M.Map E Int
@@ -56,6 +66,7 @@ typeOf refs (Y e) = TF
 typeOf refs (Neg e) = mustType refs e [TF] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
 typeOf refs (Mat2 _) = TM2
+-- typeOf refs (Signum _) = TF
 
 glslType :: Ty -> String
 glslType TF = "float"
@@ -147,6 +158,9 @@ share' (Fun1 name tin tout e) = do
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
+-- share' (Signum e) = do
+--   e' <- share' e
+--   return $ Signum e'
 share' x = return x
 
 subexp :: Int -> String
@@ -164,6 +178,9 @@ fun f args = parens $ concat [f, parens arglist]
 
 dot :: String -> String -> String
 dot e field = parens $ concat [e, ".", field]
+
+-- signumE :: E -> String
+-- signumE e = parens
 
 compileE :: E -> String
 compileE (KF d) = parens $ show d
@@ -185,6 +202,7 @@ compileE (Y e) = dot (compileE e) "y"
 compileE (Neg e) = parens $ concat ["-", compileE e]
 compileE (Fun1 name _ _ arg) = fun name [compileE arg]
 compileE (Mat2 es) = fun "mat2" (map compileE es)
+-- compileE (Signum e) = signumE e
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
@@ -205,24 +223,24 @@ scos = Fun1 "cos" TF TF
 
 circle =
   let yeah = Sh $ U (UF "yeah")
-      center = Sh $ V2 (KF 0.2 +. yeah) (KF 0.2)
+      center = Sh $ V2 (KF 0.2 + yeah) (KF 0.2)
       radius = Sh $ KF 0.2
-      dist = (Length (XY -. center) /. radius) -. KF 1.0
+      dist = (Length (XY - center) /. radius) - KF 1.0
    in dist
 
 square =
   let center = Sh $ V2 (KF 0.0) (KF 0.0)
       radius = Sh $ KF 0.2
-      sd = Sh $ Abs (XY -. center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
+      sd = Sh $ Abs (XY - center)
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
    in dist
 
 tsquare :: E -> E -> E
 tsquare xy _ =
   let center = Sh $ V2 (KF 0.0) (KF 0.0)
       radius = Sh $ KF 0.2
-      sd = Sh $ Abs (xy -. center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
+      sd = Sh $ Abs (xy - center)
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
    in dist
 
 rotMat :: E -> E
@@ -258,12 +276,12 @@ smoothUnion' usd0 usd1 =
   let d0 = Sh usd0
       d1 = Sh usd1
       r = KF 0.3
-      md0 = Sh $ Min (d0 -. r) (KF 0.0)
-      md1 = Sh $ Min (d1 -. r) (KF 0.0)
-      inside_distance = Neg $ ssqrt $ (md0 *. md0) +. (md1 *. md1)
+      md0 = Sh $ Min (d0 - r) (KF 0.0)
+      md1 = Sh $ Min (d1 - r) (KF 0.0)
+      inside_distance = Neg $ ssqrt $ (md0 * md0) + (md1 * md1)
       simple_union = Min d0 d1
       outside_distance = Max simple_union r
-      dist = inside_distance +. outside_distance
+      dist = inside_distance + outside_distance
    in dist
 
 scale :: E -> Transformer
@@ -277,7 +295,7 @@ rotation ang (Transform xy t) =
   let c = scos ang
       s = ssin ang
       mat = Sh $ Mat2 [c, s, Neg s, c]
-   in Transform (mat *. xy) t
+   in Transform (mat * xy) t
 
 -- Transform uv t
 data Transform = Transform E E
@@ -293,12 +311,12 @@ psquare (Transform xy _) =
   let center = Sh $ V2 (KF 0.0) (KF 0.0)
       radius = Sh $ KF 0.2
       sd = Sh $ Abs (xy -. center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
    in dist
 
 pcircle :: Transform -> E
 pcircle (Transform xy _) =
-  let dist = Length xy -. KF 1.0
+  let dist = Length xy - KF 1.0
    in dist
 
 idTransform :: Transform
@@ -313,22 +331,24 @@ main = do
   let t = U (UF "yeah")
   -- let rotXY = rotMat t *. XY
 
-  -- let rot = rotation $ KF 50.0 *. t
-  --     slide = translation (V2 (t *. KF 0.8) (KF 0.0))
-  --     -- p = transform rot psquare
-  --     srp = transform rot $ transform slide psquare
-  --     rsp = transform slide $ transform rot psquare
-  --     p = sup srp rsp
+  let rot = rotation $ KF 50.0 * t
+      slide = translation (V2 (t * KF 0.8) (KF 0.0))
+      -- p = transform rot psquare
+      srp = transform rot $ transform slide psquare
+      rsp = transform slide $ transform rot psquare
+      p2 = smoothUnion srp rsp
 
   -- let s = tsquare (XY /. t) t
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = transform (translation (V2 (t *. KF 0.8) (KF 0.0))) $ transform (scale $ KF 0.15) pcircle
-      smaller = transform (translation (V2 (t *. KF 0.8) (KF 0.0))) $ transform (scale $ KF 0.03) pcircle
+  let cir = transform (translation (V2 (Neg (t * KF 0.8)) (KF 0.0))) $ transform (scale $ KF 0.15) pcircle
+      smaller = transform (translation (V2 (Neg (t * KF 0.8)) (KF 0.0))) $ transform (scale $ KF 0.03) pcircle
       both = smoothUnion psquare cir
       p' = difference both cir
-      p = union p' smaller
+      p3 = union p' smaller
+
+  let p = union p2 p3
 
   let s = evalPrim p
 
