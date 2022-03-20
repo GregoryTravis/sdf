@@ -40,10 +40,10 @@ data Ty = TF | TV2
 typeOf :: Refs -> E -> Ty
 typeOf refs (KF _) = TF
 typeOf refs (U (UF _)) = TF
-typeOf refs (Add a b) = sameType refs a b
-typeOf refs (Sub a b) = sameType refs a b
-typeOf refs (Mul a b) = sameType refs a b
-typeOf refs (Div a b) = sameType refs a b
+typeOf refs (Add a b) = opType refs a b
+typeOf refs (Sub a b) = opType refs a b
+typeOf refs (Mul a b) = opType refs a b
+typeOf refs (Div a b) = opType refs a b
 typeOf refs (Length e) = mustType refs e [TV2] TF
 typeOf refs (V2 _ _) = TV2
 typeOf refs XY = TV2
@@ -60,10 +60,21 @@ glslType :: Ty -> String
 glslType TF = "float"
 glslType TV2 = "vec2"
 
+-- Figure out type of the overloaded arithmetic ops
+opType :: Refs -> E -> E -> Ty
+opType refs a b = go (typeOf refs a) (typeOf refs b)
+  where go TF TF = TF
+        go TV2 TF = TV2
+        go TF TV2 = TV2
+        go TV2 TV2 = TV2
+        -- go a b = error $ "opType? " ++ show a ++ " " ++ show b
+
+-- The expression's type must be in the list; returns the last arg
 mustType :: Refs -> E -> [Ty] -> Ty -> Ty
 mustType refs e tys ty | (typeOf refs e) `elem` tys = ty
                   | otherwise = error $ "wrong type " ++ show e ++ " " ++ show tys
 
+-- Types must be the same; returns the type
 sameType :: Refs -> E -> E -> Ty
 sameType refs a b | typeOf refs a == typeOf refs b = typeOf refs a
              | otherwise = error $ "type mismatch: " ++ show a ++ " " ++ show b
@@ -195,6 +206,14 @@ square =
       dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
    in dist
 
+tsquare :: E -> E -> E
+tsquare xy _ =
+  let center = Sh $ V2 (KF 0.0) (KF 0.0)
+      radius = Sh $ KF 0.2
+      sd = Sh $ Abs (xy -. center)
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
+   in dist
+
 union a b = Min a b
 intersection a b = Max a b
 difference a b = Max a (Neg b)
@@ -212,18 +231,11 @@ smoothUnion usd0 usd1 =
       dist = inside_distance +. outside_distance
    in dist
 
-  -- // float r = 0.3;
-  -- // float d0 = cdist;
-  -- // float d1 = sdist;
-  -- // float md0 = min(d0 - r, 0.0);
-  -- // float md1 = min(d1 - r, 0.0);
-  -- // float inside_distance = -(sqrt(md0*md0 + md1*md1));
-  -- // float simple_union = min(d0, d1);
-  -- // float outside_distance = max(simple_union, r);
-  -- // float dist = inside_distance + outside_distance;
+smu = smoothUnion circle square
 
 main = do
-  let s = smoothUnion circle square
+  let t = U (UF "yeah")
+  let s = tsquare (XY /. t) t
   let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
