@@ -232,12 +232,29 @@ rotMat ang =
       mat = Mat2 [c, s, Neg s, c]
    in mat
 
-union a b = Min a b
-intersection a b = Max a b
-difference a b = Max a (Neg b)
+union :: BinOp
+union = binopper union'
+union' :: E -> E -> E
+union' a b = Min a b
 
-smoothUnion :: E -> E -> E
-smoothUnion usd0 usd1 =
+intersection :: BinOp
+intersection = binopper intersection'
+intersection' :: E -> E -> E
+intersection' a b = Max a b
+
+difference :: BinOp
+difference = binopper difference'
+difference' :: E -> E -> E
+difference' a b = Max a (Neg b)
+
+binopper :: (E -> E -> E) -> BinOp
+binopper distCombiner p0 p1 tr = distCombiner (p0 tr) (p1 tr)
+
+smoothUnion :: BinOp
+smoothUnion = binopper smoothUnion'
+
+smoothUnion' :: E -> E -> E
+smoothUnion' usd0 usd1 =
   let d0 = Sh usd0
       d1 = Sh usd1
       r = KF 0.3
@@ -248,8 +265,6 @@ smoothUnion usd0 usd1 =
       outside_distance = Max simple_union r
       dist = inside_distance +. outside_distance
    in dist
-
-smu = smoothUnion circle square
 
 scale :: E -> Transformer
 scale s (Transform xy t) = Transform (xy /. s) t
@@ -268,6 +283,7 @@ rotation ang (Transform xy t) =
 data Transform = Transform E E
 type Transformer = Transform -> Transform
 type Prim = Transform -> E
+type BinOp = Prim -> Prim -> Prim
 
 transform :: Transformer -> Prim -> Prim
 transform transformer p = p . transformer
@@ -298,20 +314,24 @@ main = do
   -- let rotXY = rotMat t *. XY
 
   -- let rot = rotation $ KF 50.0 *. t
-  --     slide = translation (V2 (t *. KF 0.2) (KF 0.0))
+  --     slide = translation (V2 (t *. KF 0.8) (KF 0.0))
   --     -- p = transform rot psquare
   --     srp = transform rot $ transform slide psquare
   --     rsp = transform slide $ transform rot psquare
-  --     s = smoothUnion (evalPrim srp) (evalPrim rsp)
+  --     p = sup srp rsp
 
   -- let s = tsquare (XY /. t) t
   -- let s = tsquare rotXY t
   -- let s = smu
+
   let cir = transform (translation (V2 (t *. KF 0.8) (KF 0.0))) $ transform (scale $ KF 0.15) pcircle
       smaller = transform (translation (V2 (t *. KF 0.8) (KF 0.0))) $ transform (scale $ KF 0.03) pcircle
-      both = smoothUnion (evalPrim psquare) (evalPrim cir)
-      s' = difference both (evalPrim cir)
-      s = union s' (evalPrim smaller)
+      both = smoothUnion psquare cir
+      p' = difference both cir
+      p = union p' smaller
+
+  let s = evalPrim p
+
   let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
