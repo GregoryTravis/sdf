@@ -14,7 +14,7 @@ data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
-       | Abs E | Min E E | Max E E | X E | Y E | Neg E | Sqrt E
+       | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Mat2 [E]
   deriving (Eq, Show, Read, Ord)
 
 infixl 6 +.
@@ -34,8 +34,8 @@ type Sharey a = State RefState a
 initState :: RefState
 initState = (0, M.empty, M.empty)
 
-data Ty = TF | TV2
-  deriving (Eq, Show, Read)
+data Ty = TF | TV2 | TM2
+  deriving (Eq, Show, Read, Ord)
 
 typeOf :: Refs -> E -> Ty
 typeOf refs (KF _) = TF
@@ -54,7 +54,8 @@ typeOf refs (Max a b) = sameType refs a b
 typeOf refs (X e) = TF
 typeOf refs (Y e) = TF
 typeOf refs (Neg e) = mustType refs e [TF] TF
-typeOf refs (Sqrt e) = mustType refs e [TF] TF
+typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
+typeOf refs (Mat2 _) = TM2
 
 glslType :: Ty -> String
 glslType TF = "float"
@@ -67,7 +68,8 @@ opType refs a b = go (typeOf refs a) (typeOf refs b)
         go TV2 TF = TV2
         go TF TV2 = TV2
         go TV2 TV2 = TV2
-        -- go a b = error $ "opType? " ++ show a ++ " " ++ show b
+        go TM2 TV2 = TV2
+        go a b = error $ "opType? " ++ show a ++ " " ++ show b
 
 -- The expression's type must be in the list; returns the last arg
 mustType :: Refs -> E -> [Ty] -> Ty -> Ty
@@ -138,9 +140,12 @@ share' (Y e) = do
 share' (Neg e) = do
   e' <- share' e
   return $ Neg e'
-share' (Sqrt e) = do
+share' (Fun1 name tin tout e) = do
   e' <- share' e
-  return $ Sqrt e'
+  return $ Fun1 name tin tout e'
+share' (Mat2 es) = do
+  es' <- mapM share' es
+  return $ Mat2 es'
 share' x = return x
 
 subexp :: Int -> String
@@ -177,7 +182,8 @@ compileE (Max a b) = fun "max" [compileE a, compileE b]
 compileE (X e) = dot (compileE e) "x"
 compileE (Y e) = dot (compileE e) "y"
 compileE (Neg e) = parens $ concat ["-", compileE e]
-compileE (Sqrt e) = fun "sqrt" [compileE e]
+compileE (Fun1 name _ _ arg) = fun name [compileE arg]
+compileE (Mat2 es) = fun "mat2" (map compileE es)
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
@@ -191,6 +197,10 @@ compileGroup :: (E, Refs) -> String -> String
 compileGroup (top, refs) topName = compileBindings refs bindings
   where bindings =  shares ++ [(topName, top)]
         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
+
+ssqrt = Fun1 "sqrt" TF TF
+ssin = Fun1 "sin" TF TF
+scos = Fun1 "cos" TF TF
 
 circle =
   let yeah = Sh $ U (UF "yeah")
@@ -214,6 +224,13 @@ tsquare xy _ =
       dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
    in dist
 
+rotMat :: E -> E
+rotMat ang =
+  let c = scos ang
+      s = ssin ang
+      mat = Mat2 [c, s, Neg s, c]
+   in mat
+
 union a b = Min a b
 intersection a b = Max a b
 difference a b = Max a (Neg b)
@@ -225,7 +242,7 @@ smoothUnion usd0 usd1 =
       r = KF 0.3
       md0 = Sh $ Min (d0 -. r) (KF 0.0)
       md1 = Sh $ Min (d1 -. r) (KF 0.0)
-      inside_distance = Neg $ Sqrt $ (md0 *. md0) +. (md1 *. md1)
+      inside_distance = Neg $ ssqrt $ (md0 *. md0) +. (md1 *. md1)
       simple_union = Min d0 d1
       outside_distance = Max simple_union r
       dist = inside_distance +. outside_distance
@@ -235,7 +252,12 @@ smu = smoothUnion circle square
 
 main = do
   let t = U (UF "yeah")
-  let s = tsquare (XY /. t) t
+  let rotXY = rotMat t *. XY
+
+  -- let s = tsquare (XY /. t) t
+  -- let s = tsquare rotXY t
+  -- let s = smu
+  let s = smoothUnion circle (tsquare rotXY t)
   let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
