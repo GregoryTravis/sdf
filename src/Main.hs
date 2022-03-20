@@ -19,8 +19,8 @@ data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length 
 
 -- infixl 6 +.
 -- (+.) = Add
-infixl 6 -.
-(-.) = Sub
+-- infixl 6 -.
+-- (-.) = Sub
 -- infixl 7 *.
 -- (*.) = Mul
 infixl 7 /.
@@ -63,7 +63,7 @@ typeOf refs (Min a b) = sameType refs a b
 typeOf refs (Max a b) = sameType refs a b
 typeOf refs (X e) = TF
 typeOf refs (Y e) = TF
-typeOf refs (Neg e) = mustType refs e [TF] TF
+typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
 typeOf refs (Mat2 _) = TM2
 -- typeOf refs (Signum _) = TF
@@ -288,7 +288,7 @@ scale :: E -> Transformer
 scale s (Transform xy t) = Transform (xy /. s) t
 
 translation :: E -> Transformer
-translation dxy (Transform xy t) = Transform (xy -. dxy) t
+translation dxy (Transform xy t) = Transform (xy - dxy) t
 
 rotation :: E -> Transformer
 rotation ang (Transform xy t) =
@@ -310,7 +310,7 @@ psquare :: Transform -> E
 psquare (Transform xy _) =
   let center = Sh $ V2 (KF 0.0) (KF 0.0)
       radius = Sh $ KF 0.2
-      sd = Sh $ Abs (xy -. center)
+      sd = Sh $ Abs (xy - center)
       dist = Sh $ (Max (X sd) (Y sd) /. radius) - KF 1.0
    in dist
 
