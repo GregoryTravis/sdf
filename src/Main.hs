@@ -92,18 +92,6 @@ share' (V2 a b) = do
   return $ V2 a' b'
 share' x = return x
 
-circle =
-  let yeah = Sh $ U (UF "yeah")
-      center = Sh $ V2 (Add (KF 2.0) yeah) (KF 2.0)
-      radius = Sh $ KF 2.0
-      cdist = Sub (Div (Length (Sub XY center)) radius) (KF 1.0)
-   in cdist
-
--- // circle
--- vec2 center = vec2(0.2 + yeah, 0.2);
--- float radius = 0.2;
--- float cdist = (length(uv-center) / radius) - 1.0;
-
 subexp :: Int -> String
 subexp n = "x" ++ show n
 
@@ -135,16 +123,28 @@ compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
   where ty = glslType $ typeOf refs e
 
 compileBindings :: Refs -> [(String, E)] -> String
-compileBindings refs bindings = intercalate ";\n" cbs ++ "\n"
+compileBindings refs bindings = intercalate ";\n" cbs ++ ";\n"
   where cbs = map (\(var, e) -> compileBinding refs var e) bindings
 
 compileGroup :: (E, Refs) -> String -> String
 compileGroup (top, refs) topName = compileBindings refs bindings
-  where bindings = reverse $ (topName, top) : shares
+  where bindings =  shares ++ [(topName, top)]
         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
 
--- generateExe :: FilePath -> FilePath -> M.Map String String -> IO ()
+circle =
+  let yeah = Sh $ U (UF "yeah")
+      center = Sh $ V2 (Add (KF 0.2) yeah) (KF 0.2)
+      radius = Sh $ KF 0.2
+      cdist = Sub (Div (Length (Sub XY center)) radius) (KF 1.0)
+   in cdist
+
+-- // circle
+-- vec2 center = vec2(0.2 + yeah, 0.2);
+-- float radius = 0.2;
+-- float cdist = (length(uv-center) / radius) - 1.0;
+
 main = do
-  generateExe "template.html" "index.html" $ M.fromList [("ASDFASDF", "no way"), ("ZIZMOR", "whoa")]
-  -- msp $ compileGroup (share circle) "topp"
+  let c = compileGroup (share circle) "dist"
+  msp c
+  generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
   msp "hi"

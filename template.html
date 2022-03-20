@@ -73,42 +73,41 @@ float linmap(float a, float b, float c, float d, float x) {
 void main() {
   // Assumes horizontal
   float m = (resolution.x - resolution.y) / 2.0;
-  ZIZMOR
   vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, gl_FragCoord.x),
                  linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, gl_FragCoord.y));
 
-  ASDFASDF
+  SHAPE_ASDF
 
-  // circle
-  vec2 center = vec2(0.2 + yeah, 0.2);
-  float radius = 0.2;
-  float cdist = (length(uv-center) / radius) - 1.0;
+  // // circle
+  // vec2 center = vec2(0.2 + yeah, 0.2);
+  // float radius = 0.2;
+  // float cdist = (length(uv-center) / radius) - 1.0;
 
-  // square
-  vec2 scenter = vec2(0.0, 0.0);
-  vec2 sd = abs(uv - scenter);
-  float sdist = (max(sd.x, sd.y) / radius) - 1.0;
+  // // square
+  // vec2 scenter = vec2(0.0, 0.0);
+  // vec2 sd = abs(uv - scenter);
+  // float sdist = (max(sd.x, sd.y) / radius) - 1.0;
 
-  // circle
-  // float dist = cdist;
-  // square
-  // float dist = sdist;
-  // intersection
-  // float dist = max(cdist, sdist);
-  // union
-  // float dist = min(cdist, sdist);
-  // difference: s - c
-  // float dist = max(sdist, -cdist);
+  // // circle
+  // // float dist = cdist;
+  // // square
+  // // float dist = sdist;
+  // // intersection
+  // // float dist = max(cdist, sdist);
+  // // union
+  // // float dist = min(cdist, sdist);
+  // // difference: s - c
+  // // float dist = max(sdist, -cdist);
 
-  float r = 0.3;
-  float d0 = cdist;
-  float d1 = sdist;
-  float md0 = min(d0 - r, 0.0);
-  float md1 = min(d1 - r, 0.0);
-  float inside_distance = -(sqrt(md0*md0 + md1*md1));
-  float simple_union = min(d0, d1);
-  float outside_distance = max(simple_union, r);
-  float dist = inside_distance + outside_distance;
+  // float r = 0.3;
+  // float d0 = cdist;
+  // float d1 = sdist;
+  // float md0 = min(d0 - r, 0.0);
+  // float md1 = min(d1 - r, 0.0);
+  // float inside_distance = -(sqrt(md0*md0 + md1*md1));
+  // float simple_union = min(d0, d1);
+  // float outside_distance = max(simple_union, r);
+  // float dist = inside_distance + outside_distance;
 
   if (dist < 0.0) {
     gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
