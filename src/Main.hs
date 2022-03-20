@@ -251,6 +251,9 @@ smoothUnion usd0 usd1 =
 
 smu = smoothUnion circle square
 
+scale :: E -> Transformer
+scale s (Transform xy t) = Transform (xy /. s) t
+
 translation :: E -> Transformer
 translation dxy (Transform xy t) = Transform (xy -. dxy) t
 
@@ -277,6 +280,11 @@ psquare (Transform xy _) =
       dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
    in dist
 
+pcircle :: Transform -> E
+pcircle (Transform xy _) =
+  let dist = Length xy -. KF 1.0
+   in dist
+
 idTransform :: Transform
 idTransform = Transform XY tyme
 tyme :: E
@@ -288,17 +296,22 @@ evalPrim p = p idTransform
 main = do
   let t = U (UF "yeah")
   -- let rotXY = rotMat t *. XY
-  let rot = rotation t
-      slide = translation (V2 (t *. KF 2.0) t)
-      -- p = transform rot psquare
-      srp = transform rot $ transform slide psquare
-      rsp = transform slide $ transform rot psquare
-      s = smoothUnion (evalPrim srp) (evalPrim rsp)
+
+  -- let rot = rotation $ KF 50.0 *. t
+  --     slide = translation (V2 (t *. KF 0.2) (KF 0.0))
+  --     -- p = transform rot psquare
+  --     srp = transform rot $ transform slide psquare
+  --     rsp = transform slide $ transform rot psquare
+  --     s = smoothUnion (evalPrim srp) (evalPrim rsp)
 
   -- let s = tsquare (XY /. t) t
   -- let s = tsquare rotXY t
   -- let s = smu
-  -- let s = smoothUnion circle (tsquare rotXY t)
+  let cir = transform (translation (V2 (t *. KF 0.8) (KF 0.0))) $ transform (scale $ KF 0.15) pcircle
+      smaller = transform (translation (V2 (t *. KF 0.8) (KF 0.0))) $ transform (scale $ KF 0.03) pcircle
+      both = smoothUnion (evalPrim psquare) (evalPrim cir)
+      s' = difference both (evalPrim cir)
+      s = union s' (evalPrim smaller)
   let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
