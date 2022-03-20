@@ -14,7 +14,7 @@ data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
-       | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Mat2 [E]
+       | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Mat2 [E]
   deriving (Eq, Show, Read, Ord)
 
 instance Num E where
@@ -59,6 +59,7 @@ typeOf refs (X e) = TF
 typeOf refs (Y e) = TF
 typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
+typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
 typeOf refs (Mat2 _) = TM2
 
 glslType :: Ty -> String
@@ -148,6 +149,10 @@ share' (Neg e) = do
 share' (Fun1 name tin tout e) = do
   e' <- share' e
   return $ Fun1 name tin tout e'
+share' (Fun2 name tin tin2 tout e0 e1) = do
+  e0' <- share' e0
+  e1' <- share' e1
+  return $ Fun2 name tin tin2 tout e0' e1'
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
@@ -188,6 +193,7 @@ compileE (X e) = dot (compileE e) "x"
 compileE (Y e) = dot (compileE e) "y"
 compileE (Neg e) = parens $ concat ["-", compileE e]
 compileE (Fun1 name _ _ arg) = fun name [compileE arg]
+compileE (Fun2 name _ _ _ arg0 arg1) = fun name [compileE arg0, compileE arg1]
 compileE (Mat2 es) = fun "mat2" (map compileE es)
 
 compileBinding :: Refs -> String -> E -> String
@@ -207,10 +213,14 @@ ssqrt = Fun1 "sqrt" TF TF
 ssin = Fun1 "sin" TF TF
 scos = Fun1 "cos" TF TF
 
+sabs = Abs
+smod = Fun2 "mod" TF TF TF
+sfloor = Fun1 "floor" TF TF
+
 rotMat :: E -> E
 rotMat ang =
-  let c = scos ang
-      s = ssin ang
+  let c = Sh $ scos ang
+      s = Sh $ ssin ang
       mat = Mat2 [c, s, -s, c]
    in mat
 
@@ -265,10 +275,31 @@ rotation ang = transform (rotation' ang)
 
 rotation' :: E -> Transformer
 rotation' ang (Transform xy t) =
-  let c = scos ang
-      s = ssin ang
+  let c = Sh $ scos ang
+      s = Sh $ ssin ang
       mat = Sh $ Mat2 [c, s, -s, c]
    in Transform (mat * xy) t
+
+-- pfGrid :: E -> E -> UnOp
+-- pfGrid w h = transform (pfGrid' w h)
+
+-- pfGrid' :: E -> E -> Transformer
+-- pfGrid' w h (Transform xy t) =
+--   let xx = smod x w
+--       yy = smod y h
+--       xi = sfloor x
+--       yi = sfloor y
+--       if mod
+
+    -- let (mut xx, xi) = grid_fmod2(x, w);
+    -- let (mut yy, yi) = grid_fmod2(y, h);
+    -- if xi.abs() % 2 == 1 {
+    --   xx = w - xx;
+    -- }
+    -- if yi.abs() % 2 == 1 {
+    --   yy = h - yy;
+    -- }
+    -- (xx, yy, t)
 
 -- Transform uv t
 data Transform = Transform E E
