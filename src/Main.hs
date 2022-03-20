@@ -60,7 +60,6 @@ typeOf refs (Y e) = TF
 typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
 typeOf refs (Mat2 _) = TM2
--- typeOf refs (Signum _) = TF
 
 glslType :: Ty -> String
 glslType TF = "float"
@@ -152,9 +151,6 @@ share' (Fun1 name tin tout e) = do
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
--- share' (Signum e) = do
---   e' <- share' e
---   return $ Signum e'
 share' x = return x
 
 subexp :: Int -> String
@@ -172,9 +168,6 @@ fun f args = parens $ concat [f, parens arglist]
 
 dot :: String -> String -> String
 dot e field = parens $ concat [e, ".", field]
-
--- signumE :: E -> String
--- signumE e = parens
 
 compileE :: E -> String
 compileE (KF d) = parens $ show d
@@ -196,7 +189,6 @@ compileE (Y e) = dot (compileE e) "y"
 compileE (Neg e) = parens $ concat ["-", compileE e]
 compileE (Fun1 name _ _ arg) = fun name [compileE arg]
 compileE (Mat2 es) = fun "mat2" (map compileE es)
--- compileE (Signum e) = signumE e
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
