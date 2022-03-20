@@ -278,14 +278,23 @@ smoothUnion' usd0 usd1 =
       dist = inside_distance + outside_distance
    in dist
 
-scale :: E -> Transformer
-scale s (Transform xy t) = Transform (xy / s) t
+scale :: E -> UnOp
+scale s = transform (scale' s)
 
-translation :: E -> Transformer
-translation dxy (Transform xy t) = Transform (xy - dxy) t
+scale' :: E -> Transformer
+scale' s (Transform xy t) = Transform (xy / s) t
 
-rotation :: E -> Transformer
-rotation ang (Transform xy t) =
+translation :: E -> UnOp
+translation dxy = transform (translation' dxy)
+
+translation' :: E -> Transformer
+translation' dxy (Transform xy t) = Transform (xy - dxy) t
+
+rotation :: E -> UnOp
+rotation ang = transform (rotation' ang)
+
+rotation' :: E -> Transformer
+rotation' ang (Transform xy t) =
   let c = scos ang
       s = ssin ang
       mat = Sh $ Mat2 [c, s, -s, c]
@@ -295,6 +304,7 @@ rotation ang (Transform xy t) =
 data Transform = Transform E E
 type Transformer = Transform -> Transform
 type Prim = Transform -> E
+type UnOp = Prim -> Prim
 type BinOp = Prim -> Prim -> Prim
 
 transform :: Transformer -> Prim -> Prim
@@ -328,16 +338,16 @@ main = do
   let rot = rotation $ 50.0 * t
       slide = translation (V2 (t * 0.8) 0.0)
       -- p = transform rot psquare
-      srp = transform rot $ transform slide psquare
-      rsp = transform slide $ transform rot psquare
+      srp = rot $ slide psquare
+      rsp = slide $ rot psquare
       p2 = smoothUnion srp rsp
 
   -- let s = tsquare (XY / t) t
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = transform (translation (V2 (- (t * 0.8)) 0.0)) $ transform (scale 0.15) pcircle
-      smaller = transform (translation (V2 (- (t * 0.8)) 0.0)) $ transform (scale 0.03) pcircle
+  let cir = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.15) pcircle
+      smaller = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.03) pcircle
       both = smoothUnion psquare cir
       p' = difference both cir
       p3 = union p' smaller
