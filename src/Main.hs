@@ -14,7 +14,7 @@ data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
-       | Abs E | Min E E | Max E E | X E | Y E | Neg E
+       | Abs E | Min E E | Max E E | X E | Y E | Neg E | Sqrt E
   deriving (Eq, Show, Read, Ord)
 
 infixl 6 +.
@@ -54,6 +54,7 @@ typeOf refs (Max a b) = sameType refs a b
 typeOf refs (X e) = TF
 typeOf refs (Y e) = TF
 typeOf refs (Neg e) = mustType refs e [TF] TF
+typeOf refs (Sqrt e) = mustType refs e [TF] TF
 
 glslType :: Ty -> String
 glslType TF = "float"
@@ -126,6 +127,9 @@ share' (Y e) = do
 share' (Neg e) = do
   e' <- share' e
   return $ Neg e'
+share' (Sqrt e) = do
+  e' <- share' e
+  return $ Sqrt e'
 share' x = return x
 
 subexp :: Int -> String
@@ -162,6 +166,7 @@ compileE (Max a b) = fun "max" [compileE a, compileE b]
 compileE (X e) = dot (compileE e) "x"
 compileE (Y e) = dot (compileE e) "y"
 compileE (Neg e) = parens $ concat ["-", compileE e]
+compileE (Sqrt e) = fun "sqrt" [compileE e]
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
@@ -194,8 +199,31 @@ union a b = Min a b
 intersection a b = Max a b
 difference a b = Max a (Neg b)
 
+smoothUnion :: E -> E -> E
+smoothUnion usd0 usd1 =
+  let d0 = Sh usd0
+      d1 = Sh usd1
+      r = KF 0.3
+      md0 = Sh $ Min (d0 -. r) (KF 0.0)
+      md1 = Sh $ Min (d1 -. r) (KF 0.0)
+      inside_distance = Neg $ Sqrt $ (md0 *. md0) +. (md1 *. md1)
+      simple_union = Min d0 d1
+      outside_distance = Max simple_union r
+      dist = inside_distance +. outside_distance
+   in dist
+
+  -- // float r = 0.3;
+  -- // float d0 = cdist;
+  -- // float d1 = sdist;
+  -- // float md0 = min(d0 - r, 0.0);
+  -- // float md1 = min(d1 - r, 0.0);
+  -- // float inside_distance = -(sqrt(md0*md0 + md1*md1));
+  -- // float simple_union = min(d0, d1);
+  -- // float outside_distance = max(simple_union, r);
+  -- // float dist = inside_distance + outside_distance;
+
 main = do
-  let s = difference circle square
+  let s = smoothUnion circle square
   let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
