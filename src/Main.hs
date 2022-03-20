@@ -8,7 +8,7 @@ import qualified Data.Map as M
 -- import qualified Data.Text as T
 
 import Template
-import Util
+import Util hiding (time)
 
 data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
@@ -294,19 +294,16 @@ circle (Transform xy _) =
    in dist
 
 idTransform :: Transform
-idTransform = Transform XY tyme
-tyme :: E
-tyme = (U (UF "yeah"))
+idTransform = Transform XY time
+time :: E
+time = (U (UF "yeah"))
 
 evalPrim :: Prim -> E
 evalPrim p = p idTransform
 
 main = do
-  let t = U (UF "yeah")
-  -- let rotXY = rotMat t *. XY
-
-  let rot = rotation $ 50.0 * t
-      slide = translation (V2 (t * 0.8) 0.0)
+  let rot = rotation $ 50.0 * time
+      slide = translation (V2 (time * 0.8) 0.0)
       -- p = transform rot square
       srp = rot $ slide square
       rsp = slide $ rot square
@@ -316,8 +313,8 @@ main = do
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.15) circle
-      smaller = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.03) circle
+  let cir = (translation (V2 (- (time * 0.8)) 0.0)) $ (scale 0.15) circle
+      smaller = (translation (V2 (- (time * 0.8)) 0.0)) $ (scale 0.03) circle
       both = smoothUnion square cir
       p' = difference both cir
       p3 = union p' smaller
