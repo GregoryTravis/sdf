@@ -60,6 +60,7 @@ typeOf refs (Mat2 _) = TM2
 glslType :: Ty -> String
 glslType TF = "float"
 glslType TV2 = "vec2"
+glslType TM2 = "mat2"
 
 -- Figure out type of the overloaded arithmetic ops
 opType :: Refs -> E -> E -> Ty
@@ -250,14 +251,54 @@ smoothUnion usd0 usd1 =
 
 smu = smoothUnion circle square
 
+translation :: E -> Transformer
+translation dxy (Transform xy t) = Transform (xy -. dxy) t
+
+rotation :: E -> Transformer
+rotation ang (Transform xy t) =
+  let c = scos ang
+      s = ssin ang
+      mat = Sh $ Mat2 [c, s, Neg s, c]
+   in Transform (mat *. xy) t
+
+-- Transform uv t
+data Transform = Transform E E
+type Transformer = Transform -> Transform
+type Prim = Transform -> E
+
+transform :: Transformer -> Prim -> Prim
+transform transformer p = p . transformer
+
+psquare :: Transform -> E
+psquare (Transform xy _) =
+  let center = Sh $ V2 (KF 0.0) (KF 0.0)
+      radius = Sh $ KF 0.2
+      sd = Sh $ Abs (xy -. center)
+      dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
+   in dist
+
+idTransform :: Transform
+idTransform = Transform XY tyme
+tyme :: E
+tyme = (U (UF "yeah"))
+
+evalPrim :: Prim -> E
+evalPrim p = p idTransform
+
 main = do
   let t = U (UF "yeah")
-  let rotXY = rotMat t *. XY
+  -- let rotXY = rotMat t *. XY
+  let rot = rotation t
+      slide = translation (V2 (t *. KF 2.0) t)
+      -- p = transform rot psquare
+      srp = transform rot $ transform slide psquare
+      rsp = transform slide $ transform rot psquare
+      s = smoothUnion (evalPrim srp) (evalPrim rsp)
 
   -- let s = tsquare (XY /. t) t
   -- let s = tsquare rotXY t
   -- let s = smu
-  let s = smoothUnion circle (tsquare rotXY t)
+  -- let s = smoothUnion circle (tsquare rotXY t)
   let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
