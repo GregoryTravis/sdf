@@ -215,28 +215,6 @@ ssqrt = Fun1 "sqrt" TF TF
 ssin = Fun1 "sin" TF TF
 scos = Fun1 "cos" TF TF
 
-circle =
-  let yeah = Sh $ U (UF "yeah")
-      center = Sh $ V2 (0.2 + yeah) 0.2
-      radius = Sh $ 0.2
-      dist = (Length (XY - center) / radius) - 1.0
-   in dist
-
-square =
-  let center = Sh $ V2 0.0 0.0
-      radius = Sh $ 0.2
-      sd = Sh $ Abs (XY - center)
-      dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
-   in dist
-
-tsquare :: E -> E -> E
-tsquare xy _ =
-  let center = Sh $ V2 0.0 0.0
-      radius = Sh $ 0.2
-      sd = Sh $ Abs (xy - center)
-      dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
-   in dist
-
 rotMat :: E -> E
 rotMat ang =
   let c = scos ang
@@ -310,16 +288,16 @@ type BinOp = Prim -> Prim -> Prim
 transform :: Transformer -> Prim -> Prim
 transform transformer p = p . transformer
 
-psquare :: Transform -> E
-psquare (Transform xy _) =
+square :: Transform -> E
+square (Transform xy _) =
   let center = Sh $ V2 0.0 0.0
       radius = Sh 0.2
       sd = Sh $ Abs (xy - center)
       dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
-pcircle :: Transform -> E
-pcircle (Transform xy _) =
+circle :: Transform -> E
+circle (Transform xy _) =
   let dist = Length xy - 1.0
    in dist
 
@@ -337,18 +315,18 @@ main = do
 
   let rot = rotation $ 50.0 * t
       slide = translation (V2 (t * 0.8) 0.0)
-      -- p = transform rot psquare
-      srp = rot $ slide psquare
-      rsp = slide $ rot psquare
+      -- p = transform rot square
+      srp = rot $ slide square
+      rsp = slide $ rot square
       p2 = smoothUnion srp rsp
 
   -- let s = tsquare (XY / t) t
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.15) pcircle
-      smaller = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.03) pcircle
-      both = smoothUnion psquare cir
+  let cir = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.15) circle
+      smaller = (translation (V2 (- (t * 0.8)) 0.0)) $ (scale 0.03) circle
+      both = smoothUnion square cir
       p' = difference both cir
       p3 = union p' smaller
 
