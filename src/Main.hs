@@ -17,15 +17,6 @@ data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length 
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Mat2 [E]
   deriving (Eq, Show, Read, Ord)
 
--- infixl 6 +.
--- (+.) = Add
--- infixl 6 -.
--- (-.) = Sub
--- infixl 7 *.
--- (*.) = Mul
-infixl 7 /.
-(/.) = Div
-
 instance Num E where
   (+) = Add
   (*) = Mul
@@ -228,14 +219,14 @@ circle =
   let yeah = Sh $ U (UF "yeah")
       center = Sh $ V2 (0.2 + yeah) 0.2
       radius = Sh $ 0.2
-      dist = (Length (XY - center) /. radius) - 1.0
+      dist = (Length (XY - center) / radius) - 1.0
    in dist
 
 square =
   let center = Sh $ V2 0.0 0.0
       radius = Sh $ 0.2
       sd = Sh $ Abs (XY - center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) - 1.0
+      dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
 tsquare :: E -> E -> E
@@ -243,7 +234,7 @@ tsquare xy _ =
   let center = Sh $ V2 0.0 0.0
       radius = Sh $ 0.2
       sd = Sh $ Abs (xy - center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) - 1.0
+      dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
 rotMat :: E -> E
@@ -288,7 +279,7 @@ smoothUnion' usd0 usd1 =
    in dist
 
 scale :: E -> Transformer
-scale s (Transform xy t) = Transform (xy /. s) t
+scale s (Transform xy t) = Transform (xy / s) t
 
 translation :: E -> Transformer
 translation dxy (Transform xy t) = Transform (xy - dxy) t
@@ -314,7 +305,7 @@ psquare (Transform xy _) =
   let center = Sh $ V2 0.0 0.0
       radius = Sh 0.2
       sd = Sh $ Abs (xy - center)
-      dist = Sh $ (Max (X sd) (Y sd) /. radius) - 1.0
+      dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
 pcircle :: Transform -> E
@@ -341,7 +332,7 @@ main = do
       rsp = transform slide $ transform rot psquare
       p2 = smoothUnion srp rsp
 
-  -- let s = tsquare (XY /. t) t
+  -- let s = tsquare (XY / t) t
   -- let s = tsquare rotXY t
   -- let s = smu
 
