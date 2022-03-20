@@ -250,7 +250,7 @@ rotMat :: E -> E
 rotMat ang =
   let c = scos ang
       s = ssin ang
-      mat = Mat2 [c, s, Neg s, c]
+      mat = Mat2 [c, s, -s, c]
    in mat
 
 union :: BinOp
@@ -266,7 +266,7 @@ intersection' a b = Max a b
 difference :: BinOp
 difference = binopper difference'
 difference' :: E -> E -> E
-difference' a b = Max a (Neg b)
+difference' a b = Max a (- b)
 
 binopper :: (E -> E -> E) -> BinOp
 binopper distCombiner p0 p1 tr = distCombiner (p0 tr) (p1 tr)
@@ -281,7 +281,7 @@ smoothUnion' usd0 usd1 =
       r = 0.3
       md0 = Sh $ Min (d0 - r) 0.0
       md1 = Sh $ Min (d1 - r) 0.0
-      inside_distance = Neg $ ssqrt $ (md0 * md0) + (md1 * md1)
+      inside_distance = - (ssqrt $ (md0 * md0) + (md1 * md1))
       simple_union = Min d0 d1
       outside_distance = Max simple_union r
       dist = inside_distance + outside_distance
@@ -297,7 +297,7 @@ rotation :: E -> Transformer
 rotation ang (Transform xy t) =
   let c = scos ang
       s = ssin ang
-      mat = Sh $ Mat2 [c, s, Neg s, c]
+      mat = Sh $ Mat2 [c, s, -s, c]
    in Transform (mat * xy) t
 
 -- Transform uv t
@@ -345,8 +345,8 @@ main = do
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = transform (translation (V2 (Neg (t * 0.8)) 0.0)) $ transform (scale 0.15) pcircle
-      smaller = transform (translation (V2 (Neg (t * 0.8)) 0.0)) $ transform (scale 0.03) pcircle
+  let cir = transform (translation (V2 (- (t * 0.8)) 0.0)) $ transform (scale 0.15) pcircle
+      smaller = transform (translation (V2 (- (t * 0.8)) 0.0)) $ transform (scale 0.03) pcircle
       both = smoothUnion psquare cir
       p' = difference both cir
       p3 = union p' smaller
