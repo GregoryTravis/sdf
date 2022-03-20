@@ -14,6 +14,7 @@ data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
+       | Abs E | Max E E | X E | Y E
   deriving (Eq, Show, Read, Ord)
 
 type Refs = M.Map Int E
@@ -38,6 +39,10 @@ typeOf refs (Length e) = mustType refs e [TV2] TF
 typeOf refs (V2 _ _) = TV2
 typeOf refs XY = TV2
 typeOf refs (ShRef n) = typeOf refs (refs M.! n)
+typeOf refs (Abs e) = typeOf refs e
+typeOf refs (Max a b) = sameType refs a b
+typeOf refs (X e) = TF
+typeOf refs (Y e) = TF
 
 glslType :: Ty -> String
 glslType TF = "float"
@@ -90,6 +95,19 @@ share' (V2 a b) = do
   a' <- share' a
   b' <- share' b
   return $ V2 a' b'
+share' (Abs e) = do
+  e' <- share' e
+  return $ Abs e'
+share' (Max a b) = do
+  a' <- share' a
+  b' <- share' b
+  return $ Max a' b'
+share' (X e) = do
+  e' <- share' e
+  return $ X e'
+share' (Y e) = do
+  e' <- share' e
+  return $ Y e'
 share' x = return x
 
 subexp :: Int -> String
@@ -99,11 +117,14 @@ parens :: String -> String
 parens x = concat ["(", x, ")"]
 
 op :: String -> String -> String -> String
-op operator a b = concat [parens a, operator, parens b]
+op operator a b = parens $ concat [parens a, operator, parens b]
 
 fun :: String -> [String] -> String
 fun f args = parens $ concat [f, parens arglist]
   where arglist = intercalate ", " args
+
+dot :: String -> String -> String
+dot e field = parens $ concat [e, ".", field]
 
 compileE :: E -> String
 compileE (KF d) = parens $ show d
@@ -117,6 +138,10 @@ compileE (V2 a b) = fun "vec2" [compileE a, compileE b]
 compileE XY = "(uv)"
 compileE e@(Sh _) = error $ "Can't compile Sh nodes: " ++ show e
 compileE (ShRef n) = parens $ subexp n
+compileE (Abs e) = fun "abs" [compileE e]
+compileE (Max a b) = fun "max" [compileE a, compileE b]
+compileE (X e) = dot (compileE e) "x"
+compileE (Y e) = dot (compileE e) "y"
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
@@ -135,8 +160,15 @@ circle =
   let yeah = Sh $ U (UF "yeah")
       center = Sh $ V2 (Add (KF 0.2) yeah) (KF 0.2)
       radius = Sh $ KF 0.2
-      cdist = Sub (Div (Length (Sub XY center)) radius) (KF 1.0)
-   in cdist
+      dist = Sub (Div (Length (Sub XY center)) radius) (KF 1.0)
+   in dist
+
+square =
+  let center = Sh $ V2 (KF 0.0) (KF 0.0)
+      radius = Sh $ KF 0.2
+      sd = Sh $ Abs (Sub XY center)
+      dist = Sh $ Sub (Div (Max (X sd) (Y sd)) radius) (KF 1.0)
+   in dist
 
 -- // circle
 -- vec2 center = vec2(0.2 + yeah, 0.2);
@@ -144,7 +176,7 @@ circle =
 -- float cdist = (length(uv-center) / radius) - 1.0;
 
 main = do
-  let c = compileGroup (share circle) "dist"
+  let c = compileGroup (share square) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
   msp "hi"
