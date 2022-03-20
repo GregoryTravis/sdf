@@ -14,7 +14,7 @@ data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
-       | Abs E | Max E E | X E | Y E
+       | Abs E | Min E E | Max E E | X E | Y E | Neg E
   deriving (Eq, Show, Read, Ord)
 
 infixl 6 +.
@@ -49,9 +49,11 @@ typeOf refs (V2 _ _) = TV2
 typeOf refs XY = TV2
 typeOf refs (ShRef n) = typeOf refs (refs M.! n)
 typeOf refs (Abs e) = typeOf refs e
+typeOf refs (Min a b) = sameType refs a b
 typeOf refs (Max a b) = sameType refs a b
 typeOf refs (X e) = TF
 typeOf refs (Y e) = TF
+typeOf refs (Neg e) = mustType refs e [TF] TF
 
 glslType :: Ty -> String
 glslType TF = "float"
@@ -107,6 +109,10 @@ share' (V2 a b) = do
 share' (Abs e) = do
   e' <- share' e
   return $ Abs e'
+share' (Min a b) = do
+  a' <- share' a
+  b' <- share' b
+  return $ Min a' b'
 share' (Max a b) = do
   a' <- share' a
   b' <- share' b
@@ -117,6 +123,9 @@ share' (X e) = do
 share' (Y e) = do
   e' <- share' e
   return $ Y e'
+share' (Neg e) = do
+  e' <- share' e
+  return $ Neg e'
 share' x = return x
 
 subexp :: Int -> String
@@ -148,9 +157,11 @@ compileE XY = "(uv)"
 compileE e@(Sh _) = error $ "Can't compile Sh nodes: " ++ show e
 compileE (ShRef n) = parens $ subexp n
 compileE (Abs e) = fun "abs" [compileE e]
+compileE (Min a b) = fun "min" [compileE a, compileE b]
 compileE (Max a b) = fun "max" [compileE a, compileE b]
 compileE (X e) = dot (compileE e) "x"
 compileE (Y e) = dot (compileE e) "y"
+compileE (Neg e) = parens $ concat ["-", compileE e]
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
@@ -179,13 +190,13 @@ square =
       dist = Sh $ (Max (X sd) (Y sd) /. radius) -. KF 1.0
    in dist
 
--- // circle
--- vec2 center = vec2(0.2 + yeah, 0.2);
--- float radius = 0.2;
--- float cdist = (length(uv-center) / radius) - 1.0;
+union a b = Min a b
+intersection a b = Max a b
+difference a b = Max a (Neg b)
 
 main = do
-  let c = compileGroup (share circle) "dist"
+  let s = difference circle square
+  let c = compileGroup (share s) "dist"
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
   msp "hi"
