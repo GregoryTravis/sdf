@@ -260,7 +260,7 @@ difference' :: E -> E -> E
 difference' a b = Max a (- b)
 
 binopper :: (E -> E -> E) -> BinOp
-binopper distCombiner p0 p1 tr = distCombiner (p0 tr) (p1 tr)
+binopper distCombiner p0 p1 tr = distCombiner (Sh $ p0 tr) (Sh $ p1 tr)
 
 smoothUnion :: BinOp
 smoothUnion = binopper smoothUnion'
