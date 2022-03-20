@@ -5,10 +5,12 @@ module Main where
 import Control.Monad.State
 import Data.List (intercalate)
 import qualified Data.Map as M
+-- import qualified Data.Text as T
 
+import Template
 import Util
 
-data Uniform = Uniform String
+data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
@@ -22,10 +24,37 @@ type Sharey a = State RefState a
 initState :: RefState
 initState = (0, M.empty, M.empty)
 
+data Ty = TF | TV2
+  deriving (Eq, Show, Read)
+
+typeOf :: Refs -> E -> Ty
+typeOf refs (KF _) = TF
+typeOf refs (U (UF _)) = TF
+typeOf refs (Add a b) = sameType refs a b
+typeOf refs (Sub a b) = sameType refs a b
+typeOf refs (Mul a b) = sameType refs a b
+typeOf refs (Div a b) = sameType refs a b
+typeOf refs (Length e) = mustType refs e [TV2] TF
+typeOf refs (V2 _ _) = TV2
+typeOf refs XY = TV2
+typeOf refs (ShRef n) = typeOf refs (refs M.! n)
+
+glslType :: Ty -> String
+glslType TF = "float"
+glslType TV2 = "vec2"
+
+mustType :: Refs -> E -> [Ty] -> Ty -> Ty
+mustType refs e tys ty | (typeOf refs e) `elem` tys = ty
+                  | otherwise = error $ "wrong type " ++ show e ++ " " ++ show tys
+
+sameType :: Refs -> E -> E -> Ty
+sameType refs a b | typeOf refs a == typeOf refs b = typeOf refs a
+             | otherwise = error $ "type mismatch: " ++ show a ++ " " ++ show b
+
 share :: E -> (E, Refs)
 share e =
   let (e', (_, refs, revRefs)) = runState (share' e) initState
-   in eesp revRefs (e', refs)
+   in (e', refs)
 
 share' :: E -> State RefState E
 share' (Sh e) = do
@@ -64,7 +93,7 @@ share' (V2 a b) = do
 share' x = return x
 
 circle =
-  let yeah = Sh $ U (Uniform "yeah")
+  let yeah = Sh $ U (UF "yeah")
       center = Sh $ V2 (Add (KF 2.0) yeah) (KF 2.0)
       radius = Sh $ KF 2.0
       cdist = Sub (Div (Length (Sub XY center)) radius) (KF 1.0)
@@ -88,10 +117,9 @@ fun :: String -> [String] -> String
 fun f args = parens $ concat [f, parens arglist]
   where arglist = intercalate ", " args
 
--- data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
 compileE :: E -> String
 compileE (KF d) = parens $ show d
-compileE (U (Uniform name)) = parens name
+compileE (U (UF name)) = parens name
 compileE (Add a b) = op "+" (compileE a) (compileE b)
 compileE (Sub a b) = op "-" (compileE a) (compileE b)
 compileE (Mul a b) = op "*" (compileE a) (compileE b)
@@ -102,18 +130,21 @@ compileE XY = "(uv)"
 compileE e@(Sh _) = error $ "Can't compile Sh nodes: " ++ show e
 compileE (ShRef n) = parens $ subexp n
 
-compileBinding :: String -> E -> String
-compileBinding var e = concat [var, " = ", compileE e]
+compileBinding :: Refs -> String -> E -> String
+compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
+  where ty = glslType $ typeOf refs e
 
-compileBindings :: [(String, E)] -> String
-compileBindings bindings = intercalate ";\n" cbs ++ "\n"
-  where cbs = map (\(var, e) -> compileBinding var e) bindings
+compileBindings :: Refs -> [(String, E)] -> String
+compileBindings refs bindings = intercalate ";\n" cbs ++ "\n"
+  where cbs = map (\(var, e) -> compileBinding refs var e) bindings
 
 compileGroup :: (E, Refs) -> String -> String
-compileGroup (top, refs) topName = compileBindings bindings
+compileGroup (top, refs) topName = compileBindings refs bindings
   where bindings = reverse $ (topName, top) : shares
         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
 
+-- generateExe :: FilePath -> FilePath -> M.Map String String -> IO ()
 main = do
-  msp $ compileGroup (share circle) "topp"
+  generateExe "template.html" "index.html" $ M.fromList [("ASDFASDF", "no way"), ("ZIZMOR", "whoa")]
+  -- msp $ compileGroup (share circle) "topp"
   msp "hi"
