@@ -42,7 +42,24 @@ main = do
   let filaoa' = pfGrid 2.25 2.25 circle
   let filaoa = smoothUnion (scale time filaoa') (rotation time filaoa')
 
-  let p = filaoa
+  -- oscillate 0..1 at 'rate'*2 hz
+  let osc rate = Sh $ (ssin (time * rate) + 1) / 2
+
+  -- let sc = interp osc square circle
+  --     osc = (ssin (time * 30) + 1) / 2
+  --     leftCircle = translation (V2 (-2) 0) circle
+  --     rightCircle = translation (V2 (2) 0) circle
+  --     circleMove = interp osc leftCircle rightCircle
+
+  -- let morph = interp osc p2 filaoa
+  --     osc = (ssin (time * 20) + 1) / 2 
+
+  let ss = rotation (time * 4) $ pfGrid 2.5 2.5 square
+      cs = rotation (time * (-3)) $ pfGrid 2.5 2.5 circle
+      gridz = interp (osc 5) ss cs
+      morph = interp (osc 20) gridz filaoa
+
+  let p = morph
 
   let pc = camera p
 

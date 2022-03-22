@@ -3,6 +3,7 @@ module BinOp
 , intersection
 , difference
 , smoothUnion
+, interp
 , binopper ) where
 
 import E
@@ -41,3 +42,8 @@ smoothUnion' usd0 usd1 =
       outside_distance = Max simple_union r
       dist = inside_distance + outside_distance
    in dist
+
+interp :: E -> BinOp
+interp alpha = binopper (interp' alpha)
+interp' :: E -> E -> E -> E
+interp' alpha a b = (1.0 - alpha) * a + alpha * b

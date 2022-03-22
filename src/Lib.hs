@@ -2,10 +2,10 @@ module Lib where
 
 import E
 
-ssqrt = Fun1 "sqrt" TF TF
-ssin = Fun1 "sin" TF TF
-scos = Fun1 "cos" TF TF
+ssqrt = Sh . Fun1 "sqrt" TF TF
+ssin = Sh . Fun1 "sin" TF TF
+scos = Sh . Fun1 "cos" TF TF
 
-sabs = Abs
-smod = Fun2 "mod" TF TF TF
-sfloor = Fun1 "floor" TF TF
+sabs = Sh . Abs
+smod x y = Sh $ Fun2 "mod" TF TF TF x y
+sfloor = Sh . Fun1 "floor" TF TF
