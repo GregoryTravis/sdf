@@ -3,6 +3,12 @@ module E
 , Ty(..)
 , Uniform(..)
 , (==.)
+, Transform(..)
+, Transformer
+, Shape
+, UnOp
+, BinOp
+, time
 ) where
 
 data Uniform = UF String
@@ -33,3 +39,13 @@ infix 4 ==.
 
 data Ty = TF | TV2 | TM2 | TB
   deriving (Eq, Show, Read, Ord)
+
+type Shape = Transform -> E
+type UnOp = Shape -> Shape
+type BinOp = Shape -> Shape -> Shape
+
+data Transform = Transform E E
+type Transformer = Transform -> Transform
+
+time :: E
+time = (U (UF "yeah"))

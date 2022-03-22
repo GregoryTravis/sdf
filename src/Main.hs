@@ -8,14 +8,8 @@ import E
 import Compile
 import Lib
 import Template
+import Transform
 import Util hiding (time)
-
-rotMat :: E -> E
-rotMat ang =
-  let c = Sh $ scos ang
-      s = Sh $ ssin ang
-      mat = Mat2 [c, s, -s, c]
-   in mat
 
 union :: BinOp
 union = binopper union'
@@ -50,28 +44,6 @@ smoothUnion' usd0 usd1 =
       outside_distance = Max simple_union r
       dist = inside_distance + outside_distance
    in dist
-
-scale :: E -> UnOp
-scale s = transform (scale' s)
-
-scale' :: E -> Transformer
-scale' s (Transform xy t) = Transform (xy / s) t
-
-translation :: E -> UnOp
-translation dxy = transform (translation' dxy)
-
-translation' :: E -> Transformer
-translation' dxy (Transform xy t) = Transform (xy - dxy) t
-
-rotation :: E -> UnOp
-rotation ang = transform (rotation' ang)
-
-rotation' :: E -> Transformer
-rotation' ang (Transform xy t) =
-  let c = Sh $ scos ang
-      s = Sh $ ssin ang
-      mat = Sh $ Mat2 [c, s, -s, c]
-   in Transform (mat * xy) t
 
 grid :: E -> E -> UnOp
 grid w h = transform (grid' w h)
@@ -149,16 +121,6 @@ pfGrid' w h (Transform xy t) =
     -- }
     -- (xx, yy, t)
 
--- Transform uv t
-data Transform = Transform E E
-type Transformer = Transform -> Transform
-type Shape = Transform -> E
-type UnOp = Shape -> Shape
-type BinOp = Shape -> Shape -> Shape
-
-transform :: Transformer -> Shape -> Shape
-transform transformer p = p . transformer
-
 square :: Shape
 square (Transform xy _) =
   let center = Sh $ V2 0.0 0.0
@@ -171,15 +133,6 @@ circle :: Shape
 circle (Transform xy _) =
   let dist = Length xy - 1.0
    in dist
-
-idTransform :: Transform
-idTransform = Transform XY time
-
-time :: E
-time = (U (UF "yeah"))
-
-evalShape :: Shape -> E
-evalShape p = p idTransform
 
 main = do
   let camera = scale 0.1
