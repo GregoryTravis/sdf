@@ -5,36 +5,10 @@ module Main where
 import Control.Monad.State
 import Data.List (intercalate)
 import qualified Data.Map as M
--- import qualified Data.Text as T
 
+import E
 import Template
 import Util hiding (time)
-
-data Uniform = UF String
-  deriving (Eq, Show, Read, Ord)
-
-data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
-       | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Mat2 [E]
-       | Equals E E | Cond E E E
-  deriving (Eq, Show, Read, Ord)
-
-instance Num E where
-  (+) = Add
-  (*) = Mul
-  abs = Abs
-  signum = error "signum not implemented"
-  fromInteger i = KF (fromInteger i)
-  negate = Neg
-
--- fromRational, (recip | (/))
-instance Fractional E where
-  fromRational i = KF (fromRational i)
-  (/) = Div
-
--- instance Eq E where
---   (==) = Equals
-infix 4 ==.
-(==.) = Equals
 
 type Refs = M.Map Int E
 type RevRefs = M.Map E Int
@@ -43,9 +17,6 @@ type Sharey a = State RefState a
 
 initState :: RefState
 initState = (0, M.empty, M.empty)
-
-data Ty = TF | TV2 | TM2 | TB
-  deriving (Eq, Show, Read, Ord)
 
 typeOf :: Refs -> E -> Ty
 typeOf refs (KF _) = TF
