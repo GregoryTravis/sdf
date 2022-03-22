@@ -15,6 +15,7 @@ data Uniform = UF String
 
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Mat2 [E]
+       | Equals E E | Cond E E E
   deriving (Eq, Show, Read, Ord)
 
 instance Num E where
@@ -30,6 +31,11 @@ instance Fractional E where
   fromRational i = KF (fromRational i)
   (/) = Div
 
+-- instance Eq E where
+--   (==) = Equals
+infix 4 ==.
+(==.) = Equals
+
 type Refs = M.Map Int E
 type RevRefs = M.Map E Int
 type RefState = (Int, Refs, RevRefs)
@@ -38,7 +44,7 @@ type Sharey a = State RefState a
 initState :: RefState
 initState = (0, M.empty, M.empty)
 
-data Ty = TF | TV2 | TM2
+data Ty = TF | TV2 | TM2 | TB
   deriving (Eq, Show, Read, Ord)
 
 typeOf :: Refs -> E -> Ty
@@ -61,11 +67,14 @@ typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
 typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
 typeOf refs (Mat2 _) = TM2
+typeOf refs (Equals _ _) = TB
+typeOf refs (Cond _ t e) = sameType refs t e
 
 glslType :: Ty -> String
 glslType TF = "float"
 glslType TV2 = "vec2"
 glslType TM2 = "mat2"
+glslType TB = "bool"
 
 -- Figure out type of the overloaded arithmetic ops
 opType :: Refs -> E -> E -> Ty
@@ -156,6 +165,15 @@ share' (Fun2 name tin tin2 tout e0 e1) = do
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
+share' (Equals a b) = do
+  a' <- share' a
+  b' <- share' b
+  return $ Equals a' b'
+share' (Cond b t e) = do
+  b' <- share' b
+  t' <- share' t
+  e' <- share' e
+  return $ Cond b' t' e'
 share' x = return x
 
 subexp :: Int -> String
@@ -173,6 +191,9 @@ fun f args = parens $ concat [f, parens arglist]
 
 dot :: String -> String -> String
 dot e field = parens $ concat [e, ".", field]
+
+cond :: String -> String -> String -> String
+cond b t e = parens $ concat [parens b, "?", parens t , ":", parens e]
 
 compileE :: E -> String
 compileE (KF d) = parens $ show d
@@ -195,6 +216,8 @@ compileE (Neg e) = parens $ concat ["-", compileE e]
 compileE (Fun1 name _ _ arg) = fun name [compileE arg]
 compileE (Fun2 name _ _ _ arg0 arg1) = fun name [compileE arg0, compileE arg1]
 compileE (Mat2 es) = fun "mat2" (map compileE es)
+compileE (Equals a b) = op "==" (compileE a) (compileE b)
+compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
@@ -280,16 +303,71 @@ rotation' ang (Transform xy t) =
       mat = Sh $ Mat2 [c, s, -s, c]
    in Transform (mat * xy) t
 
--- pfGrid :: E -> E -> UnOp
--- pfGrid w h = transform (pfGrid' w h)
+grid :: E -> E -> UnOp
+grid w h = transform (grid' w h)
 
--- pfGrid' :: E -> E -> Transformer
--- pfGrid' w h (Transform xy t) =
---   let xx = smod x w
---       yy = smod y h
---       xi = sfloor x
---       yi = sfloor y
---       if mod
+grid' :: E -> E -> Transformer
+grid' w h (Transform xy t) =
+  let x = X xy
+      y = Y xy
+      xx = smod x w
+      yy = smod y h
+      xi = sfloor x
+      yi = sfloor y
+   in Transform (V2 xx yy) t
+
+bugPfGrid :: E -> E -> UnOp
+bugPfGrid w h = transform (bugPfGrid' w h)
+
+bugPfGrid' :: E -> E -> Transformer
+bugPfGrid' w h (Transform xy t) =
+  let x = X xy
+      y = Y xy
+      xx = smod x w
+      yy = smod y h
+      xi = sfloor x
+      yi = sfloor y
+      xx2 = Cond (smod (Abs xi) 2 ==. 1) (w - xx) xx
+      yy2 = Cond (smod (Abs yi) 2 ==. 1) (h - yy) yy
+   in Transform (V2 xx2 yy2) t
+
+bugPfGrid2 :: E -> E -> UnOp
+bugPfGrid2 w h = transform (bugPfGrid2' w h)
+
+bugPfGrid2' :: E -> E -> Transformer
+bugPfGrid2' w h (Transform xy t) =
+  let x = X xy
+      y = Y xy
+      xx = smod x w
+      yy = smod y h
+      xi = sfloor x
+      yi = sfloor y
+      xx2 = Cond (smod xi 2 ==. 1) (w - xx) xx
+      yy2 = Cond (smod yi 2 ==. 1) (h - yy) yy
+   in Transform (V2 xx2 yy2) t
+
+pfGrid :: E -> E -> UnOp
+pfGrid w h = transform (pfGrid' w h)
+
+-- I tried using mod to calculate xx, yy, xi, yi, but it was wrong, so I just inlined the original rust grid_fmod2()
+pfGrid' :: E -> E -> Transformer
+pfGrid' w h (Transform xy t) =
+  let x = X xy
+      y = Y xy
+      xow = x / w
+      yoh = y / h
+      xx = (xow - sfloor xow) * w
+      xi = sfloor xow
+      yy = (yoh - sfloor yoh) * h
+      yi = sfloor yoh
+      xx2 = Cond (smod (Abs xi) 2.0 ==. 1.0) (w - xx) xx
+      yy2 = Cond (smod (Abs yi) 2.0 ==. 1.0) (h - yy) yy
+   in Transform (V2 xx2 yy2) t
+
+-- fn grid_fmod2(a: f32, b: f32) -> (f32, i32) {
+--   let aob = a / b;
+--   (((aob - aob.floor()) * b), aob.floor() as i32)
+-- }
 
     -- let (mut xx, xi) = grid_fmod2(x, w);
     -- let (mut yy, yi) = grid_fmod2(y, h);
@@ -314,7 +392,7 @@ transform transformer p = p . transformer
 square :: Prim
 square (Transform xy _) =
   let center = Sh $ V2 0.0 0.0
-      radius = Sh 0.2
+      radius = Sh 1.0
       sd = Sh $ Abs (xy - center)
       dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
@@ -334,6 +412,8 @@ evalPrim :: Prim -> E
 evalPrim p = p idTransform
 
 main = do
+  let camera = scale 0.1
+
   let rot = rotation $ 50.0 * time
       slide = translation (V2 (time * 0.8) 0.0)
       -- p = transform rot square
@@ -351,9 +431,19 @@ main = do
       p' = difference both cir
       p3 = union p' smaller
 
-  let p = union p2 p3
+  -- let p = union p2 p3
+  -- let p = pfGrid 2.25 2.25 square
 
-  let s = evalPrim p
+  -- FAVORITE don't lose this!!
+  -- fall in love all over again
+  let filaoa' = pfGrid 2.25 2.25 circle
+  let filaoa = smoothUnion (scale time filaoa') (rotation time filaoa')
+
+  let p = filaoa
+
+  let pc = camera p
+
+  let s = evalPrim pc
 
   let c = compileGroup (share s) "dist"
   msp c

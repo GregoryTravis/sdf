@@ -109,11 +109,20 @@ void main() {
   // float outside_distance = max(simple_union, r);
   // float dist = inside_distance + outside_distance;
 
-  if (dist < 0.0) {
-    gl_FragColor = vec4(vec3(1.0, 1.0, 1.0), 1.0);
-  } else {
-    gl_FragColor = vec4(vec3(0.0, 0.0, 0.0), 1.0);
-  }
+  // Smoothstep-based AA, not scale-invariant
+  float smoothRadius = 0.03;
+  // 0 when neg, 1 when pos, mixed at 0
+  vec4 white = vec4(vec3(1.0, 1.0, 1.0), 1.0);
+  vec4 black = vec4(vec3(0.0, 0.0, 0.0), 1.0);
+  float bwBlend = smoothstep(-smoothRadius, smoothRadius, dist);
+  gl_FragColor = bwBlend * black + (1.0 - bwBlend) * white;
+
+  // No AA
+  // if (dist < 0.0) {
+  //   gl_FragColor = vec4(vec3(1.0, 1.0, 1.0), 1.0);
+  // } else {
+  //   gl_FragColor = vec4(vec3(0.0, 0.0, 0.0), 1.0);
+  // }
 
   // if (uv.x > -0.9 && uv.x < 0.9 && uv.y > -0.9 && uv.y < 0.9) {
   //   gl_FragColor = vec4(vec3(1.0, 0.0, 0.0), 1.0);
