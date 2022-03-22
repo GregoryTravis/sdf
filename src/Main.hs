@@ -14,21 +14,6 @@ import Template
 import Transform
 import Util hiding (time)
 
--- fn grid_fmod2(a: f32, b: f32) -> (f32, i32) {
---   let aob = a / b;
---   (((aob - aob.floor()) * b), aob.floor() as i32)
--- }
-
-    -- let (mut xx, xi) = grid_fmod2(x, w);
-    -- let (mut yy, yi) = grid_fmod2(y, h);
-    -- if xi.abs() % 2 == 1 {
-    --   xx = w - xx;
-    -- }
-    -- if yi.abs() % 2 == 1 {
-    --   yy = h - yy;
-    -- }
-    -- (xx, yy, t)
-
 main = do
   let camera = scale 0.1
 
@@ -61,9 +46,7 @@ main = do
 
   let pc = camera p
 
-  let s = evalShape pc
-
-  let c = compile s
+  let c = compile pc
   msp c
   generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
   msp "hi"

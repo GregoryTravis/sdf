@@ -6,6 +6,7 @@ import qualified Data.Map as M
 
 import E
 import Share
+import Transform
 
 typeOf :: Refs -> E -> Ty
 typeOf refs (KF _) = TF
@@ -112,5 +113,5 @@ compileGroup (top, refs) topName = compileBindings refs bindings
   where bindings =  shares ++ [(topName, top)]
         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
 
-compile :: E -> String
-compile e = compileGroup (share e) "dist"
+compile :: Shape -> String
+compile e = compileGroup (share (evalShape e)) "dist"
