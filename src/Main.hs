@@ -382,14 +382,14 @@ pfGrid' w h (Transform xy t) =
 -- Transform uv t
 data Transform = Transform E E
 type Transformer = Transform -> Transform
-type Prim = Transform -> E
-type UnOp = Prim -> Prim
-type BinOp = Prim -> Prim -> Prim
+type Shape = Transform -> E
+type UnOp = Shape -> Shape
+type BinOp = Shape -> Shape -> Shape
 
-transform :: Transformer -> Prim -> Prim
+transform :: Transformer -> Shape -> Shape
 transform transformer p = p . transformer
 
-square :: Prim
+square :: Shape
 square (Transform xy _) =
   let center = Sh $ V2 0.0 0.0
       radius = Sh 1.0
@@ -397,7 +397,7 @@ square (Transform xy _) =
       dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
-circle :: Prim
+circle :: Shape
 circle (Transform xy _) =
   let dist = Length xy - 1.0
    in dist
@@ -408,8 +408,8 @@ idTransform = Transform XY time
 time :: E
 time = (U (UF "yeah"))
 
-evalPrim :: Prim -> E
-evalPrim p = p idTransform
+evalShape :: Shape -> E
+evalShape p = p idTransform
 
 main = do
   let camera = scale 0.1
@@ -443,7 +443,7 @@ main = do
 
   let pc = camera p
 
-  let s = evalPrim pc
+  let s = evalShape pc
 
   let c = compileGroup (share s) "dist"
   msp c
