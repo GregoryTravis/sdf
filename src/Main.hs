@@ -6,16 +6,9 @@ import qualified Data.Map as M
 
 import E
 import Compile
+import Lib
 import Template
 import Util hiding (time)
-
-ssqrt = Fun1 "sqrt" TF TF
-ssin = Fun1 "sin" TF TF
-scos = Fun1 "cos" TF TF
-
-sabs = Abs
-smod = Fun2 "mod" TF TF TF
-sfloor = Fun1 "floor" TF TF
 
 rotMat :: E -> E
 rotMat ang =
