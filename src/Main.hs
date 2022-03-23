@@ -10,6 +10,7 @@ import Compile
 import Grid
 import Lib
 import Prim
+import Random
 import Template
 import Transform
 import Util hiding (time)
@@ -54,12 +55,17 @@ main = do
   -- let morph = interp osc p2 filaoa
   --     osc = (ssin (time * 20) + 1) / 2 
 
+  -- Another great one
   let ss = rotation (time * 4) $ pfGrid 2.5 2.5 square
       cs = rotation (time * (-3)) $ pfGrid 2.5 2.5 circle
       gridz = interp (osc 5) ss cs
       morph = interp (osc 20) gridz filaoa
 
-  let p = morph
+  rs0 <- randomShape
+  rs1 <- randomShape
+  let rs0' = rotation (osc 5) (pfGrid 2 2 rs0)
+  let rs1' = rotation (osc (-3.5)) (pfGrid 1.5 1.5 rs1)
+  let p = interp (osc 2) rs0' rs1'
 
   let pc = camera p
 

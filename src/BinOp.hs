@@ -4,7 +4,8 @@ module BinOp
 , difference
 , smoothUnion
 , interp
-, binopper ) where
+, binopper
+, allBinOps ) where
 
 import E
 import Lib
@@ -47,3 +48,11 @@ interp :: E -> BinOp
 interp alpha = binopper (interp' alpha)
 interp' :: E -> E -> E -> E
 interp' alpha a b = (1.0 - alpha) * a + alpha * b
+
+allBinOps :: [BinOp]
+allBinOps = [
+    union
+  , intersection
+  , difference
+  , smoothUnion
+  ]

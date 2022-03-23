@@ -1,6 +1,7 @@
 module Prim
 ( circle
-, square ) where
+, square
+, allPrims ) where
 
 import E
 
@@ -16,3 +17,6 @@ circle :: Shape
 circle (Transform xy _) =
   let dist = Length xy - 1.0
    in dist
+
+allPrims :: [Shape]
+allPrims = [circle, square]
