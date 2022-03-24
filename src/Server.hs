@@ -17,11 +17,11 @@ runServer handler = run 8000 (app handler)
 
 app :: IO String -> App ()
 app ioHandler = do
-  route "/foo" (fooHandler ioHandler)
+  route "/" (indexHandler ioHandler)
   route "/twgl-full.module.js" twglHandler
 
-fooHandler :: IO String -> Handler W.Response
-fooHandler ioHandler = do
+indexHandler :: IO String -> Handler W.Response
+indexHandler ioHandler = do
   s <- liftIO ioHandler
   return $ toResponse (T.pack s, ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
 
