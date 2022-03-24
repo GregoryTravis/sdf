@@ -5,11 +5,10 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import System.IO
 
-generateExe :: FilePath -> FilePath -> M.Map String String -> IO ()
-generateExe templateFile outputFile map = do
+generateExe :: FilePath -> M.Map String String -> IO String
+generateExe templateFile map = do
   template <- readFile templateFile
-  let output = subst map template
-  writeFile outputFile output
+  return $ subst map template
 
 -- foldr :: (a -> b -> b) -> b -> Map k a -> b
 -- foldrWithKey :: (k -> a -> b -> b) -> b -> Map k a -> b

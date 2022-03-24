@@ -11,11 +11,13 @@ import Grid
 import Lib
 import Prim
 import Random
+import Server
 import Template
 import Transform
 import Util hiding (time)
 
-main = do
+genShape :: IO Shape
+genShape = do
   let camera = scale 0.1
 
   let rot = rotation $ 50.0 * time
@@ -68,8 +70,15 @@ main = do
   let p = interp (osc 2) rs0' rs1'
 
   let pc = camera p
+  return pc
 
+handler :: IO String
+handler = do
+  pc <- genShape
   let c = compile pc
   msp c
-  generateExe "template.html" "index.html" $ M.fromList [("SHAPE_ASDF", c)]
-  msp "hi"
+  html <- generateExe "template.html" $ M.fromList [("SHAPE_ASDF", c)]
+  return html
+
+main :: IO ()
+main = runServer handler
