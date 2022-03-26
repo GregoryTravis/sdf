@@ -32,6 +32,7 @@ typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
 typeOf refs (Mat2 _) = TM2
 typeOf refs (Comparison _ _ _) = TB
 typeOf refs (Cond _ t e) = sameType refs t e
+-- typeOf refs (Var name) = sameType refs t e
 
 glslType :: Ty -> String
 glslType TF = "float"
