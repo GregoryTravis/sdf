@@ -4,9 +4,12 @@ module Server
 ( runServer ) where
 
 import Control.Monad.IO.Class (liftIO)
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Map as M
 import qualified Data.Text as T
-import Network.HTTP.Types.Status (ok200, found302)
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.Encoding as LT
+-- import Network.HTTP.Types.Status
 import Network.Wai as W
 import Web.Firefly
 
@@ -32,6 +35,10 @@ twglHandler = do
 
 newtype JS = JS String
 
+-- Found this nastiness in the firefly source
 instance ToResponse JS where
   toResponse (JS s) =
-    toResponse (T.pack s :: T.Text, ok200, M.fromList [("Content-type", ["application/javascript"])] :: HeaderMap)
+    W.responseLBS ok200 [("Content-Type", "application/javascript")] (toLBS $ T.pack s)
+
+toLBS :: T.Text -> LBS.ByteString
+toLBS = LT.encodeUtf8 . LT.fromStrict
