@@ -3,6 +3,10 @@ module E
 , Ty(..)
 , Uniform(..)
 , (==.)
+, (<.)
+, (>.)
+, (<=.)
+, (>=.)
 , Transform(..)
 , Transformer
 , Shape
@@ -14,7 +18,7 @@ module E
 data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
-data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | XY | Sh E | ShRef Int
+data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY | Sh E | ShRef Int
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Mat2 [E]
        | Comparison String E E | Cond E E E
   deriving (Eq, Show, Read, Ord)
@@ -34,8 +38,16 @@ instance Fractional E where
 
 infix 4 ==.
 (==.) = Comparison "=="
+infix 4 <.
+(<.) = Comparison "<"
+infix 4 >.
+(>.) = Comparison ">"
+infix 4 <=.
+(<=.) = Comparison "<="
+infix 4 >=.
+(>=.) = Comparison ">="
 
-data Ty = TF | TV2 | TM2 | TB
+data Ty = TF | TV2 | TV3 | TV4 | TM2 | TB
   deriving (Eq, Show, Read, Ord)
 
 type Shape = Transform -> E

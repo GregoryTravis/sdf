@@ -53,6 +53,17 @@ share' (V2 a b) = do
   a' <- share' a
   b' <- share' b
   return $ V2 a' b'
+share' (V3 a b c) = do
+  a' <- share' a
+  b' <- share' b
+  c' <- share' c
+  return $ V3 a' b' c'
+share' (V4 a b c d) = do
+  a' <- share' a
+  b' <- share' b
+  c' <- share' c
+  d' <- share' d
+  return $ V4 a' b' c' d'
 share' (Abs e) = do
   e' <- share' e
   return $ Abs e'
