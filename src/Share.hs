@@ -83,10 +83,10 @@ share' (Fun2 name tin tin2 tout e0 e1) = do
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
-share' (Equals a b) = do
+share' (Comparison op a b) = do
   a' <- share' a
   b' <- share' b
-  return $ Equals a' b'
+  return $ Comparison op a' b'
 share' (Cond b t e) = do
   b' <- share' b
   t' <- share' t

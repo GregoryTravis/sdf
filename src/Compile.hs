@@ -28,7 +28,7 @@ typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
 typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
 typeOf refs (Mat2 _) = TM2
-typeOf refs (Equals _ _) = TB
+typeOf refs (Comparison _ _ _) = TB
 typeOf refs (Cond _ t e) = sameType refs t e
 
 glslType :: Ty -> String
@@ -97,7 +97,7 @@ compileE (Neg e) = parens $ concat ["-", compileE e]
 compileE (Fun1 name _ _ arg) = fun name [compileE arg]
 compileE (Fun2 name _ _ _ arg0 arg1) = fun name [compileE arg0, compileE arg1]
 compileE (Mat2 es) = fun "mat2" (map compileE es)
-compileE (Equals a b) = op "==" (compileE a) (compileE b)
+compileE (Comparison opS a b) = op opS (compileE a) (compileE b)
 compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
 
 compileBinding :: Refs -> String -> E -> String
