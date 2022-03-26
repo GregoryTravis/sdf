@@ -58,4 +58,4 @@ data Transform = Transform E E
 type Transformer = Transform -> Transform
 
 time :: E
-time = (U (UF "yeah"))
+time = (U (UF "time"))

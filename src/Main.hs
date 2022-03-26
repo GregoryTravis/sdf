@@ -20,8 +20,8 @@ genShape :: IO Shape
 genShape = do
   let camera = scale 0.1
 
-  let rot = rotation $ 50.0 * time
-      slide = translation (V2 (time * 0.8) 0.0)
+  let rot = rotation $ 5.0 * time
+      slide = translation (V2 (time * 0.08) 0.0)
       -- p = transform rot square
       srp = rot $ slide square
       rsp = slide $ rot square
@@ -31,8 +31,8 @@ genShape = do
   -- let s = tsquare rotXY t
   -- let s = smu
 
-  let cir = (translation (V2 (- (time * 0.8)) 0.0)) $ (scale 0.15) circle
-      smaller = (translation (V2 (- (time * 0.8)) 0.0)) $ (scale 0.03) circle
+  let cir = (translation (V2 (- (time * 0.08)) 0.0)) $ (scale 0.15) circle
+      smaller = (translation (V2 (- (time * 0.08)) 0.0)) $ (scale 0.03) circle
       both = smoothUnion square cir
       p' = difference both cir
       p3 = union p' smaller
@@ -43,31 +43,31 @@ genShape = do
   -- FAVORITE don't lose this!!
   -- fall in love all over again
   let filaoa' = pfGrid 2.25 2.25 circle
-  let filaoa = smoothUnion (scale time filaoa') (rotation time filaoa')
+  let filaoa = smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
 
   -- oscillate 0..1 at 'rate'*2 hz
   let osc rate = Sh $ (ssin (time * rate) + 1) / 2
 
   -- let sc = interp osc square circle
-  --     osc = (ssin (time * 30) + 1) / 2
+  --     osc = (ssin (time * 3) + 1) / 2
   --     leftCircle = translation (V2 (-2) 0) circle
   --     rightCircle = translation (V2 (2) 0) circle
   --     circleMove = interp osc leftCircle rightCircle
 
   -- let morph = interp osc p2 filaoa
-  --     osc = (ssin (time * 20) + 1) / 2 
+  --     osc = (ssin (time * 2) + 1) / 2
 
   -- Another great one
-  let ss = rotation (time * 4) $ pfGrid 2.5 2.5 square
-      cs = rotation (time * (-3)) $ pfGrid 2.5 2.5 circle
-      gridz = interp (osc 5) ss cs
-      morph = interp (osc 20) gridz filaoa
+  let ss = rotation (time * 0.4) $ pfGrid 2.5 2.5 square
+      cs = rotation (time * (-0.3)) $ pfGrid 2.5 2.5 circle
+      gridz = interp (osc 0.5) ss cs
+      morph = interp (osc 2) gridz filaoa
 
   rs0 <- randomShape
   rs1 <- randomShape
-  let rs0' = rotation (osc 5) (pfGrid 2 2 rs0)
-  let rs1' = rotation (osc (-3.5)) (pfGrid 1.5 1.5 rs1)
-  let p = interp (osc 2) rs0' rs1'
+  let rs0' = rotation (osc 0.5) (pfGrid 2 2 rs0)
+  let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
+  let p = interp (osc 0.2) rs0' rs1'
 
   let pc = camera p
   return pc

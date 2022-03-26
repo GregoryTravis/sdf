@@ -63,7 +63,6 @@ precision mediump float;
 
 uniform vec2 resolution;
 uniform float time;
-uniform float yeah;
 
 // TODO slow
 float linmap(float a, float b, float c, float d, float x) {
@@ -111,7 +110,6 @@ void main() {
       const uniforms = {
         time: time * 0.001,
         resolution: [gl.canvas.width, gl.canvas.height],
-        yeah: time / 10000.0,
       };
 
       gl.useProgram(programInfo.program);
