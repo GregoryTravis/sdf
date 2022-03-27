@@ -26,13 +26,13 @@ smooth fg bg dist =
   let smoothRadius = 0.03
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
       color = bwBlend * bg + (1.0 - bwBlend) * fg;
-   in color
+   in Sh color
 
 alphaBlend :: E -> E -> E
-alphaBlend bg fg = vec4 (mix (RGB bg) (RGB fg) (A fg)) 1.0
+alphaBlend bg fg = Sh $ vec4 (mix (RGB $ Sh bg) (RGB $ Sh fg) (A fg)) 1.0
 
 alphaBlends :: [E] -> E
-alphaBlends es = alphaBlends' (black : es)
+alphaBlends es = Sh $ alphaBlends' (black : es)
   where alphaBlends' [] = error "alphaBlends: impossible"
         alphaBlends' [e] = e
         alphaBlends' (bg : fg : es) = alphaBlends' (alphaBlend bg fg : es)
