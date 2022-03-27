@@ -1,9 +1,43 @@
-module Color
-() where
+module Color where
+
+import System.Random
 
 import E
 import Lib
 import Util
+
+black = V4 0.0 0.0 0.0 1.0
+white = V4 1.0 1.0 1.0 1.0
+gray = V4 0.5 0.5 0.5 1.0
+red = V4 1.0 0.0 0.0 1.0
+green = V4 0.0 1.0 0.0 1.0
+nothing = V4 0.0 0.0 0.0 0.0
+
+randomColor :: IO E
+randomColor = do
+  r <- getStdRandom (randomR (0.0, 1.0))
+  g <- getStdRandom (randomR (0.0, 1.0))
+  b <- getStdRandom (randomR (0.0, 1.0))
+  return $ V4 (KF r) (KF g) (KF b) 1.0
+
+-- anti-aliased edge
+smooth :: E -> E -> E -> E
+smooth fg bg dist =
+  let smoothRadius = 0.03
+      bwBlend = smoothstep (-smoothRadius) smoothRadius dist
+      color = bwBlend * bg + (1.0 - bwBlend) * fg;
+   in color
+
+alphaBlend :: E -> E -> E
+alphaBlend bg fg = vec4 (mix (RGB bg) (RGB fg) (A fg)) 1.0
+
+alphaBlends :: [E] -> E
+alphaBlends es = alphaBlends' (black : es)
+  where alphaBlends' [] = error "alphaBlends: impossible"
+        alphaBlends' [e] = e
+        alphaBlends' (bg : fg : es) = alphaBlends' (alphaBlend bg fg : es)
+
+---- half-completed bevel edge, needs entire shader to be in E
 
 bevelWidth :: Double
 bevelWidth = 0.075
@@ -25,10 +59,6 @@ bevelDistToHeight dist =
 --     ((pi/2.0) * (sd+1.0)).cos()
 --   }
 -- }
-
-black = V4 0.0 0.0 0.0 1.0
-white = V4 1.0 1.0 1.0 1.0
-gray = V4 0.5 0.5 0.5 1.0
 
 -- This should wait until the whole shader is written in E, because it needs
 -- screen coords as well, and makes 5 calls to the shape

@@ -6,7 +6,9 @@ import qualified Data.Map as M
 
 import BinOp
 import E
+import Color
 import Compile
+import Funs
 import Grid
 import Lib
 import Prim
@@ -63,21 +65,40 @@ genShape = do
       gridz = interp (osc 0.5) ss cs
       morph = interp (osc 2) gridz filaoa
 
+  -- rs0 <- randomShape
+  -- rs1 <- randomShape
+  -- let rs0' = rotation (osc 0.5) (pfGrid 2 2 rs0)
+  -- let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
+  -- let p = interp (osc 0.2) rs0' rs1'
+  -- let dist = evalShape $ camera p
+  -- let smoothRadius = 0.03
+  --     white = V4 1.0 1.0 1.0 1.0
+  --     black = V4 0.0 0.0 0.0 1.0
+  --     bwBlend = smoothstep (-smoothRadius) smoothRadius dist
+  --     color = bwBlend * black + (1.0 - bwBlend) * white;
+
+  col0 <- randomColor
+  col1 <- randomColor
+  -- let c = rotation (time * 0.4) $ pfGrid 1.5 1.5 circle
+  -- let s = rotation (time * (-0.3)) $ pfGrid 1.5 1.5 square
+  c <- translation (V2 (time * 0.8) 0.0) <$> thang
+  s <- rotation (time * 0.2) <$> thang
+  let cdist = evalShape $ camera c
+  let sdist = evalShape $ camera s
+  let ccolor = smooth col0 nothing cdist
+  let scolor = smooth col1 nothing sdist
+  let color = alphaBlends [scolor, ccolor]
+
+  return color
+
+thang :: IO Shape
+thang = do
   rs0 <- randomShape
   rs1 <- randomShape
   let rs0' = rotation (osc 0.5) (pfGrid 2 2 rs0)
   let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
   let p = interp (osc 0.2) rs0' rs1'
-
-  let dist = evalShape $ camera p
-
-  let smoothRadius = 0.03
-      white = V4 1.0 1.0 1.0 1.0
-      black = V4 0.0 0.0 0.0 1.0
-      bwBlend = smoothstep (-smoothRadius) smoothRadius dist
-      color = bwBlend * black + (1.0 - bwBlend) * white;
-
-  return color
+  return p
 
 handler :: IO String
 handler = do

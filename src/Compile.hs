@@ -33,6 +33,8 @@ typeOf refs (Fun name tins tout args) = tout -- should check both
 typeOf refs (Mat2 _) = TM2
 typeOf refs (Comparison _ _ _) = TB
 typeOf refs (Cond _ t e) = sameType refs t e
+typeOf refs (RGB e) = TV3
+typeOf refs (A e) = TF
 -- typeOf refs (Var name) = sameType refs t e
 
 glslType :: Ty -> String
@@ -114,6 +116,8 @@ compileE (Fun name _ _ args) = fun name (map compileE args)
 compileE (Mat2 es) = fun "mat2" (map compileE es)
 compileE (Comparison opS a b) = op opS (compileE a) (compileE b)
 compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
+compileE (RGB e) = dot (compileE e) "rgb"
+compileE (A e) = dot (compileE e) "a"
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]

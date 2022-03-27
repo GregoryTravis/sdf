@@ -106,4 +106,10 @@ share' (Cond b t e) = do
   t' <- share' t
   e' <- share' e
   return $ Cond b' t' e'
+share' (RGB e) = do
+  e' <- share' e
+  return $ RGB e'
+share' (A e) = do
+  e' <- share' e
+  return $ A e'
 share' x = return x
