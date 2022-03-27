@@ -16,7 +16,7 @@ import Template
 import Transform
 import Util hiding (time)
 
-genShape :: IO Shape
+genShape :: IO E
 genShape = do
   let camera = scale 0.1
 
@@ -69,8 +69,15 @@ genShape = do
   let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
   let p = interp (osc 0.2) rs0' rs1'
 
-  let pc = camera p
-  return pc
+  let dist = evalShape $ camera p
+
+  let smoothRadius = 0.03
+      white = V4 1.0 1.0 1.0 1.0
+      black = V4 0.0 0.0 0.0 1.0
+      bwBlend = smoothstep (-smoothRadius) smoothRadius dist
+      color = bwBlend * black + (1.0 - bwBlend) * white;
+
+  return color
 
 handler :: IO String
 handler = do

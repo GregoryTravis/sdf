@@ -29,6 +29,7 @@ typeOf refs (Y e) = TF
 typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
 typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
 typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
+typeOf refs (Fun name tins tout args) = tout -- should check both
 typeOf refs (Mat2 _) = TM2
 typeOf refs (Comparison _ _ _) = TB
 typeOf refs (Cond _ t e) = sameType refs t e
@@ -109,6 +110,7 @@ compileE (Y e) = dot (compileE e) "y"
 compileE (Neg e) = parens $ concat ["-", compileE e]
 compileE (Fun1 name _ _ arg) = fun name [compileE arg]
 compileE (Fun2 name _ _ _ arg0 arg1) = fun name [compileE arg0, compileE arg1]
+compileE (Fun name _ _ args) = fun name (map compileE args)
 compileE (Mat2 es) = fun "mat2" (map compileE es)
 compileE (Comparison opS a b) = op opS (compileE a) (compileE b)
 compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
@@ -126,5 +128,5 @@ compileGroup (top, refs) topName = compileBindings refs bindings
   where bindings =  shares ++ [(topName, top)]
         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
 
-compile :: Shape -> String
-compile e = compileGroup (share (evalShape e)) "dist"
+compile :: E -> String
+compile e = compileGroup (share e) "topColor"

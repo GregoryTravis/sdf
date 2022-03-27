@@ -91,6 +91,9 @@ share' (Fun2 name tin tin2 tout e0 e1) = do
   e0' <- share' e0
   e1' <- share' e1
   return $ Fun2 name tin tin2 tout e0' e1'
+share' (Fun name tins tout es) = do
+  es' <- mapM share' es
+  return $ Fun name tins tout es'
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'

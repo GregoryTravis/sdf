@@ -9,3 +9,5 @@ scos = Sh . Fun1 "cos" TF TF
 sabs = Sh . Abs
 smod x y = Sh $ Fun2 "mod" TF TF TF x y
 sfloor = Sh . Fun1 "floor" TF TF
+
+smoothstep edge0 edge1 x = Sh $ Fun "smoothstep" [TF, TF, TF] TF [edge0, edge1, x]
