@@ -20,6 +20,14 @@ randomColor = do
   b <- getStdRandom (randomR (0.0, 1.0))
   return $ V4 (KF r) (KF g) (KF b) 1.0
 
+randomTransparentColor :: IO E
+randomTransparentColor = do
+  r <- getStdRandom (randomR (0.0, 1.0))
+  g <- getStdRandom (randomR (0.0, 1.0))
+  b <- getStdRandom (randomR (0.0, 1.0))
+  a <- getStdRandom (randomR (0.0, 1.0))
+  return $ V4 (KF r) (KF g) (KF b) (KF a)
+
 -- anti-aliased edge
 smooth :: E -> E -> E -> E
 smooth fg bg dist =

@@ -79,15 +79,18 @@ genShape = do
 
   col0 <- randomColor
   col1 <- randomColor
+  col2 <- randomTransparentColor
   -- let c = rotation (time * 0.4) $ pfGrid 1.5 1.5 circle
   -- let s = rotation (time * (-0.3)) $ pfGrid 1.5 1.5 square
   c <- translation (V2 (time * 0.8) 0.0) <$> thang
   s <- rotation (time * 0.2) <$> thang
   let cdist = evalShape $ camera c
   let sdist = evalShape $ camera s
+  let fdist = evalShape $ camera filaoa
   let ccolor = smooth col0 nothing cdist
   let scolor = smooth col1 nothing sdist
-  let color = alphaBlends [scolor, ccolor]
+  let fcolor = smooth col2 nothing fdist
+  let color = alphaBlends [scolor, ccolor, fcolor]
 
   return color
 
