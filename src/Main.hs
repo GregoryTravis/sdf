@@ -20,7 +20,7 @@ import Util hiding (time)
 
 genShape :: IO E
 genShape = do
-  crecipe
+  crecipes
 
 handler :: IO String
 handler = do

@@ -28,6 +28,15 @@ randomTransparentColor = do
   a <- getStdRandom (randomR (0.0, 1.0))
   return $ V4 (KF r) (KF g) (KF b) (KF a)
 
+-- likelihood 0..1
+randomMaybeTransparentColor :: Double -> IO E
+randomMaybeTransparentColor transparencyLikelihood = do
+  n <- getStdRandom (randomR (0.0, 1.0))
+  let transparent = n < transparencyLikelihood
+  if transparent
+    then randomTransparentColor
+    else randomColor
+
 -- anti-aliased edge
 smooth :: E -> E -> E -> E
 smooth fg bg dist =

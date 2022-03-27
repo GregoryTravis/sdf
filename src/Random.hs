@@ -2,6 +2,7 @@ module Random
 ( randomShape
 , recipe
 , crecipe
+, crecipes
 , thang2 ) where
 
 import System.Random
@@ -100,11 +101,17 @@ recipe = randIO recipes
 
 crecipe :: IO E
 crecipe = do
-  col <- randomColor
+  col <- randomMaybeTransparentColor 0.333
   r <- recipe
   let camera = scale 1.0
       color = smooth col nothing $ evalShape (camera r)
   return color
+
+crecipes :: IO E
+crecipes = do
+  n <- getStdRandom (randomR (1::Int, 4))
+  colors <- mapM (\_ -> crecipe) [0..n-1]
+  return $ alphaBlends colors
 
 thang :: IO Shape
 thang = do
