@@ -1,5 +1,6 @@
 module Compile
-( compile ) where
+( compileSingle
+, compileFunction ) where
 
 import Data.List (intercalate)
 import qualified Data.Map as M
@@ -132,5 +133,14 @@ compileGroup (top, refs) topName = compileBindings refs bindings
   where bindings =  shares ++ [(topName, top)]
         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
 
-compile :: E -> String
-compile e = compileGroup (share e) "topColor"
+compileSingle :: E -> String
+compileSingle e = compileGroup (share e) "topColor"
+
+-- Should add return, functions, etc to the DSL
+compileFunction :: E -> String
+compileFunction e =
+  let top = "toppppp"
+      bindings = compileGroup (share e) top
+      -- all = "vec4 " ++ name ++ "() {\n" ++ bindings ++ "return " ++ top ++ ";\n}\n"
+      all = bindings ++ "return " ++ top ++ ";\n"
+   in all

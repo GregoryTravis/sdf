@@ -3,7 +3,8 @@ module Random
 , recipe
 , crecipe
 , crecipes
-, thang2 ) where
+, thang2
+, spinner ) where
 
 import System.Random
 
@@ -160,3 +161,6 @@ hmm = do
       p' = difference both cir
       p3 = union p' smaller
    in scale 0.1 p3
+
+spinner :: Shape
+spinner = scale 0.1 $ rotation (time * 4.0) $ translation (V2 3.0 0.0) circle

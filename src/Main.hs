@@ -22,13 +22,13 @@ genShape :: IO E
 genShape = do
   crecipes
 
-handler :: IO String
-handler = do
-  pc <- genShape
-  let c = compile pc
-  msp c
-  html <- generateExe "template.html" $ M.fromList [("SHAPE_ASDF", c)]
-  return html
+-- handler :: IO String
+-- handler = do
+--   let pc = smooth white black $ evalShape spinner
+--   let c = compile pc
+--   msp c
+--   html <- generateExe "single.html" $ M.fromList [("SHAPE_ASDF", c)]
+--   return html
 
 main :: IO ()
-main = runServer handler
+main = runServer

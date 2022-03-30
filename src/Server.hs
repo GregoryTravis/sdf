@@ -13,20 +13,35 @@ import qualified Data.Text.Lazy.Encoding as LT
 import Network.Wai as W
 import Web.Firefly
 
+import Infinity
+import Single
 import Util
 
-runServer :: IO String -> IO ()
-runServer handler = run 8000 (app handler)
+runServer :: IO ()
+runServer = run 8000 app
 
-app :: IO String -> App ()
-app ioHandler = do
-  route "/" (indexHandler ioHandler)
+app :: App ()
+app = do
+  route "/" (htmlHandler singleHandler)
+  route "/function" (htmlHandler getShapeFunction)
   route "/twgl-full.module.js" twglHandler
+  route "/infinity.html" $ htmlFileHandler "infinity.html"
+  route "/infinity-main.glsl" $ htmlFileHandler "infinity-main.glsl"
 
-indexHandler :: IO String -> Handler W.Response
-indexHandler ioHandler = do
-  s <- liftIO ioHandler
+htmlHandler :: IO String -> Handler W.Response
+htmlHandler handler = do
+  s <- liftIO handler
   return $ toResponse (T.pack s, ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
+
+plainFileHandler :: FilePath -> Handler W.Response
+plainFileHandler file = do
+  s <- liftIO $ readFile file
+  return $ toResponse (T.pack s, ok200, M.fromList [("Content-type", ["text/plain"])] :: HeaderMap)
+
+htmlFileHandler :: FilePath -> Handler W.Response
+htmlFileHandler file = do
+  html <- liftIO $ readFile file
+  return $ toResponse (T.pack html, ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
 
 twglHandler :: Handler JS
 twglHandler = do
