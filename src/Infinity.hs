@@ -12,6 +12,7 @@ import Util
 
 getShapeFunction :: IO String
 getShapeFunction = do
+  -- spinner <- randSpinner
   -- let pc = smooth white black $ evalShape spinner
   pc <- crecipes
   let glsl = compileFunction pc

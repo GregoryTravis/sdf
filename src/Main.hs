@@ -31,4 +31,6 @@ genShape = do
 --   return html
 
 main :: IO ()
-main = runServer
+main = do
+  noBuffering
+  runServer

@@ -190,6 +190,7 @@ time s a = do
 unsafeTime :: String -> a -> a
 unsafeTime s x = unsafePerformIO (time s (return x))
 
+noBuffering :: IO ()
 noBuffering = do
   hSetBuffering stdout NoBuffering
   hSetBuffering stderr NoBuffering

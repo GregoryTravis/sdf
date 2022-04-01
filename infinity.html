@@ -59,38 +59,122 @@
      }
     </script>
 
-  <script type="module">
-   alert(1);
+    <script id="fs" type="notjs">
+    </script>
 
-   function loadShapeFunction() {
-     fetch('/function')
+  <script type="module">
+   //alert(1);
+
+   function delme_loadShapeFunction() {
+     return fetch('/function')
        .then(response => response.text().then(oneSrc => {
          /* console.log(oneSrc); */
-         fetch('/function')
+         return fetch('/function')
            .then(response => response.text().then(twoSrc => {
              /* console.log(twoSrc); */
-             fetch('/infinity-main.glsl')
+             return fetch('/infinity-main.glsl')
                .then(response => response.text().then(main => {
                  let oneFunc = "vec4 one(vec2 uv) {\n" + oneSrc + "\n}\n"
                  let twoFunc = "vec4 two(vec2 uv) {\n" + twoSrc + "\n}\n"
                  let functions = oneFunc + "\n" + twoFunc + "\n";
                  let all = main.replace("FUNCTIONS_HERE", functions);
                  /* let all = main + "\n" + oneSrc + "\n" + twoSrc; */
-                 console.log("all");
-                 console.log(all);
-
+                 /* console.log("all");
+                  * console.log(all);
+                  */
                  var script = document.createElement('script');
                  script.setAttribute("id", "fs");
                  script.setAttribute("type","notjs");
                  script.text = all;
                  document.head.appendChild(script);
 
-                 go();
+                 // go();
                }));
            }));
        }));
    }
-   loadShapeFunction();
+   // loadShapeFunction().then(() => go());
+
+   async function getThing(url) {
+     return fetch(url).then(response => response.text());
+   }
+
+   const playDuration = 5.0;
+   const transitionDuration = 2.0;
+
+   let shapeOne = undefined;
+   let shapeTwo = undefined;
+   let shaderMain = undefined;
+
+   async function setup() {
+     shapeOne = await getThing('/function');
+     shapeTwo = await getThing('/function');
+     shaderMain = await getThing('/infinity-main.glsl');
+     installShader(assembleShader());
+   }
+
+   async function nextShader() {
+     shapeOne = shapeTwo;
+     shapeTwo = await getThing('/function');
+     installShader(assembleShader());
+   }
+
+   function assembleShader() {
+     let oneFunc = "vec4 one(vec2 uv, float time) {\n" + shapeOne + "\n}\n"
+     let twoFunc = "vec4 two(vec2 uv, float time) {\n" + shapeTwo + "\n}\n"
+     let functions = oneFunc + "\n" + twoFunc + "\n";
+     let all = shaderMain.replace("FUNCTIONS_HERE", functions);
+     return all;
+   }
+
+   function installShader(glsl) {
+     /* var script = document.createElement('script');
+      * script.setAttribute("id", "fs");
+      * script.setAttribute("type","notjs"); */
+     let script = document.getElementById('fs');
+     script.text = glsl;
+     document.body.appendChild(script);
+   }
+
+   await setup();
+   go();
+
+   /* async function getShape() {
+    *   return getThing('/function');
+    *   // return fetch('/function').then(response => response.text());
+    * }
+    */
+   function delme_nextShader() {
+     return fetch('/function')
+       .then(response => response.text().then(src => {
+         return fetch('/infinity-main.glsl')
+           .then(response => response.text().then(main => {
+             let oneFunc = "vec4 one(vec2 uv) {\n" + oneSrc + "\n}\n"
+             let twoFunc = "vec4 two(vec2 uv) {\n" + twoSrc + "\n}\n"
+             let functions = oneFunc + "\n" + twoFunc + "\n";
+             let all = main.replace("FUNCTIONS_HERE", functions);
+             /* let all = main + "\n" + oneSrc + "\n" + twoSrc; */
+             /* console.log("all");
+              * console.log(all);
+              */
+             var script = document.createElement('script');
+             script.setAttribute("id", "fs");
+             script.setAttribute("type","notjs");
+             script.text = all;
+             document.head.appendChild(script);
+
+             // go();
+           }));
+       }));
+   }
+
+   /* async function lalalawr() {
+    *   const yeah = (await fetch('/function')).text();
+    * }
+    * const yeah = (await fetch('/function')).text();
+    * console.log("yeah");
+    * console.log(yeah);
+    */
 
    // works
    /* function loadShapeFunction(elementId) {
@@ -147,7 +231,7 @@
    import * as twgl from './twgl-full.module.js';
    function go() {
     const gl = document.querySelector("#c").getContext("webgl");
-    const programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
+    let programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
 
     const arrays = {
       position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
@@ -155,26 +239,54 @@
     const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
      let n = 0;
+     let firstTime = undefined;
+     let step = 0;
+     let lastLoadedStep = 0;
+     let nextedForStep = -1;
+     let numFramesDrawn = 0;
 
-     function render(time) {
+     function render(time_) {
+       if (firstTime == undefined) {
+         firstTime = time_;
+       }
+       const time = time_ - firstTime;
+
        if (n%100 == 0) {
-         console.log(time);
+         console.log("time " + time + " step " + step + " nframes " + numFramesDrawn);
        }
        n++;
       twgl.resizeCanvasToDisplaySize(gl.canvas);
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
       const uniforms = {
-        time: time * 0.001,
+        globalTime: time * 0.001,
         resolution: [gl.canvas.width, gl.canvas.height],
+        step: step,
+        playDuration: playDuration,
+        transitionDuration: transitionDuration,
       };
 
       gl.useProgram(programInfo.program);
       twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
       twgl.setUniforms(programInfo, uniforms);
-      twgl.drawBufferInfo(gl, bufferInfo);
+       twgl.drawBufferInfo(gl, bufferInfo);
 
-      requestAnimationFrame(render);
+       const shouldNext = step != nextedForStep && ((time / 1000.0) > ((step + 1) * (playDuration + transitionDuration)));
+       //if (time > 9000.0 && !nexted) {
+       if (shouldNext) {
+         //console.log("nexting " + time);
+         nextedForStep = step;
+         nextShader().then(() => {
+           programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
+           step++;
+           //console.log("um " + shouldNext + " " + step + " " + nextedForStep + " " + ((step + 1) * (playDuration + transitionDuration)) + " " + time);
+           //console.log("nexted " + time);
+         });
+       }
+
+       numFramesDrawn ++;
+
+       requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
    }
