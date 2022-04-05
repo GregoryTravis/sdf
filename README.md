@@ -42,27 +42,27 @@ float x7 = ((((((((((uv))/((1.0))))/((0.1))))/((((time))/((10.0))))).y))/((2.25)
 [... continues ...]
 ```
 
-Live demo [here](http://34.148.179.16:8000/infinity.html)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/master/images/ss0.gif">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/master/images/ss1.gif">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/master/images/ss2.gif">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/master/images/ss3.gif">
-</p>
+[Live demo here.](http://34.148.179.16:8000/infinity.html)
 
 TODO:
 
 * Add a GLSL type parameter to the main expression type to support (and typecheck) GLSL ad-hoc polymorphism
 * Monad comprehensions for loops
 
-Thanks to https://twgljs.org/
+Thanks to https://twgljs.org/.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/main/images/ss0.png">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/main/images/ss1.png">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/main/images/ss2.png">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GregoryTravis/sdf/main/images/ss3.png">
+</p>
