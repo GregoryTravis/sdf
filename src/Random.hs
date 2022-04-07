@@ -101,7 +101,8 @@ recipe = randIO recipes
             thang
           , return filaoa
           , return anotherGreatOne
-          , return undulum
+          -- , return undulum
+          , vlad <$> randomPrim
           -- , return hmm
           ]
 
@@ -118,6 +119,46 @@ crecipes = do
   n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
+
+_crecipes :: IO E
+_crecipes = do
+  -- let s = trx $ try circle
+  --     trx = transform sinex
+  --     try = transform siney
+  let s = vlad circle
+  return $ justShape s
+
+-- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
+-- smoothUnion them
+vlad :: Shape -> Shape
+vlad s =
+  let g = pfGrid 1.5 1.5 s
+      trx = transform sinex
+      try = transform siney
+      -- sg = rotation time $ trx $ try g
+      sg = trx $ try $ rotation time g
+   in scale 0.25 $ smoothUnion g sg
+
+sinex :: Transformer
+sinex (Transform xy t) =
+  let x' = x + ssin (y + t)
+      x = X xy
+      y = Y xy
+      xy' = V2 x' y
+   in Transform xy' t
+
+siney :: Transformer
+siney (Transform xy t) =
+  let y' = y + ssin (x + t)
+      x = X xy
+      y = Y xy
+      xy' = V2 x y'
+   in Transform xy' t
+
+justShape :: Shape -> E
+justShape s =
+  let c = smooth white nothing $ evalShape $ scale 0.5 s
+   in alphaBlends [black, c]
 
 -- crecipes :: IO E
 -- crecipes = do
