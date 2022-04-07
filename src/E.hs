@@ -65,6 +65,7 @@ type Shape = Transform -> E
 type UnOp = Shape -> Shape
 type BinOp = Shape -> Shape -> Shape
 
+-- (Transform xy t)
 data Transform = Transform E E
 type Transformer = Transform -> Transform
 

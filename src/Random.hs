@@ -1,7 +1,6 @@
 module Random
 ( randomShape
 , recipe
-, crecipe
 , crecipes
 , thang2
 , spinner
@@ -14,6 +13,7 @@ import Color
 import E
 import Funs
 import Grid
+import Lib
 import Prim
 import Transform
 import Util hiding (time)
@@ -101,6 +101,7 @@ recipe = randIO recipes
             thang
           , return filaoa
           , return anotherGreatOne
+          , return undulum
           -- , return hmm
           ]
 
@@ -117,6 +118,39 @@ crecipes = do
   n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
+
+-- crecipes :: IO E
+-- crecipes = do
+--   s' <- recipe
+--   let s = difference (smoothUnion undulum s') s' -- (scale 0.2 (pfGrid 1.5 1.5 circle))
+--       camera = scale 1.0
+--       c = smooth white nothing $ evalShape $ camera s
+--       cs = alphaBlends [black, c]
+--   return cs
+
+undulum :: Shape
+undulum =
+  let s' = belowFun (undulo 5 0.7 2.0)
+      s'' = belowFun (undulo 5 1.0 1.5)
+      -- s = intersection s' $ rotation (- (KF pi / 2.0)) s''
+      rs' = translation (V2 0.0 (-0.3)) s'
+      rs'' = translation (V2 0.5 0.0) $ r $ s'' -- translation (V2 0.0 (-3.0)) s''
+      s = smoothUnion rs' rs''
+      r = rotation (- (KF pi / 2.0))
+   in s
+
+undulo :: E -> E -> E -> E -> E -> E
+undulo freq amp ampfreq t x =
+  let amp' = amp * ssin (t * ampfreq)
+   in amp' * ssin (freq * x)
+
+-- f :: t -> x -> y
+belowFun :: (E -> E -> E) -> Shape
+belowFun f (Transform xy t) =
+  let y = f t (X xy)
+      dist = (Y xy) - y
+   in dist
+
 
 thang :: IO Shape
 thang = do
