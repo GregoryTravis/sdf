@@ -136,7 +136,7 @@ zinny :: Shape
 zinny =
   let whoa = transform (flowerize 10.0) $ transform whorl $ transform (flowerize 5.0) (pfGrid 1.5 1.5 circle)
       g = translation (V2 time 0.0) $ pfGrid 1.5 1.5 circle
-   in smoothUnion whoa g
+   in scale 0.25 $ smoothUnion whoa g
 
 -- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
 -- smoothUnion them
