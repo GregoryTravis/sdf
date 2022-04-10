@@ -5,6 +5,7 @@ import E
 ssqrt = Sh . Fun1 "sqrt" TF TF
 ssin = Sh . Fun1 "sin" TF TF
 scos = Sh . Fun1 "cos" TF TF
+satan y x = Sh $ Fun2 "atan" TF TF TF y x
 
 sabs = Sh . Abs
 smod x y = Sh $ Fun2 "mod" TF TF TF x y

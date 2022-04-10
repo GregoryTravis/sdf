@@ -2,6 +2,7 @@ module Transform
 ( scale
 , translation
 , rotation
+, rotation'
 , transform
 , evalShape ) where
 

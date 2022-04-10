@@ -103,6 +103,7 @@ recipe = randIO recipes
           , return anotherGreatOne
           -- , return undulum
           , vlad <$> randomPrim
+          , return zinny
           -- , return hmm
           ]
 
@@ -125,8 +126,17 @@ _crecipes = do
   -- let s = trx $ try circle
   --     trx = transform sinex
   --     try = transform siney
-  let s = vlad circle
+  -- let s = vlad circle
+  -- let s = limonTwaist
+  -- let s =  transform (flowerize 5.0) limonTwaist -- (pfGrid 1.5 1.5 circle)
+  let s = scale 0.25 $ zinny
   return $ justShape s
+
+zinny :: Shape
+zinny =
+  let whoa = transform (flowerize 10.0) $ transform whorl $ transform (flowerize 5.0) (pfGrid 1.5 1.5 circle)
+      g = translation (V2 time 0.0) $ pfGrid 1.5 1.5 circle
+   in smoothUnion whoa g
 
 -- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
 -- smoothUnion them
@@ -138,6 +148,23 @@ vlad s =
       -- sg = rotation time $ trx $ try g
       sg = trx $ try $ rotation time g
    in scale 0.25 $ smoothUnion g sg
+
+limonTwaist :: Shape
+limonTwaist =
+  let g = pfGrid 1.5 1.5 circle
+   in scale 0.25 $ transform whorl g
+
+whorl :: Transformer
+whorl tr@(Transform xy t) =
+  let ang = Length xy * 2.0 * KF pi * (ssin (t / 3.0) / 10.0)
+   in rotation' ang tr
+
+flowerize :: E -> Transformer
+flowerize numPetals (Transform xy t) =
+  let ang = Sh $ satan (Y xy) (X xy)
+      mod = ssin t * (ssin $ (ang * numPetals))
+      xy' = xy * (1.0 + (mod / 4.0))
+   in Transform xy' t
 
 sinex :: Transformer
 sinex (Transform xy t) =
