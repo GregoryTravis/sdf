@@ -50,19 +50,24 @@
   <body>
     <canvas id="c" width="1680" height="855"></canvas>
     <div id="b"><a href="https://twgljs.org/">twgl.js</a> - tiny</div>
-  
+
   <script id="vs" type="notjs">
-attribute vec4 position;
+#version 300 es
+
+// attribute vec4 position;
+layout(location = 0) in vec4 position;
 
 void main() {
   gl_Position = position;
 }
   </script>
   <script id="fs" type="notjs">
+#version 300 es
 precision mediump float;
 
 uniform vec2 resolution;
 uniform float time;
+out vec4 fragColor;
 
 // TODO slow
 float linmap(float a, float b, float c, float d, float x) {
@@ -76,13 +81,14 @@ void main() {
                  linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, gl_FragCoord.y));
 
   SHAPE_ASDF
-
-  gl_FragColor = topColor;
+  // Works
+  // float x = dFdx(topColor.r);
+  fragColor = topColor;
 }
   </script>
   <script type="module">
     import * as twgl from './twgl-full.module.js';
-    const gl = document.querySelector("#c").getContext("webgl");
+    const gl = document.querySelector("#c").getContext("webgl2");
     const programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
 
     const arrays = {
