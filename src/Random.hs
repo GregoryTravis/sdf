@@ -129,7 +129,7 @@ _crecipes = do
   -- let s = vlad circle
   -- let s = limonTwaist
   -- let s =  transform (flowerize 5.0) limonTwaist -- (pfGrid 1.5 1.5 circle)
-  let s = scale 0.25 $ zinny
+  let s = scale 0.25 $ transform (siney 0.1 10 time) $ transform (siney 1 1 time) $ pfGrid 1.5 1.5 circle
   return $ justShape s
 
 zinny :: Shape
@@ -143,8 +143,8 @@ zinny =
 vlad :: Shape -> Shape
 vlad s =
   let g = pfGrid 1.5 1.5 s
-      trx = transform sinex
-      try = transform siney
+      trx = transform (sinex 1 1 time)
+      try = transform (siney 1 1 time)
       -- sg = rotation time $ trx $ try g
       sg = trx $ try $ rotation time g
    in scale 0.25 $ smoothUnion g sg
@@ -166,17 +166,17 @@ flowerize numPetals (Transform xy t) =
       xy' = xy * (1.0 + (mod / 4.0))
    in Transform xy' t
 
-sinex :: Transformer
-sinex (Transform xy t) =
-  let x' = x + ssin (y + t)
+sinex :: E -> E -> E -> Transformer
+sinex amp freq phase (Transform xy t) =
+  let x' = x + (amp * ssin (freq * y + phase))
       x = X xy
       y = Y xy
       xy' = V2 x' y
    in Transform xy' t
 
-siney :: Transformer
-siney (Transform xy t) =
-  let y' = y + ssin (x + t)
+siney :: E -> E -> E -> Transformer
+siney amp freq phase (Transform xy t) =
+  let y' = y + (amp * ssin (freq * x + phase))
       x = X xy
       y = Y xy
       xy' = V2 x y'
