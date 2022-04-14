@@ -16,7 +16,7 @@ The simple Javascript client downloads new randomly-generated animated shapes
 from the server every five seconds, seamlessly blending them in the browser,
 resulting in an animation that never repeats.
 
-It's based around a DSL that compiles pixel shaders to GLSL. It's core
+It's built around a DSL that compiles pixel shaders to GLSL. It's core
 expression type is not refined by a GLSL type, so some type errors are caught by
 the DSL's crude typechecker, and the rest by the GLSL compiler.
 
