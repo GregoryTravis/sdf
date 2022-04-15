@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses #-}
+
 module Random
 ( randomShape
 , recipe
@@ -98,13 +100,13 @@ randomShapes = [
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
-            thang
-          , return filaoa
-          , return anotherGreatOne
-          -- , return undulum
-          , vlad <$> randomPrim
-          , return zinny
-          -- , return hmm
+            rpthang
+          -- , return filaoa
+          -- , return anotherGreatOne
+          -- -- , return undulum
+          -- , vlad <$> randomPrim
+          -- , return zinny
+          -- -- , return hmm
           ]
 
 crecipe :: IO E
@@ -117,7 +119,7 @@ crecipe = do
 
 crecipes :: IO E
 crecipes = do
-  n <- getStdRandom (randomR (1::Int, 4))
+  n <- return 1 -- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
 
@@ -220,14 +222,89 @@ belowFun f (Transform xy t) =
    in dist
 
 
-thang :: IO Shape
-thang = do
+pthang :: E -> E -> E -> E -> E -> IO Shape
+pthang r0 r1 g0 g1 interpRate = do
   rs0 <- randomShape
   rs1 <- randomShape
-  let rs0' = rotation (osc 0.5) (pfGrid 2 2 rs0)
-  let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
-  let p = interp (osc 0.2) rs0' rs1'
+  let rs0' = rotation (osc r0) (pfGrid g0 g0  rs0)
+  let rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
+  let p = interp (osc interpRate) rs0' rs1'
   return $ scale 0.1 p
+
+rpthang :: IO Shape
+rpthang = do
+  ioshape <- pthang <$$$> (0.1, 1.2) <***> (-0.5, 0.9) <***> (0.5, 2.5) <***> (1.0, 3.0) <***> (0.1, 4.0)
+  shape <- ioshape
+  return shape
+-- thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
+
+infixl 4 <$$>
+(<$$>) :: RandE r => (E -> b) -> r -> IO b
+f <$$> rando = do
+  e <- getE rando
+  return (f e)
+
+infixl 4 <**>
+(<**>) :: RandE r => IO (E -> b) -> r -> IO b
+iof <**> rando = do
+  f <- iof
+  e <- getE rando
+  return (f e)
+
+infixl 4 <$$$>
+(<$$$>) :: (E -> b) -> (Double, Double) -> IO b
+f <$$$> pr = f <$$> Range pr
+
+infixl 4 <***>
+(<***>) :: IO (E -> b) -> (Double, Double) -> IO b
+iof <***> pr = iof <**> Range pr
+
+class RandE a where
+  getE :: a -> IO E
+
+data Range = Range (Double, Double)
+instance RandE Range where
+  getE (Range (a, b)) = do
+    n <- getStdRandom (randomR (a, b))
+    return $ KF n
+
+-- rpthang :: IO (E -> E -> E -> E -> IO Shape)
+-- rpthang = luft pthang (0.1 :: Double, 1.2 :: Double)
+
+-- luft :: Rando r => (E -> b) -> r -> IO b
+-- luft f rando = do
+--   a <- getE rando
+--   let b = f a
+--   return b
+
+-- class Rando r where
+--   getE :: r -> IO E
+
+-- -- instance Random E
+
+-- -- instance Random n => Rando (n, n) n where
+-- --   get pr = getStdRandom (randomR pr)
+
+-- -- instance Rando (Double, Double) where
+-- instance (Random n, Fractional n, Real n) => Rando (n, n) where
+--   getE pr = do
+--     n <- getStdRandom (randomR pr)
+--     return $ KF $ realToFrac n
+
+-- -- instance Random n => Rando (n, n) E where
+-- --   get pr = do
+-- --     n <- getStdRandom (randomR pr)
+-- --     return $ KF n
+
+thang :: IO Shape
+thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
+-- thang = do
+--   rs0 <- randomShape
+--   rs1 <- randomShape
+--   let rs0' = rotation (osc 0.5) (pfGrid 2 2 rs0)
+--   let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
+--   let p = interp (osc 0.2) rs0' rs1'
+--   return $ scale 0.1 p
 
 thang2 :: IO E
 thang2 = do
