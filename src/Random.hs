@@ -232,9 +232,15 @@ pthang r0 r1 g0 g1 interpRate = do
   let p = interp (osc interpRate) rs0' rs1'
   return $ scale 0.1 p
 
+-- Not sure this is better since it doesn't handle plain ranges
+-- TODO: implement this by composition
+lift5 :: (Rand a E, Rand b E, Rand c E, Rand d E, Rand e E) => (E -> E -> E -> E -> E -> IO z) -> (a -> b -> c -> d -> e -> (IO (IO z)))
+lift5 f a b c d e = f $. a *. b *. c *. d *. e
+
 rpthang :: IO Shape
 rpthang = do
-  ioshape <- pthang $.. (0.1, 1.2) *.. (-0.5, 0.9) *.. (0.5, 2.5) *.. (1.0, 3.0) *.. (0.1, 4.0)
+  -- ioshape <- pthang $.. (0.1, 1.2) *.. (-0.5, 0.9) *.. (0.5, 2.5) *.. (1.0, 3.0) *.. (0.1, 4.0)
+  ioshape <- (lift5 pthang) (Range (0.1, 1.2)) (Range (-0.5, 0.9)) (Range (0.5, 2.5)) (Range (1.0, 3.0)) (Range (0.1, 4.0))
   shape <- ioshape
   return shape
 -- thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
