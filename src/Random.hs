@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses #-}
+-- {-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, MultiParamTypeClasses #-}
 
 module Random
 ( randomShape
@@ -239,13 +240,13 @@ rpthang = do
 -- thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
 
 infixl 4 <$$>
-(<$$>) :: RandE r => (E -> b) -> r -> IO b
+(<$$>) :: Rand r E => (E -> b) -> r -> IO b
 f <$$> rando = do
   e <- getE rando
   return (f e)
 
 infixl 4 <**>
-(<**>) :: RandE r => IO (E -> b) -> r -> IO b
+(<**>) :: Rand r E => IO (E -> b) -> r -> IO b
 iof <**> rando = do
   f <- iof
   e <- getE rando
@@ -259,11 +260,11 @@ infixl 4 <***>
 (<***>) :: IO (E -> b) -> (Double, Double) -> IO b
 iof <***> pr = iof <**> Range pr
 
-class RandE a where
-  getE :: a -> IO E
+class Rand r a where
+  getE :: r -> IO a
 
 data Range = Range (Double, Double)
-instance RandE Range where
+instance Rand Range E where
   getE (Range (a, b)) = do
     n <- getStdRandom (randomR (a, b))
     return $ KF n
