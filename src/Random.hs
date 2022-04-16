@@ -234,31 +234,31 @@ pthang r0 r1 g0 g1 interpRate = do
 
 rpthang :: IO Shape
 rpthang = do
-  ioshape <- pthang <$$$> (0.1, 1.2) <***> (-0.5, 0.9) <***> (0.5, 2.5) <***> (1.0, 3.0) <***> (0.1, 4.0)
+  ioshape <- pthang $.. (0.1, 1.2) *.. (-0.5, 0.9) *.. (0.5, 2.5) *.. (1.0, 3.0) *.. (0.1, 4.0)
   shape <- ioshape
   return shape
 -- thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
 
-infixl 4 <$$>
-(<$$>) :: Rand r E => (E -> b) -> r -> IO b
-f <$$> rando = do
+infixl 4 $.
+($.) :: Rand r E => (E -> b) -> r -> IO b
+f $. rando = do
   e <- getE rando
   return (f e)
 
-infixl 4 <**>
-(<**>) :: Rand r E => IO (E -> b) -> r -> IO b
-iof <**> rando = do
+infixl 4 *.
+(*.) :: Rand r E => IO (E -> b) -> r -> IO b
+iof *. rando = do
   f <- iof
   e <- getE rando
   return (f e)
 
-infixl 4 <$$$>
-(<$$$>) :: (E -> b) -> (Double, Double) -> IO b
-f <$$$> pr = f <$$> Range pr
+infixl 4 $..
+($..) :: (E -> b) -> (Double, Double) -> IO b
+f $.. pr = f $. Range pr
 
-infixl 4 <***>
-(<***>) :: IO (E -> b) -> (Double, Double) -> IO b
-iof <***> pr = iof <**> Range pr
+infixl 4 *..
+(*..) :: IO (E -> b) -> (Double, Double) -> IO b
+iof *.. pr = iof *. Range pr
 
 class Rand r a where
   getE :: r -> IO a
