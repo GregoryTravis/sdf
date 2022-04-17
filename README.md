@@ -1,5 +1,4 @@
 SDF: GPU screensaver implemented in Haskell
-
 ======
 
 <p align="center">
