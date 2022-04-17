@@ -8,6 +8,7 @@ module Random
 , spinner
 , randSpinner ) where
 
+import Control.Monad (join)
 import System.Random
 
 import BinOp
@@ -359,9 +360,7 @@ looft6 :: (Rend r0 a, Rend r1 b, Rend r2 c, Rend r3 d, Rend r4 e, Rend r5 f) => 
 looft6 = (((((looft .) .) .) .) .) . looft5
 looft7 :: (Rend r0 a, Rend r1 b, Rend r2 c, Rend r3 d, Rend r4 e, Rend r5 f, Rend r6 g) => IO (a -> b -> c -> d -> e -> f -> g -> h) -> r0 -> r1 -> r2 -> r3 -> r4 -> r5 -> r6 -> IO h
 looft7 = ((((((looft .) .) .) .) .) .) . looft6
-lpthang' = do
-  io <- lpthang
-  io
+lpthang' = join lpthang
 
 -- -- Not sure this is better since it doesn't handle plain ranges
 -- -- TODO: implement this by composition
