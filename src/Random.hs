@@ -1,4 +1,3 @@
--- {-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, TypeOperators #-}
 
 module Random
@@ -74,11 +73,6 @@ gridders = [
     KF <$> dim
   ]
   where dim = getStdRandom (randomR (1.5, 3.0))
-
-randIO :: [IO a] -> IO a
-randIO ios = do
-  io <- randFromList ios
-  io
 
 randomize1 :: (a -> b) -> [IO a] -> IO b
 randomize1 f ioas = do
@@ -233,13 +227,22 @@ pthang r0 r1 g0 g1 interpRate = do
   let p = interp (osc interpRate) rs0' rs1'
   return $ scale 0.1 p
 
+randIO :: [IO a] -> IO a
+randIO ios = do
+  io <- randFromList ios
+  io
+
 class Rend r a where
   toE :: r -> IO a
 
+-- TODO rename toE
 instance Rend Range E where
   toE (Range (lo, hi)) = do
     n <- getStdRandom (randomR (lo, hi))
     return $ KF n
+
+instance Rend [a] a where
+  toE xs = randFromList xs
 
 -- instance Rend (Double, Double) E where
 --   toE (lo, hi) = do
@@ -251,7 +254,7 @@ instance Rend Range E where
 --     n <- getStdRandom (randomR (lo, hi))
 --     return $ KF $ realToFrac n
 
-looft :: Rend r E => IO (E -> b) -> r -> IO b
+looft :: Rend r a => IO (a -> b) -> r -> IO b
 looft iof rend = do
   f <- iof
   e <- toE rend
@@ -261,15 +264,27 @@ looft iof rend = do
 (...) :: Double -> Double -> Range
 a ... b = Range (a, b)
 
+sspthang :: Shape -> Shape -> E -> E -> E -> E -> E -> IO Shape
+sspthang rs0 rs1 r0 r1 g0 g1 interpRate = do
+  let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
+  let rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
+  let p = interp (osc interpRate) rs0' rs1'
+  return $ scale 0.1 p
+
 -- lpthang = looft (looft (return pthang) (0.1...1.2)) ((-0.5)...0.9)
 lpthang = looft5 (return pthang) (0.1...1.2) ((-0.5)...0.9) (0.5...2.5) (1.0...3.0) (0.1...4.0)
--- looft2 f r0 r1 = looft (looft f r0) r1
-looft2 f r0 = looft (looft f r0)
--- looft3 f r0 r1 r2 = looft (looft (looft f r0) r1) r2
--- looft3 f r0 r1 = looft (looft (looft f r0) r1)
-looft3 f r0 r1 = looft (looft2 f r0 r1)
-looft4 f r0 r1 r2 = looft (looft3 f r0 r1 r2)
-looft5 f r0 r1 r2 r3 = looft (looft4 f r0 r1 r2 r3)
+looft2 :: (Rend r0 a, Rend r1 b) => IO (a -> b -> c) -> r0 -> r1 -> IO c
+looft2 = (looft .) . looft
+looft3 :: (Rend r0 a, Rend r1 b, Rend r2 c) => IO (a -> b -> c -> d) -> r0 -> r1 -> r2 -> IO d
+looft3 = ((looft .) .) . looft2
+looft4 :: (Rend r0 a, Rend r1 b, Rend r2 c, Rend r3 d) => IO (a -> b -> c -> d -> e) -> r0 -> r1 -> r2 -> r3 -> IO e
+looft4 = (((looft .) .) .) . looft3
+looft5 :: (Rend r0 a, Rend r1 b, Rend r2 c, Rend r3 d, Rend r4 e) => IO (a -> b -> c -> d -> e -> f) -> r0 -> r1 -> r2 -> r3 -> r4 -> IO f
+looft5 = ((((looft .) .) .) .) . looft4
+looft6 :: (Rend r0 a, Rend r1 b, Rend r2 c, Rend r3 d, Rend r4 e, Rend r5 f) => IO (a -> b -> c -> d -> e -> f -> g) -> r0 -> r1 -> r2 -> r3 -> r4 -> r5 -> IO g
+looft6 = (((((looft .) .) .) .) .) . looft5
+looft7 :: (Rend r0 a, Rend r1 b, Rend r2 c, Rend r3 d, Rend r4 e, Rend r5 f, Rend r6 g) => IO (a -> b -> c -> d -> e -> f -> g -> h) -> r0 -> r1 -> r2 -> r3 -> r4 -> r5 -> r6 -> IO h
+looft7 = ((((((looft .) .) .) .) .) .) . looft6
 lpthang' = do
   io <- lpthang
   io
