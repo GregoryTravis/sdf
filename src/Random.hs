@@ -159,14 +159,14 @@ belowFun f (Transform xy t) =
       dist = (Y xy) - y
    in dist
 
-pthang :: E -> E -> E -> E -> E -> IO Shape
-pthang r0 r1 g0 g1 interpRate = do
-  rs0 <- randomShape
-  rs1 <- randomShape
-  let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
-  let rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
-  let p = interp (osc interpRate) rs0' rs1'
-  return $ scale 0.1 p
+-- pthang :: E -> E -> E -> E -> E -> IO Shape
+-- pthang r0 r1 g0 g1 interpRate = do
+--   rs0 <- randomShape
+--   rs1 <- randomShape
+--   let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
+--   let rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
+--   let p = interp (osc interpRate) rs0' rs1'
+--   return $ scale 0.1 p
 
 randIO :: [IO a] -> IO a
 randIO ios = do
@@ -263,16 +263,6 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
       rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
       p = interp (osc interpRate) rs0' rs1'
    in scale 0.1 p
-
-thang :: IO Shape
-thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
--- thang = do
---   rs0 <- randomShape
---   rs1 <- randomShape
---   let rs0' = rotation (osc 0.5) (pfGrid 2 2 rs0)
---   let rs1' = rotation (osc (-0.35)) (pfGrid 1.5 1.5 rs1)
---   let p = interp (osc 0.2) rs0' rs1'
---   return $ scale 0.1 p
 
 thang2 :: IO E
 thang2 = do
