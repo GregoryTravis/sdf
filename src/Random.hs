@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies , MultiParamTypeClasses, TypeOperators #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies, GADTs , MultiParamTypeClasses, TypeOperators #-}
 
 module Random
 ( randomShape
@@ -315,10 +315,75 @@ instance Rend [IO a] a where
     io <- randFromList xs
     io
 
+-- instance Rend r a => Rend [r] a where
+--   toE xs = do
+--     x <- randFromList xs
+--     return x
+
 data ConstantRandom a = ConstantRandom a
 instance Rend (ConstantRandom a) a where
   toE (ConstantRandom a) = return a
 rk = ConstantRandom
+
+data Rind a where
+  -- Ringe :: Num n => (n, n) -> Rind E
+  Ringe :: (Double, Double) -> Rind E
+  Choice :: [Rind a] -> Rind a
+  RApp :: Rind (a -> b) -> Rind a -> Rind b
+  Here :: a -> Rind a
+
+deRind :: Rind a -> IO a
+deRind (Ringe lohi) = do
+  n <- getStdRandom (randomR lohi)
+  return $ KF n
+deRind (Choice rinds) = do
+  rind <- randFromList rinds
+  deRind rind
+deRind (RApp rf ra) = do
+  f <- deRind rf
+  a <- deRind ra
+  return $ f a
+
+infixl 4 $.
+($.) :: (a -> b) -> Rind a -> Rind b
+f $. r = Here f *. r
+
+infixl 4 *.
+(*.) :: Rind (a -> b) -> Rind a -> Rind b
+(*.) = RApp
+
+(....) :: Double -> Double -> Rind E
+a .... b = Ringe (a, b)
+
+rirandomPrim :: Rind Shape
+rirandomPrim = Choice (map Here allPrims)
+
+rirandomShape :: Rind Shape
+rirandomShape = Choice
+  [ rirandomPrim
+  , rirandomUnOp *. rirandomPrim
+  ]
+rirandomUnOp :: Rind UnOp
+rirandomUnOp = Choice
+  [ scale $. riscalers
+  ]
+
+riscalers :: Rind E
+riscalers = Choice [0.25....4.0, osc $. (0.25....4.0)]
+-- rioscScaler :: Rind E
+-- -- rioscScaler = RApp (Here osc) (Ringe (0.25, 4.0))
+-- rioscScaler = osc $. (0.25....4.0)
+-- rirandScaler :: Rind UnOp
+-- rirandScaler = scale $. riscalers
+
+-- scalers = [
+--     KF <$> (getStdRandom (randomR (0.25, 4.0)))
+--   , osc <$> KF <$> (getStdRandom (randomR (2.0, 8.0)))
+--   ]
+
+-- -- qallPrims :: Rend r Shape => [r]
+-- qallPrims = map rk allPrims
+-- hum = toE qallPrims
 
 -- instance Rend (Double, Double) E where
 --   toE (lo, hi) = do
