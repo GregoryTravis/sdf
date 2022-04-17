@@ -143,29 +143,30 @@ randomize2 f ioas iobs = do
   return (f a b)
 
 randomShape :: IO Shape
-randomShape = randIO randomShapes
+randomShape = toE randomShapes
 randomShapes :: [IO Shape]
 randomShapes = [
-    randomPrim
+    toE randomPrim''
   -- , randomUnOp' <*> randomPrim
   , toE randomUnOp'' <*> randomPrim
   -- , randomBinOp' <*> randomPrim <*> randomPrim
   , toE randomBinOp'' <*> randomPrim <*> randomPrim
   ]
 
-lark :: IO Shape
-lark = (toE randomUnOp'' <*>) randomPrim -- (return circle)
+-- lark :: IO Shape
+-- lark = (toE randomUnOp'' <*>) randomPrim -- (return circle)
 
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
             lpthang'
-          , return filaoa
-          , return anotherGreatOne
-          -- , return undulum
-          , vlad <$> randomPrim
-          , return zinny
-          -- , return hmm
+            -- lpthangAllRand
+          -- , return filaoa
+          -- , return anotherGreatOne
+          -- -- , return undulum
+          -- , vlad <$> randomPrim
+          -- , return zinny
+          -- -- , return hmm
           ]
 
 crecipe :: IO E
@@ -178,15 +179,15 @@ crecipe = do
 
 crecipes :: IO E
 crecipes = do
-  -- determinisitic
-  -- n <- return 1
-  n <- getStdRandom (randomR (1::Int, 4))
+  determinisitic
+  n <- return 1
+  -- n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
 
 determinisitic :: IO ()
 determinisitic = do
-  setStdGen $ mkStdGen 12
+  setStdGen $ mkStdGen 123
 
 _crecipes :: IO E
 _crecipes = do
@@ -331,8 +332,8 @@ rk = ConstantRandom
 
 looft :: Rend r a => IO (a -> b) -> r -> IO b
 looft iof rend = do
-  f <- iof
   e <- toE rend
+  f <- iof
   return $ f e
 
 -- data Range = Range Double Double
@@ -345,6 +346,8 @@ sspthang rs0 rs1 r0 r1 g0 g1 interpRate = do
   let rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
   let p = interp (osc interpRate) rs0' rs1'
   return $ scale 0.1 p
+
+lpthangAllRand = join $ looft7 (return sspthang) randomShapes randomShapes (0.1...1.2) ((-0.5)...0.9) (0.5...2.5) (1.0...3.0) (0.1...4.0)
 
 -- lpthang = looft (looft (return pthang) (0.1...1.2)) ((-0.5)...0.9)
 lpthang = looft5 (return pthang) (0.1...1.2) ((-0.5)...0.9) (0.5...2.5) (1.0...3.0) (0.1...4.0)
