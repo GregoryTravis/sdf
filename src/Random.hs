@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, TypeOperators #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies , MultiParamTypeClasses, TypeOperators #-}
 
 module Random
 ( randomShape
@@ -26,33 +26,73 @@ rnd :: Random n => n -> n -> IO n
 rnd a b = (getStdRandom (randomR (a, b)))
 
 randomPrim :: IO Shape
-randomPrim = randFromList allPrims
+-- randomPrim = randFromList allPrims
+randomPrim = toE (map return allPrims :: [IO Shape])
+randomPrim'' = map return allPrims :: [IO Shape]
 
-randomUnOp :: IO UnOp
-randomUnOp = randIO unOps
+-- randomUnOp :: IO UnOp
+-- randomUnOp = randIO unOps
 
-randomBinOp :: IO BinOp
-randomBinOp = randIO binOps
+-- randomBinOp :: IO BinOp
+-- randomBinOp = randIO binOps
 
 unOps :: [IO UnOp]
 unOps = [
-    randomize1 scale scalers
-  , randomize1 translation translators
-  , randomize1 rotation rotators
-  , randomize2 grid gridders gridders
-  , randomize2 pfGrid gridders gridders
+    -- randomize1 scale scalers
+    looft (return scale) [punk, pink]
+  -- , randomize1 translation translators
+  , translators'
+  -- , randomize1 rotation rotators
+  , rotators'
+  -- , randomize2 grid gridders gridders
+  , gridders'
+  -- , randomize2 pfGrid gridders gridders
+  , pfgridders'
+  ]
+
+randomUnOp' :: IO UnOp
+randomUnOp' = toE [
+    looft (return scale) [punk, pink]
+  , translators'
+  , rotators'
+  , gridders'
+  , pfgridders'
+  ]
+
+randomUnOp'' = [
+    looft (return scale) [punk, pink]
+  , translators'
+  , rotators'
+  , gridders'
+  , pfgridders'
   ]
 
 binOps :: [IO BinOp]
 binOps = (map return allBinOps) ++
   [ interp <$> (KF <$> (getStdRandom (randomR (0.0, 0.1))))
   ]
+randomBinOp' :: IO BinOp
+randomBinOp' = toE ([looft (return interp) (0.0...0.1)] ++ (map return allBinOps))
+randomBinOp'' = ([looft (return interp) (0.0...0.1)] ++ (map return allBinOps))
 
 scalers :: [IO E]
+-- scalers = error "asdf"
 scalers = [
-    KF <$>  (getStdRandom (randomR (0.25, 4.0)))
+    KF <$> (getStdRandom (randomR (0.25, 4.0)))
   , osc <$> KF <$> (getStdRandom (randomR (2.0, 8.0)))
   ]
+
+punk :: IO E
+punk = KF <$> (getStdRandom (randomR (0.25, 4.0)))
+punk' :: IO E
+-- punk' = looft (return id) (0.25...4.0)
+punk' = toE (0.25...4.0)
+pink :: IO E
+-- pink = osc <$> KF <$> (getStdRandom (randomR (2.0, 8.0)))
+pink = looft (return osc) (2.0...8.0)
+scalers' :: IO E
+scalers' = toE [punk, pink]
+-- randomize1 scale scalers :: IO UnOp
 
 translators :: [IO E]
 translators = [
@@ -61,18 +101,34 @@ translators = [
   , V2 <$> (return $ KF 0.0) <*> (KF <$> small)
   ]
   where small :: IO Double
+
         small = getStdRandom (randomR ((-3.0), 3.0))
+translators' :: IO UnOp
+translators' = looft (return translation)
+  [ (looft2 (return V2) small small)
+  , (looft2 (return V2) small (rk (KF 0.0)))
+  , (looft2 (return V2) (rk (KF 0.0)) small)
+  ]
+  where small = ((-3.0)...3.0)
 
 rotators :: [IO E]
 rotators = [
     KF <$> getStdRandom (randomR (0, pi))
   ]
+rotators' :: IO UnOp
+rotators' = looft (return rotation) (0.0...pi)
 
 gridders :: [IO E]
 gridders = [
     KF <$> dim
   ]
   where dim = getStdRandom (randomR (1.5, 3.0))
+gridders' :: IO UnOp
+gridders' = looft2 (return grid) dim dim
+  where dim = (1.5...3.0)
+pfgridders' :: IO UnOp
+pfgridders' = looft2 (return pfGrid) dim dim
+  where dim = (1.5...3.0)
 
 randomize1 :: (a -> b) -> [IO a] -> IO b
 randomize1 f ioas = do
@@ -90,20 +146,25 @@ randomShape = randIO randomShapes
 randomShapes :: [IO Shape]
 randomShapes = [
     randomPrim
-  , (randomUnOp <*>) randomPrim
-  , (randomBinOp <*>) randomPrim <*> randomPrim
+  -- , randomUnOp' <*> randomPrim
+  , toE randomUnOp'' <*> randomPrim
+  -- , randomBinOp' <*> randomPrim <*> randomPrim
+  , toE randomBinOp'' <*> randomPrim <*> randomPrim
   ]
+
+lark :: IO Shape
+lark = (toE randomUnOp'' <*>) randomPrim -- (return circle)
 
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
             lpthang'
-          -- , return filaoa
-          -- , return anotherGreatOne
-          -- -- , return undulum
-          -- , vlad <$> randomPrim
-          -- , return zinny
-          -- -- , return hmm
+          , return filaoa
+          , return anotherGreatOne
+          -- , return undulum
+          , vlad <$> randomPrim
+          , return zinny
+          -- , return hmm
           ]
 
 crecipe :: IO E
@@ -116,9 +177,15 @@ crecipe = do
 
 crecipes :: IO E
 crecipes = do
-  n <- return 1 -- getStdRandom (randomR (1::Int, 4))
+  -- determinisitic
+  -- n <- return 1
+  n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
+
+determinisitic :: IO ()
+determinisitic = do
+  setStdGen $ mkStdGen 12
 
 _crecipes :: IO E
 _crecipes = do
@@ -232,7 +299,7 @@ randIO ios = do
   io <- randFromList ios
   io
 
-class Rend r a where
+class Rend r a | r -> a where
   toE :: r -> IO a
 
 -- TODO rename toE
@@ -241,8 +308,15 @@ instance Rend Range E where
     n <- getStdRandom (randomR (lo, hi))
     return $ KF n
 
-instance Rend [a] a where
-  toE xs = randFromList xs
+instance Rend [IO a] a where
+  toE xs = do
+    io <- randFromList xs
+    io
+
+data ConstantRandom a = ConstantRandom a
+instance Rend (ConstantRandom a) a where
+  toE (ConstantRandom a) = return a
+rk = ConstantRandom
 
 -- instance Rend (Double, Double) E where
 --   toE (lo, hi) = do
@@ -289,48 +363,48 @@ lpthang' = do
   io <- lpthang
   io
 
--- Not sure this is better since it doesn't handle plain ranges
--- TODO: implement this by composition
-lift5 :: (Rand a E, Rand b E, Rand c E, Rand d E, Rand e E) => (E -> E -> E -> E -> E -> IO z) -> (a -> b -> c -> d -> e -> (IO (IO z)))
-lift5 f a b c d e = f $. a *. b *. c *. d *. e
+-- -- Not sure this is better since it doesn't handle plain ranges
+-- -- TODO: implement this by composition
+-- lift5 :: (Rand a E, Rand b E, Rand c E, Rand d E, Rand e E) => (E -> E -> E -> E -> E -> IO z) -> (a -> b -> c -> d -> e -> (IO (IO z)))
+-- lift5 f a b c d e = f $. a *. b *. c *. d *. e
 
-rpthang :: IO Shape
-rpthang = do
-  -- ioshape <- pthang $.. (0.1, 1.2) *.. (-0.5, 0.9) *.. (0.5, 2.5) *.. (1.0, 3.0) *.. (0.1, 4.0)
-  ioshape <- (lift5 pthang) (Range (0.1, 1.2)) (Range (-0.5, 0.9)) (Range (0.5, 2.5)) (Range (1.0, 3.0)) (Range (0.1, 4.0))
-  shape <- ioshape
-  return shape
--- thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
+-- rpthang :: IO Shape
+-- rpthang = do
+--   -- ioshape <- pthang $.. (0.1, 1.2) *.. (-0.5, 0.9) *.. (0.5, 2.5) *.. (1.0, 3.0) *.. (0.1, 4.0)
+--   ioshape <- (lift5 pthang) (Range (0.1, 1.2)) (Range (-0.5, 0.9)) (Range (0.5, 2.5)) (Range (1.0, 3.0)) (Range (0.1, 4.0))
+--   shape <- ioshape
+--   return shape
+-- -- thang = pthang 0.5 (-0.35) 2.0 1.5 0.2
 
-infixl 4 $.
-($.) :: Rand r E => (E -> b) -> r -> IO b
-f $. rando = do
-  e <- getE rando
-  return (f e)
+-- infixl 4 $.
+-- ($.) :: Rand r E => (E -> b) -> r -> IO b
+-- f $. rando = do
+--   e <- getE rando
+--   return (f e)
 
-infixl 4 *.
-(*.) :: Rand r E => IO (E -> b) -> r -> IO b
-iof *. rando = do
-  f <- iof
-  e <- getE rando
-  return (f e)
+-- infixl 4 *.
+-- (*.) :: Rand r E => IO (E -> b) -> r -> IO b
+-- iof *. rando = do
+--   f <- iof
+--   e <- getE rando
+--   return (f e)
 
-infixl 4 $..
-($..) :: (E -> b) -> (Double, Double) -> IO b
-f $.. pr = f $. Range pr
+-- infixl 4 $..
+-- ($..) :: (E -> b) -> (Double, Double) -> IO b
+-- f $.. pr = f $. Range pr
 
-infixl 4 *..
-(*..) :: IO (E -> b) -> (Double, Double) -> IO b
-iof *.. pr = iof *. Range pr
+-- infixl 4 *..
+-- (*..) :: IO (E -> b) -> (Double, Double) -> IO b
+-- iof *.. pr = iof *. Range pr
 
-class Rand r a where
-  getE :: r -> IO a
+-- class Rand r a where
+--   getE :: r -> IO a
 
 data Range = Range (Double, Double)
-instance Rand Range E where
-  getE (Range (a, b)) = do
-    n <- getStdRandom (randomR (a, b))
-    return $ KF n
+-- instance Rand Range E where
+--   getE (Range (a, b)) = do
+--     n <- getStdRandom (randomR (a, b))
+--     return $ KF n
 
 -- rpthang :: IO (E -> E -> E -> E -> IO Shape)
 -- rpthang = luft pthang (0.1 :: Double, 1.2 :: Double)
