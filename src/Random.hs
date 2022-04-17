@@ -159,7 +159,8 @@ randomShapes = [
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
-            lpthang'
+            deRind rithang
+            -- lpthang'
             -- lpthangAllRand
           -- , return filaoa
           -- , return anotherGreatOne
@@ -179,7 +180,7 @@ crecipe = do
 
 crecipes :: IO E
 crecipes = do
-  determinisitic
+  -- determinisitic
   n <- return 1
   -- n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
@@ -343,6 +344,7 @@ deRind (RApp rf ra) = do
   f <- deRind rf
   a <- deRind ra
   return $ f a
+deRind (Here a) = return a
 
 infixl 4 $.
 ($.) :: (a -> b) -> Rind a -> Rind b
@@ -362,24 +364,71 @@ rirandomShape :: Rind Shape
 rirandomShape = Choice
   [ rirandomPrim
   , rirandomUnOp *. rirandomPrim
+  , rirandomBinOp *. rirandomPrim *. rirandomPrim
   ]
+
 rirandomUnOp :: Rind UnOp
 rirandomUnOp = Choice
   [ scale $. riscalers
+  , translation $. ritranslators
+  , rotation $. rirotators
+  , rigridder
+  , ripfGridder
   ]
 
-riscalers :: Rind E
-riscalers = Choice [0.25....4.0, osc $. (0.25....4.0)]
--- rioscScaler :: Rind E
--- -- rioscScaler = RApp (Here osc) (Ringe (0.25, 4.0))
--- rioscScaler = osc $. (0.25....4.0)
--- rirandScaler :: Rind UnOp
--- rirandScaler = scale $. riscalers
+rirandomBinOp :: Rind BinOp
+rirandomBinOp = Choice bos
+  where bos = (map Here allBinOps) ++ [randInterp]
+        randInterp = interp $. (0.0....1.0)
 
--- scalers = [
---     KF <$> (getStdRandom (randomR (0.25, 4.0)))
---   , osc <$> KF <$> (getStdRandom (randomR (2.0, 8.0)))
+riscalers :: Rind E
+riscalers = Choice
+  [ 0.25....4.0
+  , osc $. (0.25....4.0)
+  ]
+
+ritranslators :: Rind E
+ritranslators = Choice
+  [ V2 $. small *. small
+  , V2 $. small *. Here (KF 0.0)
+  , V2 $. Here (KF 0.0) *. small
+  ]
+  where small = ((-3.0)....3.0)
+
+rirotators :: Rind E
+rirotators = Choice
+  [ (0.0....pi)
+  ]
+
+rigridder :: Rind UnOp
+rigridder = grid $. dim *. dim
+  where dim = 1.5....3.0
+
+ripfGridder :: Rind UnOp
+ripfGridder = pfGrid $. dim *. dim
+  where dim = 1.5....3.0
+
+rithang :: Rind Shape
+rithang = sspthang' $. rirandomShape *. rirandomShape *. (0.1....1.2) *. ((-0.5)....0.9) *. (0.5....2.5) *. (1.0....3.0) *. (0.1....4.0)
+sspthang' :: Shape -> Shape -> E -> E -> E -> E -> E -> Shape
+sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
+  let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
+      rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
+      p = interp (osc interpRate) rs0' rs1'
+   in scale 0.1 p
+
+-- gridders :: [IO E]
+-- gridders = [
+--     KF <$> dim
 --   ]
+--   where dim = getStdRandom (randomR (1.5, 3.0))
+-- gridders' :: IO UnOp
+-- gridders' = looft2 (return grid) dim dim
+--   where dim = (1.5...3.0)
+-- pfgridders' :: IO UnOp
+-- pfgridders' = looft2 (return pfGrid) dim dim
+--   where dim = (1.5...3.0)
+
 
 -- -- qallPrims :: Rend r Shape => [r]
 -- qallPrims = map rk allPrims
