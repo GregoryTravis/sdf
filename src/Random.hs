@@ -1,5 +1,5 @@
 -- {-# LANGUAGE FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, TypeOperators #-}
 
 module Random
 ( randomShape
@@ -20,6 +20,8 @@ import Lib
 import Prim
 import Transform
 import Util hiding (time)
+
+-- default (Double)
 
 rnd :: Random n => n -> n -> IO n
 rnd a b = (getStdRandom (randomR (a, b)))
@@ -101,7 +103,7 @@ randomShapes = [
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
-            rpthang
+            lpthang'
           -- , return filaoa
           -- , return anotherGreatOne
           -- -- , return undulum
@@ -222,15 +224,55 @@ belowFun f (Transform xy t) =
       dist = (Y xy) - y
    in dist
 
-
 pthang :: E -> E -> E -> E -> E -> IO Shape
 pthang r0 r1 g0 g1 interpRate = do
   rs0 <- randomShape
   rs1 <- randomShape
-  let rs0' = rotation (osc r0) (pfGrid g0 g0  rs0)
+  let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
   let rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
   let p = interp (osc interpRate) rs0' rs1'
   return $ scale 0.1 p
+
+class Rend r a where
+  toE :: r -> IO a
+
+instance Rend Range E where
+  toE (Range (lo, hi)) = do
+    n <- getStdRandom (randomR (lo, hi))
+    return $ KF n
+
+-- instance Rend (Double, Double) E where
+--   toE (lo, hi) = do
+--     n <- getStdRandom (randomR (lo, hi))
+--     return $ KF n
+
+-- instance (Random n, Fractional n, Real n) => Rend (n, n) E where
+--   toE (lo, hi) = do
+--     n <- getStdRandom (randomR (lo, hi))
+--     return $ KF $ realToFrac n
+
+looft :: Rend r E => IO (E -> b) -> r -> IO b
+looft iof rend = do
+  f <- iof
+  e <- toE rend
+  return $ f e
+
+-- data Range = Range Double Double
+(...) :: Double -> Double -> Range
+a ... b = Range (a, b)
+
+-- lpthang = looft (looft (return pthang) (0.1...1.2)) ((-0.5)...0.9)
+lpthang = looft5 (return pthang) (0.1...1.2) ((-0.5)...0.9) (0.5...2.5) (1.0...3.0) (0.1...4.0)
+-- looft2 f r0 r1 = looft (looft f r0) r1
+looft2 f r0 = looft (looft f r0)
+-- looft3 f r0 r1 r2 = looft (looft (looft f r0) r1) r2
+-- looft3 f r0 r1 = looft (looft (looft f r0) r1)
+looft3 f r0 r1 = looft (looft2 f r0 r1)
+looft4 f r0 r1 r2 = looft (looft3 f r0 r1 r2)
+looft5 f r0 r1 r2 r3 = looft (looft4 f r0 r1 r2 r3)
+lpthang' = do
+  io <- lpthang
+  io
 
 -- Not sure this is better since it doesn't handle plain ranges
 -- TODO: implement this by composition
