@@ -30,12 +30,12 @@ recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
             deRnd thang
-          -- , return filaoa
-          -- , return anotherGreatOne
-          -- -- , return undulum
-          -- , vlad <$> randomPrim
-          -- , return zinny
-          -- -- , return hmm
+          , return filaoa
+          , return anotherGreatOne
+          -- , return undulum
+          , deRnd $ vlad $. randomPrim
+          , return zinny
+          -- , return hmm
           ]
 
 crecipe :: IO E
