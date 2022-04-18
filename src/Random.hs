@@ -26,13 +26,10 @@ import Util hiding (time)
 rnd :: Random n => n -> n -> IO n
 rnd a b = (getStdRandom (randomR (a, b)))
 
-randomShape :: IO Shape
-randomShape = deRnd rirandomShape
-
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
-            deRnd rithang
+            deRnd thang
           -- , return filaoa
           -- , return anotherGreatOne
           -- -- , return undulum
@@ -204,59 +201,59 @@ infixl 4 *.
 (...) :: Double -> Double -> Rnd E
 a ... b = Ringe (a, b)
 
-rirandomPrim :: Rnd Shape
-rirandomPrim = Choice (map Here allPrims)
+randomPrim :: Rnd Shape
+randomPrim = Choice (map Here allPrims)
 
-rirandomShape :: Rnd Shape
-rirandomShape = Choice
-  [ rirandomPrim
-  , rirandomUnOp *. rirandomPrim
-  , rirandomBinOp *. rirandomPrim *. rirandomPrim
+randomShape :: Rnd Shape
+randomShape = Choice
+  [ randomPrim
+  , randomUnOp *. randomPrim
+  , randomBinOp *. randomPrim *. randomPrim
   ]
 
-rirandomUnOp :: Rnd UnOp
-rirandomUnOp = Choice
-  [ scale $. riscalers
-  , translation $. ritranslators
-  , rotation $. rirotators
-  , rigridder
-  , ripfGridder
+randomUnOp :: Rnd UnOp
+randomUnOp = Choice
+  [ scale $. scalers
+  , translation $. translators
+  , rotation $. rotators
+  , gridder
+  , pfGridder
   ]
 
-rirandomBinOp :: Rnd BinOp
-rirandomBinOp = Choice bos
+randomBinOp :: Rnd BinOp
+randomBinOp = Choice bos
   where bos = (map Here allBinOps) ++ [randInterp]
         randInterp = interp $. (0.0...1.0)
 
-riscalers :: Rnd E
-riscalers = Choice
+scalers :: Rnd E
+scalers = Choice
   [ 0.25...4.0
   , osc $. (0.25...4.0)
   ]
 
-ritranslators :: Rnd E
-ritranslators = Choice
+translators :: Rnd E
+translators = Choice
   [ V2 $. small *. small
   , V2 $. small *. Here (KF 0.0)
   , V2 $. Here (KF 0.0) *. small
   ]
   where small = ((-3.0)...3.0)
 
-rirotators :: Rnd E
-rirotators = Choice
+rotators :: Rnd E
+rotators = Choice
   [ (0.0...pi)
   ]
 
-rigridder :: Rnd UnOp
-rigridder = grid $. dim *. dim
+gridder :: Rnd UnOp
+gridder = grid $. dim *. dim
   where dim = 1.5...3.0
 
-ripfGridder :: Rnd UnOp
-ripfGridder = pfGrid $. dim *. dim
+pfGridder :: Rnd UnOp
+pfGridder = pfGrid $. dim *. dim
   where dim = 1.5...3.0
 
-rithang :: Rnd Shape
-rithang = sspthang' $. rirandomShape *. rirandomShape *. (0.1...1.2) *. ((-0.5)...0.9) *. (0.5...2.5) *. (1.0...3.0) *. (0.1...4.0)
+thang :: Rnd Shape
+thang = sspthang' $. randomShape *. randomShape *. (0.1...1.2) *. ((-0.5)...0.9) *. (0.5...2.5) *. (1.0...3.0) *. (0.1...4.0)
 sspthang' :: Shape -> Shape -> E -> E -> E -> E -> E -> Shape
 sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
   let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
@@ -266,7 +263,7 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
 
 thang2 :: IO E
 thang2 = do
-  a <- translation (V2 (time * 0.8) 0.0) <$> recipe 
+  a <- translation (V2 (time * 0.8) 0.0) <$> recipe
   b <- rotation (time * 0.2) <$> recipe
   c <- recipe
   cola <- randomColor
