@@ -172,7 +172,7 @@ randIO ios = do
 
 data Rnd a where
   -- Range :: Num n => (n, n) -> Rnd E
-  Range :: (Double, Double) -> Rnd E
+  Range :: (Num n, Fractional n, Random n) => (n, n) -> Rnd n
   Choice :: [Rnd a] -> Rnd a
   RApp :: Rnd (a -> b) -> Rnd a -> Rnd b
   Here :: a -> Rnd a
@@ -180,7 +180,7 @@ data Rnd a where
 deRnd :: Rnd a -> IO a
 deRnd (Range lohi) = do
   n <- getStdRandom (randomR lohi)
-  return $ KF n
+  return n
 deRnd (Choice rnds) = do
   rnd <- randFromList rnds
   deRnd rnd
@@ -198,7 +198,7 @@ infixl 4 *.
 (*.) :: Rnd (a -> b) -> Rnd a -> Rnd b
 (*.) = RApp
 
-(...) :: Double -> Double -> Rnd E
+(...) :: (Num n, Fractional n, Random n) => n -> n -> Rnd n
 a ... b = Range (a, b)
 
 randomPrim :: Rnd Shape
@@ -241,7 +241,7 @@ translators = Choice
 
 rotators :: Rnd E
 rotators = Choice
-  [ (0.0...pi)
+  [ (0.0...KF pi)
   ]
 
 gridder :: Rnd UnOp

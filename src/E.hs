@@ -15,6 +15,11 @@ module E
 , time
 ) where
 
+import System.Random hiding (Uniform)
+import System.Random.Stateful hiding (Uniform)
+import qualified System.Random as SR
+import qualified System.Random.Stateful as SRS
+
 data Uniform = UF String
   deriving (Eq, Show, Read, Ord)
 
@@ -46,6 +51,24 @@ instance Num E where
 instance Fractional E where
   fromRational i = KF (fromRational i)
   (/) = Div
+
+-- Not sure why I thought I needed this
+-- instance Floating E
+
+instance Random E
+
+instance UniformRange E where
+  uniformRM (KF lo, KF hi) g = KF <$> uniformRM (lo, hi) g
+  uniformRM (Neg (KF lo), KF hi) g = KF <$> uniformRM (-lo, hi) g
+  uniformRM (KF lo, Neg (KF hi)) g = KF <$> uniformRM (lo, -hi) g
+  uniformRM (Neg (KF lo), Neg (KF hi)) g = KF <$> uniformRM (-lo, -hi) g
+  uniformRM pr _ = error $ "UniformRange not implemented for: " ++ show pr
+
+instance SRS.Uniform E
+  where
+    -- This worked but seems unnecessary
+    -- uniformM g = KF <$> uniformRM (0.0, 1.0) g
+    uniformM g = uniformRM (0.0, 1.0) g
 
 infix 4 ==.
 (==.) = Comparison "=="
