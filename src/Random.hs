@@ -27,10 +27,8 @@ recipe = randIO recipes
             deRnd thang
           , return filaoa
           , return anotherGreatOne
-          -- , return undulum
           , deRnd $ vlad $. randomPrim
           , return zinny
-          -- , return hmm
           ]
 
 crecipe :: IO E
