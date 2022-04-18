@@ -25,10 +25,10 @@ recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
           --   deRnd thang
-          -- , return filaoa
+          -- , deRnd $ Here filaoa
           -- , deRnd rAnotherGreatOne
-            deRnd $ rvlad
-          -- , return zinny
+          -- , deRnd $ rvlad
+            deRnd rZinny
           ]
 
 crecipe :: IO E
@@ -62,10 +62,15 @@ _crecipes = do
   let s = scale 0.25 $ transform (siney 0.1 10 time) $ transform (siney 1 1 time) $ pfGrid 1.5 1.5 circle
   return $ justShape s
 
-zinny :: Shape
-zinny =
-  let whoa = transform (flowerize 10.0) $ transform whorl $ transform (flowerize 5.0) (pfGrid 1.5 1.5 circle)
-      g = translation (V2 time 0.0) $ pfGrid 1.5 1.5 circle
+classicZinny = zinny $. Here 10.0 *. Here 5.0 *. Here 1.5 *. Here 1.5
+rZinny = zinny $. ps *. ps *. g *. g
+  where ps = 2.0...16.0
+        g = 0.8...2.8
+
+zinny :: E -> E -> E -> E -> Shape
+zinny p0 p1 g0 g1 =
+  let whoa = transform (flowerize p0) $ transform whorl $ transform (flowerize p1) (pfGrid g0 g0 circle)
+      g = translation (V2 time 0.0) $ pfGrid g1 g1  circle
    in scale 0.25 $ smoothUnion whoa g
 
 -- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
