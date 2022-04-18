@@ -22,7 +22,9 @@ import Util hiding (time)
 
 recipe :: Rnd Shape
 recipe = Choice
-  [ thang
+  [
+    rLimonTwaist
+  , thang
   , Here filaoa
   , rAnotherGreatOne
   , rvlad
@@ -67,7 +69,7 @@ rZinny = zinny $. ps *. ps *. g *. g
 
 zinny :: E -> E -> E -> E -> Shape
 zinny p0 p1 g0 g1 =
-  let whoa = transform (flowerize p0) $ transform whorl $ transform (flowerize p1) (pfGrid g0 g0 circle)
+  let whoa = transform (flowerize p0) $ transform (whorl 3.0 10.0) $ transform (flowerize p1) (pfGrid g0 g0 circle)
       g = translation (V2 time 0.0) $ pfGrid g1 g1  circle
    in scale 0.25 $ smoothUnion whoa g
 
@@ -87,14 +89,15 @@ rvlad = vlad $. (1.0...1.8) *. s *. s *. s *. s *. sc
   where s = 0.2...3.0
         sc = Here 0.25 -- 0.05...0.3
 
-limonTwaist :: Shape
-limonTwaist =
-  let g = pfGrid 1.5 1.5 circle
-   in scale 0.25 $ transform whorl g
+rLimonTwaist = limonTwaist $. 1.1...1.7 *. 1.0...6.0 *. 3.0...12.0
+limonTwaist :: E -> E -> E -> Shape
+limonTwaist gs wf wa =
+  let g = pfGrid gs gs circle
+   in scale 0.25 $ transform (whorl wf wa) g
 
-whorl :: Transformer
-whorl tr@(Transform xy t) =
-  let ang = Length xy * 2.0 * KF pi * (ssin (t / 3.0) / 10.0)
+whorl :: E -> E -> Transformer
+whorl wf wa tr@(Transform xy t) =
+  let ang = Length xy * 2.0 * KF pi * (ssin (t / wf) / wa)
    in rotation' ang tr
 
 flowerize :: E -> Transformer
