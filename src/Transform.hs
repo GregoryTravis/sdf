@@ -1,5 +1,6 @@
 module Transform
-( scale
+( speed
+, scale
 , translation
 , rotation
 , rotation'
@@ -8,6 +9,10 @@ module Transform
 
 import E
 import Lib
+
+speed :: E -> UnOp
+speed r = transform (speed' r)
+  where speed' r (Transform xy t) = Transform xy (t * r)
 
 rotMat :: E -> E
 rotMat ang =

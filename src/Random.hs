@@ -31,10 +31,17 @@ recipe = Choice
   , rZinny
   ]
 
+oscRecipe :: Rnd Shape
+oscRecipe = interp (osc 2.0) $. recipe *. recipe
+
+oscRecipe3 :: Rnd Shape
+oscRecipe3 = interp (osc 2.0) $. recipe *. (interp $. Here (osc 3.0) *. recipe *. recipe)
+
 crecipe :: IO E
 crecipe = do
   col <- randomMaybeTransparentColor 0.333
-  r <- deRnd recipe
+  -- r <- deRnd recipe
+  r <- deRnd $ Choice [oscRecipe, oscRecipe3]
   let camera = scale 1.0
       color = smooth col nothing $ evalShape (camera r)
   return color
@@ -42,8 +49,8 @@ crecipe = do
 crecipes :: IO E
 crecipes = do
   -- determinisitic
-  n <- return 1
-  -- n <- getStdRandom (randomR (1::Int, 4))
+  -- n <- return 1
+  n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
 
