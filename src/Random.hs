@@ -26,9 +26,8 @@ recipe = randIO recipes
   where recipes = [
           --   deRnd thang
           -- , return filaoa
-          -- , classicAnotherGreatOne
-          deRnd rAnotherGreatOne
-          -- , deRnd $ vlad $. randomPrim
+          -- , deRnd rAnotherGreatOne
+            deRnd $ rvlad
           -- , return zinny
           ]
 
@@ -71,14 +70,19 @@ zinny =
 
 -- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
 -- smoothUnion them
-vlad :: Shape -> Shape
-vlad s =
-  let g = pfGrid 1.5 1.5 s
-      trx = transform (sinex 1 1 time)
-      try = transform (siney 1 1 time)
+vlad :: E -> E -> E -> E -> E -> E -> Shape
+vlad gr sxa sxb sya syb sc =
+  let g = pfGrid gr gr circle
+      trx = transform (sinex sxa sxb time)
+      try = transform (siney sya syb time)
       -- sg = rotation time $ trx $ try g
       sg = trx $ try $ rotation time g
-   in scale 0.25 $ smoothUnion g sg
+   in scale sc $ smoothUnion g sg
+
+classicVlad = vlad $. Here 1.5 *. Here 1.0 *. Here 1.0 *. Here 1.0 *. Here 1.0 *. Here 0.25
+rvlad = vlad $. (1.0...1.8) *. s *. s *. s *. s *. sc
+  where s = 0.2...3.0
+        sc = Here 0.25 -- 0.05...0.3
 
 limonTwaist :: Shape
 limonTwaist =
