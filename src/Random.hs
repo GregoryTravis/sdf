@@ -171,7 +171,6 @@ randIO ios = do
   io
 
 data Rnd a where
-  -- Range :: Num n => (n, n) -> Rnd E
   Range :: (Num n, Fractional n, Random n) => (n, n) -> Rnd n
   Choice :: [Rnd a] -> Rnd a
   RApp :: Rnd (a -> b) -> Rnd a -> Rnd b
