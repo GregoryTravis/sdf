@@ -24,11 +24,12 @@ import Util hiding (time)
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
-            deRnd thang
-          , return filaoa
-          , return anotherGreatOne
-          , deRnd $ vlad $. randomPrim
-          , return zinny
+          --   deRnd thang
+          -- , return filaoa
+          -- , classicAnotherGreatOne
+          deRnd rAnotherGreatOne
+          -- , deRnd $ vlad $. randomPrim
+          -- , return zinny
           ]
 
 crecipe :: IO E
@@ -274,12 +275,18 @@ filaoa :: Shape
 filaoa = scale 0.1 $ smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
   where filaoa' = pfGrid 2.25 2.25 circle
 
-anotherGreatOne :: Shape
-anotherGreatOne =
-  let ss = rotation (time * 0.4) $ pfGrid 2.5 2.5 square
-      cs = rotation (time * (-0.3)) $ pfGrid 2.5 2.5 circle
-      gridz = interp (osc 0.5) ss cs
-      morph = interp (osc 2) gridz filaoa
+classicAnotherGreatOne :: IO Shape
+classicAnotherGreatOne = deRnd $ anotherGreatOne $. Here 0.4 *. Here 2.5 *. Here (-0.3) *. Here 2.5 *. Here 0.5 *. Here 2
+
+rAnotherGreatOne :: Rnd Shape
+rAnotherGreatOne = anotherGreatOne $. (0.1...0.6) *. (0.8...3.2) *. ((-1.5)...(-0.1)) *. (0.8...3.2) *. (0.2...0.5) *. (2...3)
+
+anotherGreatOne :: E -> E -> E -> E -> E -> E -> Shape
+anotherGreatOne sr sg cr cg go mo =
+  let ss = rotation (time * sr) $ pfGrid sg sg square
+      cs = rotation (time * cr) $ pfGrid cg cg circle
+      gridz = interp (osc go) ss cs
+      morph = interp (osc mo) gridz filaoa
    in morph
 
 -- bloop experiment
