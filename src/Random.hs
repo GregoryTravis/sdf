@@ -27,12 +27,12 @@ rnd :: Random n => n -> n -> IO n
 rnd a b = (getStdRandom (randomR (a, b)))
 
 randomShape :: IO Shape
-randomShape = deRind rirandomShape
+randomShape = deRnd rirandomShape
 
 recipe :: IO Shape
 recipe = randIO recipes
   where recipes = [
-            deRind rithang
+            deRnd rithang
           -- , return filaoa
           -- , return anotherGreatOne
           -- -- , return undulum
@@ -173,48 +173,48 @@ randIO ios = do
   io <- randFromList ios
   io
 
-data Rind a where
-  -- Ringe :: Num n => (n, n) -> Rind E
-  Ringe :: (Double, Double) -> Rind E
-  Choice :: [Rind a] -> Rind a
-  RApp :: Rind (a -> b) -> Rind a -> Rind b
-  Here :: a -> Rind a
+data Rnd a where
+  -- Ringe :: Num n => (n, n) -> Rnd E
+  Ringe :: (Double, Double) -> Rnd E
+  Choice :: [Rnd a] -> Rnd a
+  RApp :: Rnd (a -> b) -> Rnd a -> Rnd b
+  Here :: a -> Rnd a
 
-deRind :: Rind a -> IO a
-deRind (Ringe lohi) = do
+deRnd :: Rnd a -> IO a
+deRnd (Ringe lohi) = do
   n <- getStdRandom (randomR lohi)
   return $ KF n
-deRind (Choice rinds) = do
-  rind <- randFromList rinds
-  deRind rind
-deRind (RApp rf ra) = do
-  f <- deRind rf
-  a <- deRind ra
+deRnd (Choice rnds) = do
+  rnd <- randFromList rnds
+  deRnd rnd
+deRnd (RApp rf ra) = do
+  f <- deRnd rf
+  a <- deRnd ra
   return $ f a
-deRind (Here a) = return a
+deRnd (Here a) = return a
 
 infixl 4 $.
-($.) :: (a -> b) -> Rind a -> Rind b
+($.) :: (a -> b) -> Rnd a -> Rnd b
 f $. r = Here f *. r
 
 infixl 4 *.
-(*.) :: Rind (a -> b) -> Rind a -> Rind b
+(*.) :: Rnd (a -> b) -> Rnd a -> Rnd b
 (*.) = RApp
 
-(....) :: Double -> Double -> Rind E
-a .... b = Ringe (a, b)
+(...) :: Double -> Double -> Rnd E
+a ... b = Ringe (a, b)
 
-rirandomPrim :: Rind Shape
+rirandomPrim :: Rnd Shape
 rirandomPrim = Choice (map Here allPrims)
 
-rirandomShape :: Rind Shape
+rirandomShape :: Rnd Shape
 rirandomShape = Choice
   [ rirandomPrim
   , rirandomUnOp *. rirandomPrim
   , rirandomBinOp *. rirandomPrim *. rirandomPrim
   ]
 
-rirandomUnOp :: Rind UnOp
+rirandomUnOp :: Rnd UnOp
 rirandomUnOp = Choice
   [ scale $. riscalers
   , translation $. ritranslators
@@ -223,40 +223,40 @@ rirandomUnOp = Choice
   , ripfGridder
   ]
 
-rirandomBinOp :: Rind BinOp
+rirandomBinOp :: Rnd BinOp
 rirandomBinOp = Choice bos
   where bos = (map Here allBinOps) ++ [randInterp]
-        randInterp = interp $. (0.0....1.0)
+        randInterp = interp $. (0.0...1.0)
 
-riscalers :: Rind E
+riscalers :: Rnd E
 riscalers = Choice
-  [ 0.25....4.0
-  , osc $. (0.25....4.0)
+  [ 0.25...4.0
+  , osc $. (0.25...4.0)
   ]
 
-ritranslators :: Rind E
+ritranslators :: Rnd E
 ritranslators = Choice
   [ V2 $. small *. small
   , V2 $. small *. Here (KF 0.0)
   , V2 $. Here (KF 0.0) *. small
   ]
-  where small = ((-3.0)....3.0)
+  where small = ((-3.0)...3.0)
 
-rirotators :: Rind E
+rirotators :: Rnd E
 rirotators = Choice
-  [ (0.0....pi)
+  [ (0.0...pi)
   ]
 
-rigridder :: Rind UnOp
+rigridder :: Rnd UnOp
 rigridder = grid $. dim *. dim
-  where dim = 1.5....3.0
+  where dim = 1.5...3.0
 
-ripfGridder :: Rind UnOp
+ripfGridder :: Rnd UnOp
 ripfGridder = pfGrid $. dim *. dim
-  where dim = 1.5....3.0
+  where dim = 1.5...3.0
 
-rithang :: Rind Shape
-rithang = sspthang' $. rirandomShape *. rirandomShape *. (0.1....1.2) *. ((-0.5)....0.9) *. (0.5....2.5) *. (1.0....3.0) *. (0.1....4.0)
+rithang :: Rnd Shape
+rithang = sspthang' $. rirandomShape *. rirandomShape *. (0.1...1.2) *. ((-0.5)...0.9) *. (0.5...2.5) *. (1.0...3.0) *. (0.1...4.0)
 sspthang' :: Shape -> Shape -> E -> E -> E -> E -> E -> Shape
 sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
   let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
