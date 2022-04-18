@@ -4,9 +4,7 @@ module Random
 ( randomShape
 , recipe
 , crecipes
-, thang2
-, spinner
-, randSpinner ) where
+, thang2 ) where
 
 import Control.Monad (join)
 import System.Random
@@ -22,9 +20,6 @@ import Transform
 import Util hiding (time)
 
 -- default (Double)
-
-rnd :: Random n => n -> n -> IO n
-rnd a b = (getStdRandom (randomR (a, b)))
 
 recipe :: IO Shape
 recipe = randIO recipes
@@ -298,13 +293,3 @@ hmm = do
       p' = difference both cir
       p3 = union p' smaller
    in scale 0.1 p3
-
-spinner :: Shape
-spinner = scale 0.1 $ rotation (time * 4.0) $ translation (V2 3.0 0.0) circle
-
-randSpinner :: IO Shape
-randSpinner = do
-  smallR <- KF <$> rnd 0.05 0.2
-  largeR <- KF <$> rnd 0.2 0.5
-  speed <- KF <$> rnd 2.0 5.0
-  return $ rotation (time * speed) $ translation (V2 largeR 0.0) $ scale smallR circle
