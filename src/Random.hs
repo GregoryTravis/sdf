@@ -3,8 +3,7 @@
 module Random
 ( randomShape
 , recipe
-, crecipes
-, thang2 ) where
+, crecipes ) where
 
 import Control.Monad (join)
 import System.Random
@@ -21,20 +20,19 @@ import Util hiding (time)
 
 -- default (Double)
 
-recipe :: IO Shape
-recipe = randIO recipes
-  where recipes = [
-          --   deRnd thang
-          -- , deRnd $ Here filaoa
-          -- , deRnd rAnotherGreatOne
-          -- , deRnd $ rvlad
-            deRnd rZinny
-          ]
+recipe :: Rnd Shape
+recipe = Choice
+  [ thang
+  , Here filaoa
+  , rAnotherGreatOne
+  , rvlad
+  , rZinny
+  ]
 
 crecipe :: IO E
 crecipe = do
   col <- randomMaybeTransparentColor 0.333
-  r <- recipe
+  r <- deRnd recipe
   let camera = scale 1.0
       color = smooth col nothing $ evalShape (camera r)
   return color
@@ -65,7 +63,7 @@ _crecipes = do
 classicZinny = zinny $. Here 10.0 *. Here 5.0 *. Here 1.5 *. Here 1.5
 rZinny = zinny $. ps *. ps *. g *. g
   where ps = 2.0...16.0
-        g = 0.8...2.8
+        g = 1.2...2.8
 
 zinny :: E -> E -> E -> E -> Shape
 zinny p0 p1 g0 g1 =
@@ -262,21 +260,6 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
       rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
       p = interp (osc interpRate) rs0' rs1'
    in scale 0.1 p
-
-thang2 :: IO E
-thang2 = do
-  a <- translation (V2 (time * 0.8) 0.0) <$> recipe
-  b <- rotation (time * 0.2) <$> recipe
-  c <- recipe
-  cola <- randomColor
-  colb <- randomColor
-  colc <- randomTransparentColor
-  let camera = scale 0.1
-      acolor = smooth cola nothing $ evalShape $ camera a
-      bcolor = smooth colb nothing $ evalShape $ camera b
-      ccolor = smooth colc nothing $ evalShape $ camera c
-      color = alphaBlends [acolor, bcolor, ccolor]
-  return color
 
 -- FAVORITE don't lose this!!
 -- fall in love all over again
