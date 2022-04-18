@@ -171,14 +171,14 @@ randIO ios = do
   io
 
 data Rnd a where
-  -- Ringe :: Num n => (n, n) -> Rnd E
-  Ringe :: (Double, Double) -> Rnd E
+  -- Range :: Num n => (n, n) -> Rnd E
+  Range :: (Double, Double) -> Rnd E
   Choice :: [Rnd a] -> Rnd a
   RApp :: Rnd (a -> b) -> Rnd a -> Rnd b
   Here :: a -> Rnd a
 
 deRnd :: Rnd a -> IO a
-deRnd (Ringe lohi) = do
+deRnd (Range lohi) = do
   n <- getStdRandom (randomR lohi)
   return $ KF n
 deRnd (Choice rnds) = do
@@ -199,7 +199,7 @@ infixl 4 *.
 (*.) = RApp
 
 (...) :: Double -> Double -> Rnd E
-a ... b = Ringe (a, b)
+a ... b = Range (a, b)
 
 randomPrim :: Rnd Shape
 randomPrim = Choice (map Here allPrims)
