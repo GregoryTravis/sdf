@@ -32,25 +32,26 @@ recipe = Choice
   ]
 
 oscRecipe :: Rnd Shape
-oscRecipe = interp (osc 2.0) $. recipe *. recipe
+oscRecipe = interp (osc 0.5) $. recipe *. recipe
 
 oscRecipe3 :: Rnd Shape
-oscRecipe3 = interp (osc 2.0) $. recipe *. (interp $. Here (osc 3.0) *. recipe *. recipe)
+oscRecipe3 = interp (osc 0.5) $. recipe *. (interp $. Here (osc 0.33) *. recipe *. recipe)
 
 crecipe :: IO E
 crecipe = do
   col <- randomMaybeTransparentColor 0.333
   -- r <- deRnd recipe
-  r <- deRnd $ Choice [oscRecipe, oscRecipe3]
-  let camera = scale 1.0
+  -- r <- deRnd $ Choice [oscRecipe, oscRecipe3]
+  r <- realRandom
+  let camera = scale 0.25
       color = smooth col nothing $ evalShape (camera r)
   return color
 
 crecipes :: IO E
 crecipes = do
   -- determinisitic
-  -- n <- return 1
-  n <- getStdRandom (randomR (1::Int, 4))
+  n <- return 1
+  -- n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
 
@@ -300,3 +301,73 @@ hmm = do
       p' = difference both cir
       p3 = union p' smaller
    in scale 0.1 p3
+
+realRandom :: IO Shape
+realRandom = sizedProgram 4
+
+-- interp needs its own stacko
+data Op = BO BinOp | UO UnOp
+type Program = [Op]
+
+-- Generate a random shape starting with N primitives as raw material
+sizedProgram :: Int -> IO Shape
+sizedProgram n = do
+  prims <- nPrims n
+  iterateSizedProgram prims
+
+-- TODO should this be Rnd as well?
+nPrims :: Int -> IO [Shape]
+nPrims 0 = return []
+nPrims n = do
+  s <- deRnd nullOps
+  ss <- nPrims (n - 1)
+  return $ s : ss
+
+iterateSizedProgram :: [Shape] -> IO Shape
+iterateSizedProgram [] = error "iterateSizedProgram: empty?"
+iterateSizedProgram [p] = return p
+iterateSizedProgram prims = do
+  op <- randOp
+  let prims' = applyOp op prims
+  iterateSizedProgram prims'
+
+-- TODO maybe we should pre-generate this with the right # of unops
+randOp :: IO Op
+randOp = deRnd (Choice [bs, us])
+  where bs = BO $. binOps
+        us = UO $. unOps
+
+applyOp :: Op -> [Shape] -> [Shape]
+applyOp (UO unop) (a : rest) = unop a : rest
+applyOp (BO binop) (a : b : rest) = binop a b : rest
+
+-- la = 3.0...8.0 :: Rnd E
+-- TODO Rnd should be applicative, shouldn't it
+flowerNullOp :: Rnd Shape
+flowerNullOp = flower $. RApp (Here flr) (3.0...8.0)
+  where flr (KF n) = KF (fromIntegral $ floor n)
+nullOps :: Rnd Shape
+nullOps = Choice [Here circle, Here square, flowerNullOp]
+binOps :: Rnd BinOp
+binOps = Choice [Here union, Here intersection, Here difference, Here smoothUnion, interpUnOp]
+interpUnOp :: Rnd BinOp
+interpUnOp = interp $. 0.0...1.0
+unOps :: Rnd UnOp
+unOps = Choice [sc, tr, ro, gr]
+  where sc = scale $. 0.5...2.0
+        tr = translation $. (V2 $. t *. t)
+        t = (-3.0)...3.0
+        ro = rotation $. ang
+        ang = (KF (-pi))...(KF pi)
+        gr = pfGrid $. grs *. grs
+        grs = 1.1...2.5
+
+-- floorE :: E -> E
+-- floorE (KF n) = KF (fromIntegral $ floor n)
+-- lo = 3...8 :: Rnd Int
+
+-- prims :: [Shape]
+
+-- randPrimStream :: IO [Shape]
+-- randPrimStream = do
+--   s <- randFromList [circle, square,
