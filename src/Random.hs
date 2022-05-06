@@ -6,7 +6,9 @@ module Random
 , crecipes ) where
 
 import Control.Monad (join)
-import System.Random
+import Control.Monad.Random.Class
+import Control.Monad.Random.Strict
+import System.Random hiding (uniform)
 
 import BinOp
 import Color
@@ -16,42 +18,42 @@ import Grid
 import Lib
 import Prim
 import Transform
-import Util hiding (time)
+import Util hiding (die, time)
 
 -- default (Double)
 
 recipe :: Rnd Shape
-recipe = Choice
+recipe = uniformM
   [
     rLimonTwaist
   , thang
-  , Here filaoa
+  , pure filaoa
   , rAnotherGreatOne
   , rvlad
   , rZinny
   ]
 
 oscRecipe :: Rnd Shape
-oscRecipe = interp (osc 0.5) $. recipe *. recipe
+oscRecipe = interp (osc 0.5) <$> recipe <*> recipe
 
 oscRecipe3 :: Rnd Shape
-oscRecipe3 = interp (osc 0.5) $. recipe *. (interp $. Here (osc 0.33) *. recipe *. recipe)
+oscRecipe3 = interp (osc 0.5) <$> recipe <*> (interp <$> pure (osc 0.33) <*> recipe <*> recipe)
 
 crecipe :: IO E
 crecipe = do
   col <- randomMaybeTransparentColor 0.333
   -- r <- deRnd recipe
-  -- r <- deRnd $ Choice [oscRecipe, oscRecipe3]
-  r <- realRandom
-  let camera = scale 0.25
+  r <- evalRandIO $ uniformM [oscRecipe, oscRecipe3]
+  -- r <- realRandom
+  let camera = scale 1.0
       color = smooth col nothing $ evalShape (camera r)
   return color
 
 crecipes :: IO E
 crecipes = do
   -- determinisitic
-  n <- return 1
-  -- n <- getStdRandom (randomR (1::Int, 4))
+  -- n <- return 1
+  n <- getStdRandom (randomR (1::Int, 4))
   colors <- mapM (\_ -> crecipe) [0..n-1]
   return $ alphaBlends colors
 
@@ -70,8 +72,10 @@ _crecipes = do
   let s = scale 0.25 $ transform (siney 0.1 10 time) $ transform (siney 1 1 time) $ pfGrid 1.5 1.5 circle
   return $ justShape s
 
-classicZinny = zinny $. Here 10.0 *. Here 5.0 *. Here 1.5 *. Here 1.5
-rZinny = zinny $. ps *. ps *. g *. g
+classicZinny :: Rnd Shape
+classicZinny = zinny <$> pure 10.0 <*> pure 5.0 <*> pure 1.5 <*> pure 1.5
+rZinny :: Rnd Shape
+rZinny = zinny <$> ps <*> ps <*> g <*> g
   where ps = 2.0...16.0
         g = 1.2...2.8
 
@@ -92,12 +96,13 @@ vlad gr sxa sxb sya syb sc =
       sg = trx $ try $ rotation time g
    in scale sc $ smoothUnion g sg
 
-classicVlad = vlad $. Here 1.5 *. Here 1.0 *. Here 1.0 *. Here 1.0 *. Here 1.0 *. Here 0.25
-rvlad = vlad $. (1.0...1.8) *. s *. s *. s *. s *. sc
+classicVlad :: Rnd Shape
+classicVlad = vlad <$> pure 1.5 <*> pure 1.0 <*> pure 1.0 <*> pure 1.0 <*> pure 1.0 <*> pure 0.25
+rvlad = vlad <$> (1.0...1.8) <*> s <*> s <*> s <*> s <*> sc
   where s = 0.2...3.0
-        sc = Here 0.25 -- 0.05...0.3
+        sc = pure 0.25 -- 0.05...0.3
 
-rLimonTwaist = limonTwaist $. 1.1...1.7 *. 1.0...6.0 *. 3.0...12.0
+rLimonTwaist = limonTwaist <$> 1.1...1.7 <*> 1.0...6.0 <*> 3.0...12.0
 limonTwaist :: E -> E -> E -> Shape
 limonTwaist gs wf wa =
   let g = pfGrid gs gs circle
@@ -182,89 +187,76 @@ randIO ios = do
   io <- randFromList ios
   io
 
-data Rnd a where
-  Range :: (Num n, Fractional n, Random n) => (n, n) -> Rnd n
-  Choice :: [Rnd a] -> Rnd a
-  RApp :: Rnd (a -> b) -> Rnd a -> Rnd b
-  Here :: a -> Rnd a
+type Rnd a = Rand StdGen a
 
-deRnd :: Rnd a -> IO a
-deRnd (Range lohi) = do
-  n <- getStdRandom (randomR lohi)
-  return n
-deRnd (Choice rnds) = do
-  rnd <- randFromList rnds
-  deRnd rnd
-deRnd (RApp rf ra) = do
-  f <- deRnd rf
-  a <- deRnd ra
-  return $ f a
-deRnd (Here a) = return a
+lo = randomR (KF 3.4, KF 4.5) :: StdGen -> (E, StdGen)
+loo = liftRand $ lo :: Rand StdGen E
+noo = evalRandIO loo
+-- uniform :: (Foldable t, MonadRandom m) => t a -> m a
+uoo = uniform [circle] :: Rnd Shape
+soo = scale <$> loo <*> pure circle :: Rand StdGen Shape
 
-infixl 4 $.
-($.) :: (a -> b) -> Rnd a -> Rnd b
-f $. r = Here f *. r
+(...) :: E -> E -> Rnd E
+a ... b = liftRand $ randomR (a, b)
 
-infixl 4 *.
-(*.) :: Rnd (a -> b) -> Rnd a -> Rnd b
-(*.) = RApp
-
-(...) :: (Num n, Fractional n, Random n) => n -> n -> Rnd n
-a ... b = Range (a, b)
+uniformM :: [Rnd a] -> Rnd a
+uniformM rands = do
+  rand <- uniform rands
+  rand
 
 randomPrim :: Rnd Shape
-randomPrim = Choice (map Here allPrims)
+randomPrim = uniformM (map pure allPrims)
 
 randomShape :: Rnd Shape
-randomShape = Choice
+randomShape = uniformM
   [ randomPrim
-  , randomUnOp *. randomPrim
-  , randomBinOp *. randomPrim *. randomPrim
+  , randomUnOp <*> randomPrim
+  , randomBinOp <*> randomPrim <*> randomPrim
   ]
 
 randomUnOp :: Rnd UnOp
-randomUnOp = Choice
-  [ scale $. scalers
-  , translation $. translators
-  , rotation $. rotators
+randomUnOp = uniformM
+  [ scale <$> scalers
+  , translation <$> translators
+  , rotation <$> rotators
   , gridder
   , pfGridder
   ]
 
 randomBinOp :: Rnd BinOp
-randomBinOp = Choice bos
-  where bos = (map Here allBinOps) ++ [randInterp]
-        randInterp = interp $. (0.0...1.0)
+randomBinOp = uniformM bos
+  where bos = (map pure allBinOps) ++ [randInterp]
+        randInterp = interp <$> (0.0...1.0)
 
 scalers :: Rnd E
-scalers = Choice
+scalers = uniformM
   [ 0.25...4.0
-  , osc $. (0.25...4.0)
+  , osc <$> (0.25...4.0)
   ]
 
 translators :: Rnd E
-translators = Choice
-  [ V2 $. small *. small
-  , V2 $. small *. Here (KF 0.0)
-  , V2 $. Here (KF 0.0) *. small
+translators = uniformM
+  [ V2 <$> small <*> small
+  , V2 <$> small <*> pure (KF 0.0)
+  , V2 <$> pure (KF 0.0) <*> small
   ]
   where small = ((-3.0)...3.0)
 
 rotators :: Rnd E
-rotators = Choice
+rotators = uniformM
   [ (0.0...KF pi)
   ]
 
 gridder :: Rnd UnOp
-gridder = grid $. dim *. dim
+gridder = grid <$> dim <*> dim
   where dim = 1.5...3.0
 
 pfGridder :: Rnd UnOp
-pfGridder = pfGrid $. dim *. dim
+pfGridder = pfGrid <$> dim <*> dim
   where dim = 1.5...3.0
 
 thang :: Rnd Shape
-thang = sspthang' $. randomShape *. randomShape *. (0.1...1.2) *. ((-0.5)...0.9) *. (0.5...2.5) *. (1.0...3.0) *. (0.1...4.0)
+thang = sspthang' <$> randomShape <*> randomShape <*> (0.1...1.2) <*> ((-0.5)...0.9) <*> (0.5...2.5) <*> (1.0...3.0) <*> (0.1...4.0)
 sspthang' :: Shape -> Shape -> E -> E -> E -> E -> E -> Shape
 sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
   let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
@@ -278,11 +270,11 @@ filaoa :: Shape
 filaoa = scale 0.1 $ smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
   where filaoa' = pfGrid 2.25 2.25 circle
 
-classicAnotherGreatOne :: IO Shape
-classicAnotherGreatOne = deRnd $ anotherGreatOne $. Here 0.4 *. Here 2.5 *. Here (-0.3) *. Here 2.5 *. Here 0.5 *. Here 2
+classicAnotherGreatOne :: Rnd Shape
+classicAnotherGreatOne = anotherGreatOne <$> pure 0.4 <*> pure 2.5 <*> pure (-0.3) <*> pure 2.5 <*> pure 0.5 <*> pure 2
 
 rAnotherGreatOne :: Rnd Shape
-rAnotherGreatOne = anotherGreatOne $. (0.1...0.6) *. (0.8...3.2) *. ((-1.5)...(-0.1)) *. (0.8...3.2) *. (0.2...0.5) *. (2...3)
+rAnotherGreatOne = anotherGreatOne <$> (0.1...0.6) <*> (0.8...3.2) <*> ((-1.5)...(-0.1)) <*> (0.8...3.2) <*> (0.2...0.5) <*> (2...3)
 
 anotherGreatOne :: E -> E -> E -> E -> E -> E -> Shape
 anotherGreatOne sr sg cr cg go mo =
@@ -319,7 +311,7 @@ sizedProgram n = do
 nPrims :: Int -> IO [Shape]
 nPrims 0 = return []
 nPrims n = do
-  s <- deRnd nullOps
+  s <- evalRandIO nullOps
   ss <- nPrims (n - 1)
   return $ s : ss
 
@@ -333,9 +325,9 @@ iterateSizedProgram prims = do
 
 -- TODO maybe we should pre-generate this with the right # of unops
 randOp :: IO Op
-randOp = deRnd (Choice [bs, us])
-  where bs = BO $. binOps
-        us = UO $. unOps
+randOp = evalRandIO (uniformM [bs, us])
+  where bs = BO <$> binOps
+        us = UO <$> unOps
 
 applyOp :: Op -> [Shape] -> [Shape]
 applyOp (UO unop) (a : rest) = unop a : rest
@@ -344,22 +336,22 @@ applyOp (BO binop) (a : b : rest) = binop a b : rest
 -- la = 3.0...8.0 :: Rnd E
 -- TODO Rnd should be applicative, shouldn't it
 flowerNullOp :: Rnd Shape
-flowerNullOp = flower $. RApp (Here flr) (3.0...8.0)
+flowerNullOp = flower <$> (flr <$> (3.0...8.0))
   where flr (KF n) = KF (fromIntegral $ floor n)
 nullOps :: Rnd Shape
-nullOps = Choice [Here circle, Here square, flowerNullOp]
+nullOps = uniformM [pure circle, pure square, flowerNullOp]
 binOps :: Rnd BinOp
-binOps = Choice [Here union, Here intersection, Here difference, Here smoothUnion, interpUnOp]
+binOps = uniformM [pure union, pure intersection, pure difference, pure smoothUnion, interpUnOp]
 interpUnOp :: Rnd BinOp
-interpUnOp = interp $. 0.0...1.0
+interpUnOp = interp <$> 0.0...1.0
 unOps :: Rnd UnOp
-unOps = Choice [sc, tr, ro, gr]
-  where sc = scale $. 0.5...2.0
-        tr = translation $. (V2 $. t *. t)
+unOps = uniformM [sc, tr, ro, gr]
+  where sc = scale <$> 0.5...2.0
+        tr = translation <$> (V2 <$> t <*> t)
         t = (-3.0)...3.0
-        ro = rotation $. ang
+        ro = rotation <$> ang
         ang = (KF (-pi))...(KF pi)
-        gr = pfGrid $. grs *. grs
+        gr = pfGrid <$> grs <*> grs
         grs = 1.1...2.5
 
 -- floorE :: E -> E

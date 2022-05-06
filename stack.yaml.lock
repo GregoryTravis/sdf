@@ -613,4 +613,11 @@ packages:
       sha256: 462ef15cb35164d585aa3860f717c9685fbf05578330490860abd544381d2e24
   original:
     hackage: old-locale-1.0.0.7@sha256:fa998be2c7e00cd26a6e9075bea790caaf3932caa3e9497ad69bc20380dd6911,1071
+- completed:
+    hackage: MonadRandom-0.5.3@sha256:1972a7302aaa409f0b0cd5ff8f5afda03a5156ceb518c2264b2cf0e362123eb6,1454
+    pantry-tree:
+      size: 709
+      sha256: 170b25262904f658c57d93e4c19b83f2a8ec07ae8646e9b31b7b7da724ceb9de
+  original:
+    hackage: MonadRandom-0.5.3@sha256:1972a7302aaa409f0b0cd5ff8f5afda03a5156ceb518c2264b2cf0e362123eb6,1454
 snapshots: []

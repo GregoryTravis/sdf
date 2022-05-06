@@ -31,6 +31,7 @@ executable sdf
                      -- , directory
                      -- , cryptohash-md5
                      , mtl
+                     , MonadRandom
                      , pretty-simple
                      , random
                      , text

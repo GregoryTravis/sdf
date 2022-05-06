@@ -127,6 +127,7 @@ extra-deps:
 - transformers-compat-0.7.1@sha256:03534fcfd4a6026d415b0e19d2a48d6ccb639e809db0cd41f313bc771a887a9b,5602
 - StateVar-1.2.2@sha256:3c022c00485fe165e3080d5da6b3ca9c9b02f62c5deebc584d1b3d1309ce673e,1673
 - old-locale-1.0.0.7@sha256:fa998be2c7e00cd26a6e9075bea790caaf3932caa3e9497ad69bc20380dd6911,1071
+- MonadRandom-0.5.3@sha256:1972a7302aaa409f0b0cd5ff8f5afda03a5156ceb518c2264b2cf0e362123eb6,1454
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
