@@ -14,6 +14,7 @@ import Network.Wai as W
 import Web.Firefly
 
 import Infinity
+import Random
 import Single
 import Util
 
@@ -22,7 +23,8 @@ runServer = run 8000 app
 
 app :: App ()
 app = do
-  route "/" (htmlHandler singleHandler)
+  route "/" (htmlHandler (crecipes >>= singleHandler))
+  route "/rr" (htmlHandler (realRandom >>= singleHandler))
   route "/function" (htmlHandler getShapeFunction)
   route "/twgl-full.module.js" twglHandler
   route "/infinity.html" $ htmlFileHandler "infinity.html"

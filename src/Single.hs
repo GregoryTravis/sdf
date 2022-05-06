@@ -4,13 +4,12 @@ module Single
 import qualified Data.Map as M
 
 import Compile
-import Random
+import E
 import Template
 import Util
 
-singleHandler :: IO String
-singleHandler = do
-  pc <- crecipes
+singleHandler :: E -> IO String
+singleHandler pc = do
   let c = compileSingle pc
   -- msp c -- slow
   html <- generateExe "single.html" $ M.fromList [("SHAPE_ASDF", c)]

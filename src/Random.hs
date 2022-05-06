@@ -3,7 +3,8 @@
 module Random
 ( randomShape
 , recipe
-, crecipes ) where
+, crecipes
+, realRandom ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
@@ -39,14 +40,16 @@ oscRecipe = interp (osc 0.5) <$> recipe <*> recipe
 oscRecipe3 :: Rnd Shape
 oscRecipe3 = interp (osc 0.5) <$> recipe <*> (interp <$> pure (osc 0.33) <*> recipe <*> recipe)
 
+coolShape :: IO E
+coolShape = do
+  r <- evalRandIO $ uniformM [oscRecipe, oscRecipe3]
+  return $ evalShape r
+
 crecipe :: IO E
 crecipe = do
   col <- randomMaybeTransparentColor 0.333
-  -- r <- deRnd recipe
-  r <- evalRandIO $ uniformM [oscRecipe, oscRecipe3]
-  -- r <- realRandom
-  let camera = scale 1.0
-      color = smooth col nothing $ evalShape (camera r)
+  shape <- coolShape
+  let color = smooth col nothing shape
   return color
 
 crecipes :: IO E
@@ -294,8 +297,10 @@ hmm = do
       p3 = union p' smaller
    in scale 0.1 p3
 
-realRandom :: IO Shape
-realRandom = sizedProgram 4
+realRandom :: IO E
+realRandom = do
+  e <- sizedProgram 4
+  return $ smooth white black $ evalShape e
 
 -- interp needs its own stacko
 data Op = BO BinOp | UO UnOp
