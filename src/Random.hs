@@ -4,7 +4,9 @@ module Random
 ( randomShape
 , recipe
 , crecipes
-, realRandom ) where
+, realRandom
+-- , realRandomOsc
+, realRandomPile ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
@@ -34,30 +36,36 @@ recipe = uniformM
   , rZinny
   ]
 
-oscRecipe :: Rnd Shape
-oscRecipe = interp (osc 0.5) <$> recipe <*> recipe
+oscRecipe2 :: Rnd Shape -> Rnd Shape
+oscRecipe2 r = interp (osc 0.5) <$> r <*> r
 
-oscRecipe3 :: Rnd Shape
-oscRecipe3 = interp (osc 0.5) <$> recipe <*> (interp <$> pure (osc 0.33) <*> recipe <*> recipe)
+oscRecipe3 :: Rnd Shape -> Rnd Shape
+oscRecipe3 r = interp (osc 0.5) <$> r <*> (interp <$> pure (osc 0.33) <*> r <*> r)
+
+oscRecipe :: Rnd Shape -> Rnd Shape
+oscRecipe r = uniformM [oscRecipe2 r, oscRecipe3 r]
 
 coolShape :: IO E
 coolShape = do
-  r <- evalRandIO $ uniformM [oscRecipe, oscRecipe3]
+  r <- evalRandIO $ oscRecipe recipe
   return $ evalShape r
 
-crecipe :: IO E
-crecipe = do
+crecipe :: IO E -> IO E
+crecipe shaper = do
   col <- randomMaybeTransparentColor 0.333
-  shape <- coolShape
+  shape <- shaper
   let color = smooth col nothing shape
   return color
 
 crecipes :: IO E
-crecipes = do
+crecipes = pile coolShape
+
+pile :: IO E -> IO E
+pile shaper = do
   -- determinisitic
   -- n <- return 1
   n <- getStdRandom (randomR (1::Int, 4))
-  colors <- mapM (\_ -> crecipe) [0..n-1]
+  colors <- mapM (\_ -> crecipe shaper) [0..n-1]
   return $ alphaBlends colors
 
 determinisitic :: IO ()
@@ -300,7 +308,13 @@ hmm = do
 realRandom :: IO E
 realRandom = do
   e <- sizedProgram 4
-  return $ smooth white black $ evalShape e
+  return $ smooth white black $ evalShape (scale 0.25 e)
+
+realRandomPile :: IO E
+realRandomPile = pile rr
+  where rr = do
+          e <- sizedProgram 4
+          return $ evalShape (scale 0.25 e)
 
 -- interp needs its own stacko
 data Op = BO BinOp | UO UnOp
@@ -344,20 +358,22 @@ flowerNullOp :: Rnd Shape
 flowerNullOp = flower <$> (flr <$> (3.0...8.0))
   where flr (KF n) = KF (fromIntegral $ floor n)
 nullOps :: Rnd Shape
-nullOps = uniformM [pure circle, pure square, flowerNullOp]
+nullOps = gr <*> (uniformM [pure circle, pure square, flowerNullOp])
+  where gr = pfGrid <$> grs <*> grs
+        grs = 1.1...2.5
 binOps :: Rnd BinOp
 binOps = uniformM [pure union, pure intersection, pure difference, pure smoothUnion, interpUnOp]
 interpUnOp :: Rnd BinOp
 interpUnOp = interp <$> 0.0...1.0
 unOps :: Rnd UnOp
 unOps = uniformM [sc, tr, ro, gr]
-  where sc = scale <$> 0.5...2.0
+  where sc = scale <$> (osc <$> 0.5...2.0)
         tr = translation <$> (V2 <$> t <*> t)
-        t = (-3.0)...3.0
+        t = osc <$> (-3.0)...3.0
         ro = rotation <$> ang
-        ang = (KF (-pi))...(KF pi)
+        ang = osc <$> (KF (-pi))...(KF pi)
         gr = pfGrid <$> grs <*> grs
-        grs = 1.1...2.5
+        grs = osc <$> 1.1...2.5
 
 -- floorE :: E -> E
 -- floorE (KF n) = KF (fromIntegral $ floor n)
