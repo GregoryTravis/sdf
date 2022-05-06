@@ -12,6 +12,6 @@ singleHandler :: IO String
 singleHandler = do
   pc <- crecipes
   let c = compileSingle pc
-  msp c
+  -- msp c -- slow
   html <- generateExe "single.html" $ M.fromList [("SHAPE_ASDF", c)]
   return html
