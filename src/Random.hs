@@ -5,7 +5,7 @@ module Random
 , recipe
 , crecipes
 , realRandom
--- , realRandomOsc
+, realRandomOsc
 , realRandomPile ) where
 
 import Control.Monad (join)
@@ -307,13 +307,18 @@ hmm = do
 
 realRandom :: IO E
 realRandom = do
-  e <- sizedProgram 4
+  e <- evalRandIO $ sizedProgram 4
+  return $ smooth white black $ evalShape (scale 0.25 e)
+
+realRandomOsc :: IO E
+realRandomOsc = do
+  e <- evalRandIO $ oscRecipe $ sizedProgram 4
   return $ smooth white black $ evalShape (scale 0.25 e)
 
 realRandomPile :: IO E
 realRandomPile = pile rr
   where rr = do
-          e <- sizedProgram 4
+          e <- evalRandIO $ sizedProgram 4
           return $ evalShape (scale 0.25 e)
 
 -- interp needs its own stacko
@@ -321,20 +326,25 @@ data Op = BO BinOp | UO UnOp
 type Program = [Op]
 
 -- Generate a random shape starting with N primitives as raw material
-sizedProgram :: Int -> IO Shape
-sizedProgram n = do
-  prims <- nPrims n
-  iterateSizedProgram prims
+sizedProgram :: Int -> Rnd Shape
+-- sizedProgram n = iterateSizedProgram <$> nPrims n
+sizedProgram n = nPrims n >>= iterateSizedProgram 
+
+nRnds :: Int -> Rnd a -> Rnd [a]
+nRnds n r = mapM (\_ -> r) [0..n-1]
+
+nPrims :: Int -> Rnd [Shape]
+nPrims n = nRnds n nullOps
 
 -- TODO should this be Rnd as well?
-nPrims :: Int -> IO [Shape]
-nPrims 0 = return []
-nPrims n = do
-  s <- evalRandIO nullOps
-  ss <- nPrims (n - 1)
-  return $ s : ss
+-- nPrims :: Int -> IO [Shape]
+-- nPrims 0 = return []
+-- nPrims n = do
+--   s <- evalRandIO nullOps
+--   ss <- nPrims (n - 1)
+--   return $ s : ss
 
-iterateSizedProgram :: [Shape] -> IO Shape
+iterateSizedProgram :: [Shape] -> Rnd Shape
 iterateSizedProgram [] = error "iterateSizedProgram: empty?"
 iterateSizedProgram [p] = return p
 iterateSizedProgram prims = do
@@ -343,8 +353,8 @@ iterateSizedProgram prims = do
   iterateSizedProgram prims'
 
 -- TODO maybe we should pre-generate this with the right # of unops
-randOp :: IO Op
-randOp = evalRandIO (uniformM [bs, us])
+randOp :: Rnd Op
+randOp = uniformM [bs, us]
   where bs = BO <$> binOps
         us = UO <$> unOps
 

@@ -25,6 +25,7 @@ app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
   route "/rr" (htmlHandler (realRandom >>= singleHandler))
+  route "/rro" (htmlHandler (realRandomOsc >>= singleHandler))
   route "/rrp" (htmlHandler (realRandomPile >>= singleHandler))
   route "/function" (htmlHandler getShapeFunction)
   route "/twgl-full.module.js" twglHandler
