@@ -13,6 +13,7 @@ import Control.Monad.Random.Class
 import Control.Monad.Random.Strict
 import System.Random hiding (uniform)
 
+import Alg
 import BinOp
 import Color
 import E
@@ -307,33 +308,34 @@ hmm = do
 
 realRandom :: IO E
 realRandom = do
-  e <- evalRandIO $ sizedProgram 4
+  e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
   return $ smooth white black $ evalShape (scale 0.25 e)
 
 realRandomOsc :: IO E
-realRandomOsc = do
-  e <- evalRandIO $ oscRecipe $ sizedProgram 4
-  return $ smooth white black $ evalShape (scale 0.25 e)
+realRandomOsc = undefined
+-- realRandomOsc = do
+--   e <- shpEval <$> (evalRandIO $ oscRecipe $ sizedProgram 4)
+--   return $ smooth white black $ evalShape (scale 0.25 e)
 
 realRandomPile :: IO E
 realRandomPile = pile rr
   where rr = do
-          e <- evalRandIO $ sizedProgram 4
+          e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
           return $ evalShape (scale 0.25 e)
 
 -- interp needs its own stacko
-data Op = BO BinOp | UO UnOp
+data Op = BO ShpBinOp | UO ShpUnOp
 type Program = [Op]
 
 -- Generate a random shape starting with N primitives as raw material
-sizedProgram :: Int -> Rnd Shape
+sizedProgram :: Int -> Rnd Shp
 -- sizedProgram n = iterateSizedProgram <$> nPrims n
 sizedProgram n = nPrims n >>= iterateSizedProgram 
 
 nRnds :: Int -> Rnd a -> Rnd [a]
 nRnds n r = mapM (\_ -> r) [0..n-1]
 
-nPrims :: Int -> Rnd [Shape]
+nPrims :: Int -> Rnd [Shp]
 nPrims n = nRnds n nullOps
 
 -- TODO should this be Rnd as well?
@@ -344,7 +346,7 @@ nPrims n = nRnds n nullOps
 --   ss <- nPrims (n - 1)
 --   return $ s : ss
 
-iterateSizedProgram :: [Shape] -> Rnd Shape
+iterateSizedProgram :: [Shp] -> Rnd Shp
 iterateSizedProgram [] = error "iterateSizedProgram: empty?"
 iterateSizedProgram [p] = return p
 iterateSizedProgram prims = do
@@ -358,39 +360,29 @@ randOp = uniformM [bs, us]
   where bs = BO <$> binOps
         us = UO <$> unOps
 
-applyOp :: Op -> [Shape] -> [Shape]
+applyOp :: Op -> [Shp] -> [Shp]
 applyOp (UO unop) (a : rest) = unop a : rest
 applyOp (BO binop) (a : b : rest) = binop a b : rest
 
 -- la = 3.0...8.0 :: Rnd E
 -- TODO Rnd should be applicative, shouldn't it
-flowerNullOp :: Rnd Shape
-flowerNullOp = flower <$> (flr <$> (3.0...8.0))
+flowerNullOp :: Rnd Shp
+flowerNullOp = Flower <$> (flr <$> (3.0...8.0))
   where flr (KF n) = KF (fromIntegral $ floor n)
-nullOps :: Rnd Shape
-nullOps = gr <*> (uniformM [pure circle, pure square, flowerNullOp])
-  where gr = pfGrid <$> grs <*> grs
+nullOps :: Rnd Shp
+nullOps = gr <*> (uniformM [pure Circle, pure Square, flowerNullOp])
+  where gr = PfGrid <$> grs <*> grs
         grs = 1.1...2.5
-binOps :: Rnd BinOp
-binOps = uniformM [pure union, pure intersection, pure difference, pure smoothUnion, interpUnOp]
-interpUnOp :: Rnd BinOp
-interpUnOp = interp <$> 0.0...1.0
-unOps :: Rnd UnOp
+binOps :: Rnd ShpBinOp
+binOps = uniformM [pure Union, pure Intersection, pure Difference, pure SmoothUnion, interpUnOp]
+interpUnOp :: Rnd ShpBinOp
+interpUnOp = Interp <$> 0.0...1.0
+unOps :: Rnd ShpUnOp
 unOps = uniformM [sc, tr, ro, gr]
-  where sc = scale <$> (osc <$> 0.5...2.0)
-        tr = translation <$> (V2 <$> t <*> t)
+  where sc = Scale <$> (osc <$> 0.5...2.0)
+        tr = Translation <$> (V2 <$> t <*> t)
         t = osc <$> (-3.0)...3.0
-        ro = rotation <$> ang
+        ro = Rotation <$> ang
         ang = osc <$> (KF (-pi))...(KF pi)
-        gr = pfGrid <$> grs <*> grs
+        gr = PfGrid <$> grs <*> grs
         grs = osc <$> 1.1...2.5
-
--- floorE :: E -> E
--- floorE (KF n) = KF (fromIntegral $ floor n)
--- lo = 3...8 :: Rnd Int
-
--- prims :: [Shape]
-
--- randPrimStream :: IO [Shape]
--- randPrimStream = do
---   s <- randFromList [circle, square,
