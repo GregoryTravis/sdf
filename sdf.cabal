@@ -27,6 +27,7 @@ executable sdf
                      -- , contravariant
                      , criterion
                      , deepseq
+                     , hashable
                      , http-types
                      , firefly
                      -- , directory
@@ -37,4 +38,5 @@ executable sdf
                      , random
                      , text
                      , time
+                     , unordered-containers
                      , wai

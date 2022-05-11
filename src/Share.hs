@@ -14,11 +14,15 @@ type Sharey a = State RefState a
 initState :: RefState
 initState = (0, M.empty, M.empty)
 
+-- Extract Sh nodes from e and store them in the map.
 share :: E -> (E, Refs)
 share e =
   let (e', (_, refs, revRefs)) = runState (share' e) initState
    in (e', refs)
 
+-- Allocate a fresh tag n for this node, add (n -> e) to the map state, and
+-- return (ShRef n).
+-- Also recursively call share on the contents of the Sh node.
 share' :: E -> State RefState E
 share' (Sh e) = do
   e' <- share' e

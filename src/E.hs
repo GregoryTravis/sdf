@@ -15,14 +15,21 @@ module E
 , UnOp
 , BinOp
 , time
+, snTest
 ) where
 
 import Control.DeepSeq
+import Data.HashMap.Strict
+import Data.Hashable
 import GHC.Generics (Generic, Generic1)
+import System.IO.Unsafe
+import System.Mem.StableName
 import System.Random hiding (Uniform)
 import System.Random.Stateful hiding (Uniform)
 import qualified System.Random as SR
 import qualified System.Random.Stateful as SRS
+
+import Util hiding (time)
 
 data Uniform = UF String
   deriving (Eq, Show, Read, Ord, Generic)
@@ -101,3 +108,33 @@ type Transformer = Transform -> Transform
 
 time :: E
 time = (U (UF "time"))
+
+addy :: E -> E -> E
+addy a b = a + b
+
+instance Show (StableName a) where
+  show sn = show (hashStableName sn)
+
+-- instance Hashable (StableName a) where
+--   hash = hashStableName
+
+mksn :: a -> (a, StableName a)
+mksn x = (x, sn)
+  where sn = unsafePerformIO $ makeStableName x
+
+snTest :: IO ()
+snTest = do
+  let n = KF 12.3
+      sum = addy n n
+  msp sum
+  sn0 <- makeStableName sum
+  sn1 <- makeStableName sum
+  let sn2 = mksn sum
+  let sn3 = mksn sum
+  msp ("sns", sn0, sn1, sn2, sn3)
+  msp $ sn0 == sn1
+  let m0 = empty
+      m1 = insert sn0 sum m0
+  msp m1
+  msp $ m1 !? sn1
+  msp "hi snTest"
