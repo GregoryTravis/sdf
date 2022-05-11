@@ -26,18 +26,18 @@ difference' :: E -> E -> E
 difference' a b = Max a (- b)
 
 binopper :: (E -> E -> E) -> BinOp
-binopper distCombiner p0 p1 tr = distCombiner (Sh $ p0 tr) (Sh $ p1 tr)
+binopper distCombiner p0 p1 tr = distCombiner (sh $ p0 tr) (sh $ p1 tr)
 
 smoothUnion :: BinOp
 smoothUnion = binopper smoothUnion'
 
 smoothUnion' :: E -> E -> E
 smoothUnion' usd0 usd1 =
-  let d0 = Sh usd0
-      d1 = Sh usd1
+  let d0 = sh usd0
+      d1 = sh usd1
       r = 0.3
-      md0 = Sh $ Min (d0 - r) 0.0
-      md1 = Sh $ Min (d1 - r) 0.0
+      md0 = sh $ Min (d0 - r) 0.0
+      md1 = sh $ Min (d1 - r) 0.0
       inside_distance = - (ssqrt $ (md0 * md0) + (md1 * md1))
       simple_union = Min d0 d1
       outside_distance = Max simple_union r

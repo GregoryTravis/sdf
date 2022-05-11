@@ -36,12 +36,18 @@ data Uniform = UF String
 instance NFData Uniform
 
 -- DSL for GLSL expressions
-data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY | Sh E | ShRef Int
+data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Fun String [Ty] Ty [E] | Mat2 [E]
        | Comparison String E E | Cond E E E -- | V String
        | RGB E | A E
+       | Share E StableName
+       | ShareRef Int
   deriving (Eq, Show, Read, Ord, Generic)
 instance NFData E
+
+sh :: E -> E
+sh e = Share E sn
+  where sn = unsafePerformIO $ makeStableName e
 
 -- -- DSL for GLSL programs
 -- data GLSL = GLSL [UniformDecl] [Func]
@@ -111,9 +117,6 @@ time = (U (UF "time"))
 
 addy :: E -> E -> E
 addy a b = a + b
-
-instance Show (StableName a) where
-  show sn = show (hashStableName sn)
 
 -- instance Hashable (StableName a) where
 --   hash = hashStableName

@@ -3,37 +3,89 @@ module Share
 , Refs ) where
 
 import Control.Monad.State
-import qualified Data.Map as M
+import Data.HashMap.Strict as HM
+import Data.Hashable
+import qualified Data.Map.Strict as M
 import E
 
+type CapMap = HM.HashMap StableName E
+type RefMap = HM.HashMap StableName Int
 type Refs = M.Map Int E
-type RevRefs = M.Map E Int
-type RefState = (Int, Refs, RevRefs)
-type Sharey a = State RefState a
+
+type ShareState = (Int, CapMap, RefMap)
 
 initState :: RefState
-initState = (0, M.empty, M.empty)
+initState = (0, HM.empty, HM.empty)
+
+addCap :: E -> StableName -> State ShareState ()
+addCap cap sn = do
+  (n, capMap, refMap) <- get
+  let n' = n + 1
+      capMap' = HM.insert sn cap capMap
+      refMap' = HM.insert sn n refMap
+  put (n', capMap', refMap')
+
+hasCap :: StableName -> State ShareState Bool
+hasCap sn = do
+  (_, capMap, _) <- get
+  return $ HM.member sn capMap
+
+getRef :: StableName -> State ShareState Int
+getRef sn = do
+  (_, _, refMap) <- get
+  case HM.lookup sn refMap of
+    Just n -> return n
+    Nothing -> error "missing from refMap"
 
 -- Extract Sh nodes from e and store them in the map.
 share :: E -> (E, Refs)
 share e =
-  let (e', (_, refs, revRefs)) = runState (share' e) initState
+  let (e', capMap, refMap) = runState (share' e) initState
+      refs = toRefs capMap refMap
    in (e', refs)
+
+-- Assign a unique small integer to each sn. Maybe I could use hashStableName
+-- but it's not clear how unlikely that is to have a collision
+toRefs :: CapMap -> RefMap -> Refs
+toRefs capMap refMap =
+  let sns = HM.keys capMap
+      refs = map (\sn -> refMap HM.! sn)
+      caps = map (\sn -> capMap HM.! sn)
+   in HM.fromList (zip refs caps)
 
 -- Allocate a fresh tag n for this node, add (n -> e) to the map state, and
 -- return (ShRef n).
 -- Also recursively call share on the contents of the Sh node.
-share' :: E -> State RefState E
-share' (Sh e) = do
-  e' <- share' e
-  (n, refs, revRefs) <- get
-  case revRefs M.!? e' of
-    Just n -> return $ ShRef n
-    Nothing -> do
-      let refs' = M.insert n e' refs
-      let revRefs' = M.insert e' n revRefs
-      put (n + 1, refs', revRefs')
-      return $ ShRef n
+share' :: E -> State ShareState E
+share' (Share e sn) = do
+  hc <- hasCap sn
+  if hc
+    then do n <- getRef sn
+            return $ ShareRef n
+    else do eCap <- share' e
+            addCap eCap sn
+            n <- getRef sn
+            return $ ShareRef n
+
+  -- capMap <- get
+  -- case HM.lookup sn capMap of
+  --   Nothing -> do
+  --     e' <- share' e
+  --     capMap' <- get
+  --     put $ HM.insert sn e' capMap'
+  --     return (ShareRef sn)
+  --   Just e' -> do
+  --     return (ShareRef sn)
+
+  -- e' <- share' e
+  -- (n, refs, revRefs) <- get
+  -- case revRefs M.!? e' of
+  --   Just n -> return $ ShRef n
+  --   Nothing -> do
+  --     let refs' = M.insert n e' refs
+  --     let revRefs' = M.insert e' n revRefs
+  --     put (n + 1, refs', revRefs')
+  --     return $ ShRef n
 share' (Add a b) = do
   a' <- share' a
   b' <- share' b
@@ -117,3 +169,6 @@ share' (A e) = do
   e' <- share' e
   return $ A e'
 share' x = return x
+
+instance Show (StableName a) where
+  show sn = show (hashStableName sn)

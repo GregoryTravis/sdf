@@ -130,7 +130,7 @@ whorl wf wa tr@(Transform xy t) =
 
 flowerize :: E -> Transformer
 flowerize numPetals (Transform xy t) =
-  let ang = Sh $ satan (Y xy) (X xy)
+  let ang = sh $ satan (Y xy) (X xy)
       mod = ssin t * (ssin $ (ang * numPetals))
       xy' = xy * (1.0 + (mod / 4.0))
    in Transform xy' t

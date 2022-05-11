@@ -11,12 +11,12 @@ grid w h = transform (grid' w h)
 
 grid' :: E -> E -> Transformer
 grid' w h (Transform xy t) =
-  let x = Sh $ X xy
-      y = Sh $ Y xy
-      xx = Sh $ smod x w
-      yy = Sh $ smod y h
-      xi = Sh $ sfloor x
-      yi = Sh $ sfloor y
+  let x = sh $ X xy
+      y = sh $ Y xy
+      xx = sh $ smod x w
+      yy = sh $ smod y h
+      xi = sh $ sfloor x
+      yi = sh $ sfloor y
    in Transform (V2 xx yy) t
 
 bugPfGrid :: E -> E -> UnOp
@@ -57,12 +57,12 @@ pfGrid' :: E -> E -> Transformer
 pfGrid' w h (Transform xy t) =
   let x = X xy
       y = Y xy
-      xow = Sh $ x / w
-      yoh = Sh $ y / h
-      xx = Sh $ (xow - sfloor xow) * w
-      xi = Sh $ sfloor xow
-      yy = Sh $ (yoh - sfloor yoh) * h
-      yi = Sh $ sfloor yoh
-      xx2 = Sh $ Cond (smod (Abs xi) 2.0 ==. 1.0) (w - xx) xx
-      yy2 = Sh $ Cond (smod (Abs yi) 2.0 ==. 1.0) (h - yy) yy
+      xow = sh $ x / w
+      yoh = sh $ y / h
+      xx = sh $ (xow - sfloor xow) * w
+      xi = sh $ sfloor xow
+      yy = sh $ (yoh - sfloor yoh) * h
+      yi = sh $ sfloor yoh
+      xx2 = sh $ Cond (smod (Abs xi) 2.0 ==. 1.0) (w - xx) xx
+      yy2 = sh $ Cond (smod (Abs yi) 2.0 ==. 1.0) (h - yy) yy
    in Transform (V2 xx2 yy2) t

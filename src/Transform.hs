@@ -16,8 +16,8 @@ speed r = transform (speed' r)
 
 rotMat :: E -> E
 rotMat ang =
-  let c = Sh $ scos ang
-      s = Sh $ ssin ang
+  let c = sh $ scos ang
+      s = sh $ ssin ang
       mat = Mat2 [c, s, -s, c]
    in mat
 
@@ -38,9 +38,9 @@ rotation ang = transform (rotation' ang)
 
 rotation' :: E -> Transformer
 rotation' ang (Transform xy t) =
-  let c = Sh $ scos ang
-      s = Sh $ ssin ang
-      mat = Sh $ Mat2 [c, s, -s, c]
+  let c = sh $ scos ang
+      s = sh $ ssin ang
+      mat = sh $ Mat2 [c, s, -s, c]
    in Transform (mat * xy) t
 
 transform :: Transformer -> Shape -> Shape

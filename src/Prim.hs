@@ -9,10 +9,10 @@ import Lib
 
 square :: Shape
 square (Transform xy _) =
-  let center = Sh $ V2 0.0 0.0
-      radius = Sh 1.0
-      sd = Sh $ Abs (xy - center)
-      dist = Sh $ (Max (X sd) (Y sd) / radius) - 1.0
+  let center = sh $ V2 0.0 0.0
+      radius = sh 1.0
+      sd = sh $ Abs (xy - center)
+      dist = sh $ (Max (X sd) (Y sd) / radius) - 1.0
    in dist
 
 circle :: Shape
@@ -23,10 +23,10 @@ circle (Transform xy _) =
 -- E should be integral
 flower :: E -> Shape
 flower numPetals (Transform xy t) =
-  let ang = Sh $ satan (Y xy) (X xy)
-      raw_dist = Sh $ ssqrt (Length xy)
-      radius = Sh $ sabs $ ssin $ (ang * (numPetals / 2.0))
-      dist = Sh $ raw_dist / radius
+  let ang = sh $ satan (Y xy) (X xy)
+      raw_dist = sh $ ssqrt (Length xy)
+      radius = sh $ sabs $ ssin $ (ang * (numPetals / 2.0))
+      dist = sh $ raw_dist / radius
    in dist - 1.0
 
     -- let ang = non_stupid_atan2(x, y);

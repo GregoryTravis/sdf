@@ -7,4 +7,4 @@ import Util hiding (time)
 
 -- Hz
 osc :: E -> E
-osc rate = Sh $ (ssin (time * rate) + 1) / 2
+osc rate = sh $ (ssin (time * rate) + 1) / 2
