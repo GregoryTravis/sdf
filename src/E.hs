@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric  #-}
+
 module E
 ( E(..)
 , Ty(..)
@@ -15,20 +17,24 @@ module E
 , time
 ) where
 
+import Control.DeepSeq
+import GHC.Generics (Generic, Generic1)
 import System.Random hiding (Uniform)
 import System.Random.Stateful hiding (Uniform)
 import qualified System.Random as SR
 import qualified System.Random.Stateful as SRS
 
 data Uniform = UF String
-  deriving (Eq, Show, Read, Ord)
+  deriving (Eq, Show, Read, Ord, Generic)
+instance NFData Uniform
 
 -- DSL for GLSL expressions
 data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY | Sh E | ShRef Int
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Fun String [Ty] Ty [E] | Mat2 [E]
        | Comparison String E E | Cond E E E -- | V String
        | RGB E | A E
-  deriving (Eq, Show, Read, Ord)
+  deriving (Eq, Show, Read, Ord, Generic)
+instance NFData E
 
 -- -- DSL for GLSL programs
 -- data GLSL = GLSL [UniformDecl] [Func]
@@ -82,7 +88,8 @@ infix 4 >=.
 (>=.) = Comparison ">="
 
 data Ty = TF | TV2 | TV3 | TV4 | TM2 | TB
-  deriving (Eq, Show, Read, Ord)
+  deriving (Eq, Show, Read, Ord, Generic)
+instance NFData Ty
 
 type Shape = Transform -> E
 type UnOp = Shape -> Shape

@@ -6,11 +6,13 @@ module Random
 , crecipes
 , realRandom
 , realRandomOsc
-, realRandomPile ) where
+, realRandomPile
+, randomTiming ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
 import Control.Monad.Random.Strict
+import Criterion.Main
 import System.Random hiding (uniform)
 
 import Alg
@@ -21,6 +23,7 @@ import Funs
 import Grid
 import Lib
 import Prim
+import Share
 import Transform
 import Util hiding (die, time)
 
@@ -305,6 +308,39 @@ hmm = do
       p' = difference both cir
       p3 = union p' smaller
    in scale 0.1 p3
+
+repeatable :: Maybe Int -> IO ()
+repeatable (Just seed) = do
+  msp ("repeatable", seed)
+  setStdGen $ mkStdGen seed
+  sg <- getStdGen
+  msp ("stdgen", sg)
+repeatable Nothing = do
+  seed <- getStdRandom (randomR (1::Int, 100000))
+  msp ("repeatable", seed)
+  setStdGen $ mkStdGen seed
+  sg <- getStdGen
+  msp ("stdgen", sg)
+
+-- rnd Shp
+-- evalRandIO
+-- shpEval
+-- share
+-- compile
+randomTiming :: IO ()
+randomTiming = do
+  let benchmark = env setupEnv $ \ ~e -> bench "bench" (nf share e)
+  defaultMainWith config [benchmark]
+  msp "hi randomTiming"
+  where config = defaultConfig -- { resamples = 1 }
+
+setupEnv :: IO E
+setupEnv = do
+  repeatable (Just 33837) -- Nothing
+  shp <- evalRandIO $ sizedProgram 6
+  let shape = shpEval shp
+      e = evalShape shape
+  return e
 
 realRandom :: IO E
 realRandom = do

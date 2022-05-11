@@ -33,4 +33,5 @@ genShape = do
 main :: IO ()
 main = do
   noBuffering
-  runServer
+  randomTiming
+  -- runServer
