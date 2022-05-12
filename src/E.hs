@@ -2,6 +2,7 @@
 
 module E
 ( E(..)
+, sh
 , Ty(..)
 , Uniform(..)
 , (==.)
@@ -15,7 +16,7 @@ module E
 , UnOp
 , BinOp
 , time
-, snTest
+-- , snTest
 ) where
 
 import Control.DeepSeq
@@ -40,13 +41,16 @@ data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length 
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Fun String [Ty] Ty [E] | Mat2 [E]
        | Comparison String E E | Cond E E E -- | V String
        | RGB E | A E
-       | Share E StableName
+       | Share E (StableName E)
        | ShareRef Int
-  deriving (Eq, Show, Read, Ord, Generic)
+  deriving (Eq, Show, Generic)
 instance NFData E
 
+instance Show (StableName a) where
+  show sn = show (hashStableName sn)
+
 sh :: E -> E
-sh e = Share E sn
+sh e = Share e sn
   where sn = unsafePerformIO $ makeStableName e
 
 -- -- DSL for GLSL programs
@@ -115,29 +119,29 @@ type Transformer = Transform -> Transform
 time :: E
 time = (U (UF "time"))
 
-addy :: E -> E -> E
-addy a b = a + b
+-- addy :: E -> E -> E
+-- addy a b = a + b
 
--- instance Hashable (StableName a) where
---   hash = hashStableName
+-- -- instance Hashable (StableName a) where
+-- --   hash = hashStableName
 
-mksn :: a -> (a, StableName a)
-mksn x = (x, sn)
-  where sn = unsafePerformIO $ makeStableName x
+-- mksn :: a -> (a, StableName a)
+-- mksn x = (x, sn)
+--   where sn = unsafePerformIO $ makeStableName x
 
-snTest :: IO ()
-snTest = do
-  let n = KF 12.3
-      sum = addy n n
-  msp sum
-  sn0 <- makeStableName sum
-  sn1 <- makeStableName sum
-  let sn2 = mksn sum
-  let sn3 = mksn sum
-  msp ("sns", sn0, sn1, sn2, sn3)
-  msp $ sn0 == sn1
-  let m0 = empty
-      m1 = insert sn0 sum m0
-  msp m1
-  msp $ m1 !? sn1
-  msp "hi snTest"
+-- snTest :: IO ()
+-- snTest = do
+--   let n = KF 12.3
+--       sum = addy n n
+--   msp sum
+--   sn0 <- makeStableName sum
+--   sn1 <- makeStableName sum
+--   let sn2 = mksn sum
+--   let sn3 = mksn sum
+--   msp ("sns", sn0, sn1, sn2, sn3)
+--   msp $ sn0 == sn1
+--   let m0 = empty
+--       m1 = insert sn0 sum m0
+--   msp m1
+--   msp $ m1 !? sn1
+--   msp "hi snTest"

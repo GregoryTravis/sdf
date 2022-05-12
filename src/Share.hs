@@ -6,18 +6,20 @@ import Control.Monad.State
 import Data.HashMap.Strict as HM
 import Data.Hashable
 import qualified Data.Map.Strict as M
+import System.Mem.StableName
+
 import E
 
-type CapMap = HM.HashMap StableName E
-type RefMap = HM.HashMap StableName Int
+type CapMap = HM.HashMap (StableName E) E
+type RefMap = HM.HashMap (StableName E) Int
 type Refs = M.Map Int E
 
 type ShareState = (Int, CapMap, RefMap)
 
-initState :: RefState
+initState :: ShareState
 initState = (0, HM.empty, HM.empty)
 
-addCap :: E -> StableName -> State ShareState ()
+addCap :: E -> (StableName E) -> State ShareState ()
 addCap cap sn = do
   (n, capMap, refMap) <- get
   let n' = n + 1
@@ -25,12 +27,12 @@ addCap cap sn = do
       refMap' = HM.insert sn n refMap
   put (n', capMap', refMap')
 
-hasCap :: StableName -> State ShareState Bool
+hasCap :: (StableName E) -> State ShareState Bool
 hasCap sn = do
   (_, capMap, _) <- get
   return $ HM.member sn capMap
 
-getRef :: StableName -> State ShareState Int
+getRef :: (StableName E) -> State ShareState Int
 getRef sn = do
   (_, _, refMap) <- get
   case HM.lookup sn refMap of
@@ -40,7 +42,7 @@ getRef sn = do
 -- Extract Sh nodes from e and store them in the map.
 share :: E -> (E, Refs)
 share e =
-  let (e', capMap, refMap) = runState (share' e) initState
+  let (e', (_, capMap, refMap)) = runState (share' e) initState
       refs = toRefs capMap refMap
    in (e', refs)
 
@@ -49,9 +51,9 @@ share e =
 toRefs :: CapMap -> RefMap -> Refs
 toRefs capMap refMap =
   let sns = HM.keys capMap
-      refs = map (\sn -> refMap HM.! sn)
-      caps = map (\sn -> capMap HM.! sn)
-   in HM.fromList (zip refs caps)
+      refs = Prelude.map (\sn -> refMap HM.! sn) sns
+      caps = Prelude.map (\sn -> capMap HM.! sn) sns
+   in M.fromList (zip refs caps)
 
 -- Allocate a fresh tag n for this node, add (n -> e) to the map state, and
 -- return (ShRef n).
@@ -169,6 +171,3 @@ share' (A e) = do
   e' <- share' e
   return $ A e'
 share' x = return x
-
-instance Show (StableName a) where
-  show sn = show (hashStableName sn)
