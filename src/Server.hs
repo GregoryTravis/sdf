@@ -14,6 +14,7 @@ import Network.Wai as W
 import Web.Firefly
 
 import Infinity
+import Interactive
 import Random
 import Single
 import Util
@@ -24,6 +25,7 @@ runServer = run 8000 app
 app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
+  route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
   route "/rr" (htmlHandler (realRandom >>= singleHandler))
   route "/rro" (htmlHandler (realRandomOsc >>= singleHandler))
   route "/rrp" (htmlHandler (realRandomPile >>= singleHandler))

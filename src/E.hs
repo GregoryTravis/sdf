@@ -37,7 +37,7 @@ data Uniform = UF String
 instance NFData Uniform
 
 -- DSL for GLSL expressions
-data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY
+data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY | Mouse
        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Fun String [Ty] Ty [E] | Mat2 [E]
        | Comparison String E E | Cond E E E -- | V String
        | RGB E | A E
