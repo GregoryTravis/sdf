@@ -7,7 +7,8 @@ module Random
 , realRandom
 , realRandomOsc
 , realRandomPile
-, randomTiming ) where
+, randomTiming
+, interpo ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
@@ -48,6 +49,28 @@ oscRecipe3 r = interp (osc 0.5) <$> r <*> (interp <$> pure (osc 0.33) <*> r <*> 
 
 oscRecipe :: Rnd Shape -> Rnd Shape
 oscRecipe r = uniformM [oscRecipe2 r, oscRecipe3 r]
+
+interpo :: IO E
+interpo = do
+  -- [a, b, c, d] <- (evalRandIO $ nRand recipe 4) >>= randColorsFor
+  [a, b, c, d] <- (evalRandIO $ nRand recipe 4)
+  -- let [a, b, c, d] = [square, circle, square, circle]
+  -- let ae = evalShape a
+  --     be = evalShape b
+  --     ce = evalShape c
+  --     de = evalShape d
+  let top = interp (X Mouse) a b
+      bot = interp (X Mouse) c d
+      both = interp (Y Mouse) top bot
+  return $ smooth white black $ evalShape both
+
+randColorsFor :: [Shape] -> IO [E]
+randColorsFor shapes = mapM randColorFor shapes
+randColorFor :: Shape -> IO E
+randColorFor shape = do
+  col <- randomMaybeTransparentColor 0.333
+  let color = smooth col nothing (evalShape shape)
+  return color
 
 coolShape :: IO E
 coolShape = do
@@ -201,6 +224,14 @@ randIO :: [IO a] -> IO a
 randIO ios = do
   io <- randFromList ios
   io
+
+-- TODO: I know, I know
+nRand :: Rnd a -> Int -> Rnd [a]
+nRand rnd 0 = return []
+nRand rnd n = do
+  x <- rnd
+  xs <- nRand rnd (n-1)
+  return $ x:xs
 
 type Rnd a = Rand StdGen a
 

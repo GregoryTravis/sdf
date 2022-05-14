@@ -26,6 +26,7 @@ app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
+  route "/i" (htmlHandler (interpo >>= singleHandler))
   route "/rr" (htmlHandler (realRandom >>= singleHandler))
   route "/rro" (htmlHandler (realRandomOsc >>= singleHandler))
   route "/rrp" (htmlHandler (realRandomPile >>= singleHandler))
