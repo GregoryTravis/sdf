@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies, GADTs , MultiParamTypeClasses, TypeOperators #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies, GADTs, MultiParamTypeClasses, TypeOperators #-}
 
 module Random
 ( randomShape
