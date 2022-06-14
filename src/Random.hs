@@ -8,7 +8,8 @@ module Random
 , realRandomOsc
 , realRandomPile
 , randomTiming
-, interpo ) where
+, interpo1
+, interpoPile ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
@@ -62,7 +63,15 @@ interpo = do
   let top = interp (X Mouse) a b
       bot = interp (X Mouse) c d
       both = interp (Y Mouse) top bot
-  return $ smooth white black $ evalShape both
+  return $ evalShape both
+
+interpo1 :: IO E
+interpo1 = do
+  s <- interpo
+  return $ smooth white black s
+
+interpoPile :: IO E
+interpoPile = pile 2 interpo
 
 randColorsFor :: [Shape] -> IO [E]
 randColorsFor shapes = mapM randColorFor shapes
@@ -85,13 +94,13 @@ crecipe shaper = do
   return color
 
 crecipes :: IO E
-crecipes = pile coolShape
+crecipes = pile 4 coolShape
 
-pile :: IO E -> IO E
-pile shaper = do
+pile :: Int -> IO E -> IO E
+pile maxN shaper = do
   -- determinisitic
   -- n <- return 1
-  n <- getStdRandom (randomR (1::Int, 4))
+  n <- getStdRandom (randomR (1, maxN))
   colors <- mapM (\_ -> crecipe shaper) [0..n-1]
   return $ alphaBlends colors
 
@@ -385,7 +394,7 @@ realRandomOsc = undefined
 --   return $ smooth white black $ evalShape (scale 0.25 e)
 
 realRandomPile :: IO E
-realRandomPile = pile rr
+realRandomPile = pile 4 rr
   where rr = do
           e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
           return $ evalShape (scale 0.25 e)
