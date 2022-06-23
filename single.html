@@ -83,6 +83,10 @@ void main() {
                  linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, gl_FragCoord.y));
   vec2 mouse = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, mx),
                     linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, my));
+  vec2 hoo;
+  vec3 hoo2;
+  vec3 hoo3 = hoo2 + 2.0;
+  vec3 hoo4 = 2.0 + hoo2;
 
   SHAPE_ASDF
   // Works

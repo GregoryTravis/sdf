@@ -1,9 +1,10 @@
-{-# LANGUAGE AllowAmbiguousTypes, DeriveGeneric, EmptyDataDeriving, FlexibleInstances, FunctionalDependencies, GADTs, MultiParamTypeClasses, StandaloneDeriving #-}
+{-# LANGUAGE AllowAmbiguousTypes, DeriveGeneric, EmptyDataDeriving, FlexibleContexts, FlexibleInstances, FunctionalDependencies, GADTs, MultiParamTypeClasses, StandaloneDeriving #-}
 
 module Typed
 ( typedMain ) where
 
 import Data.List (intercalate)
+import System.Mem.StableName
 
 import Util hiding (time)
 
@@ -11,6 +12,10 @@ import Util hiding (time)
 data V2 a
   deriving Show
 data V3 a
+  deriving Show
+data Mat2 a
+  deriving Show
+data Bul
   deriving Show
 
 -- goals
@@ -29,50 +34,101 @@ data E a where
   V3 :: Show a => E a -> E a -> E a -> E (V3 a)
   Add :: Addable a b c => E a -> E b -> E c
   Length :: Lengthable a b => E a -> E b
-  SW2 :: (Show (v b), Show b) => Swizzler2 -> E (v b) -> E (V2 b)
-  SW3 :: (Show (v b), Show b) => Swizzler3 -> E (v b) -> E (V3 b)
   Uniform :: String  -> E a
-  -- XY, Mouse: these are just a special V2
-  -- Swizzle :: (Show a, Show b, SwizzlesTo a (v b)) => Swizzler b -> E a -> E (v b)
-  -- Swizzle :: (Show a, Show b, SwizzlesTo a b) => Swizzler b -> E a -> E b
-  -- Swizzle :: SwizzlesTo a b => String -> E a -> E b
-  -- Swizzle :: Swizzleable a => String -> E a -> E a
+  Swizzle :: SwizzlesTo (vv n) (v n) => Swizzler (v n) -> E (vv n) -> E (v n)
+  Field :: FieldsTo (vv n) n => Fielder n -> E (vv n) -> E n
+  Fun1 :: Show a => String -> E a -> E b
+  Fun2 :: (Show a, Show b) => String -> E a -> E b -> E c
+  Neg :: E a -> E a
+  Mat2 :: Show a => [E a] -> E (Mat2 a)
+  Comparison :: Show a => String -> E a -> E a -> E Bul
+  Cond :: E Bul -> E a -> E a -> E a
+  -- These require a dummy Show instance for E (a -> b) and IncoherentInstances
+  -- Fun :: String -> E (a -> b)
+  -- App :: (Show a, Show b) => E (a -> b) -> E a -> E b
+  -- XY, Mouse are just globals, not their own types
+  -- RGB, A etc aliases for XYZ, W etc
+  Share :: E a -> StableName (E a) -> E a
+  ShareRef :: Int -> E a
 
--- TODO: Maybe don't need these since SWn encodes the output type, although
--- maybe we need this so we can't forge a bad one
-data Swizzler2 = Swizzler2 String
-  deriving Show
+instance Num (E Float) where
+  (+) = Add
+  (*) = undefined
+  abs = undefined
+  signum = error "signum not implemented"
+  fromInteger i = KF (fromInteger i)
+  negate = Neg
 
-data Swizzler3 = Swizzler3 String
-  deriving Show
+instance Num (E Double) where
+  (+) = Add
+  (*) = undefined
+  abs = undefined
+  signum = error "signum not implemented"
+  fromInteger i = KD (fromInteger i)
+  negate = Neg
 
-xy v = SW2 (Swizzler2 "xy") v
-yx v = SW2 (Swizzler2 "yx") v
-xyz v = SW3 (Swizzler3 "xyz") v
-yxz v = SW3 (Swizzler3 "yxz") v
+-- -- fromRational, (recip | (/))
+-- instance Fractional (E a) where
+--   fromRational i = KF (fromRational i)
+--   (/) = undefined
 
--- data Swizzler a where
---   Swizzler2 :: String -> Swizzler (V2 a)
+instance Show (StableName a) where
+  show sn = show (hashStableName sn)
 
--- deriving instance Show a => Show (Swizzler a)
+infix 4 ==.
+(==.) :: Show a => E a -> E a -> E Bul
+(==.) = Comparison "=="
+infix 4 <.
+(<.) :: Show a => E a -> E a -> E Bul
+(<.) = Comparison "<"
+infix 4 >.
+(>.) :: Show a => E a -> E a -> E Bul
+(>.) = Comparison ">"
+infix 4 <=.
+(<=.) :: Show a => E a -> E a -> E Bul
+(<=.) = Comparison "<="
+infix 4 >=.
+(>=.) :: Show a => E a -> E a -> E Bul
+(>=.) = Comparison ">="
 
--- class (Show a, Show b) => SwizzlesTo a b
--- instance SwizzlesTo (V3 a) (V3 a)
--- instance SwizzlesTo (V3 a) (V2 a)
--- instance Show a => SwizzlesTo (V3 a) a
--- instance SwizzlesTo (V2 a) (V2 a)
--- instance Show a => SwizzlesTo (V2 a) a
+ssqrt :: E Float -> E Float
+ssqrt x = Fun1 "sqrt" x
+satan :: E Float -> E Float -> E Float
+satan y x = Fun2 "atan" y x
+ssin :: E Float -> E Float
+ssin = Fun1 "sin"
+scos :: E Float -> E Float
+scos = Fun1 "cos"
 
--- yx :: E (v a) -> E (V2 a)
--- yx = Swizzle $ Swizzler2 "yx"
+data Swizzler v where
+  SW2 :: String -> Swizzler (V2 a)
+  SW3 :: String -> Swizzler (V3 a)
+swizzleFields :: Swizzler v -> String
+swizzleFields (SW2 s) = s
+swizzleFields (SW3 s) = s
 
--- -- TODO: Should make it impossible to fake these by using a Swizzler NT instead of a string?
--- yx :: SwizzlesTo a (V2 b) => Typed.E a -> Typed.E (V2 b)
--- yx e = Swizzle "yx" e
--- x e = Swizzle "x" e
+-- data Fielder = Fielder String
+data Fielder v where
+  Fielder :: String -> Fielder a
 
--- yx :: E (V2 a) -> E (V2 a)
--- yx e = Swizzle "yx" e
+x e = Field (Fielder "x") e
+y e = Field (Fielder "y") e
+xy :: SwizzlesTo (vv n) (V2 n) => Typed.E (vv n) -> Typed.E (V2 n)
+xy e = Swizzle (SW2 "xy") e
+yx e = Swizzle (SW2 "yx") e
+xyz e = Swizzle (SW2 "xyz") e
+yxz e = Swizzle (SW2 "yxz") e
+
+deriving instance Show v => Show (Swizzler v)
+deriving instance Show v => Show (Fielder v)
+
+class (Show a, Show b) => SwizzlesTo a b
+instance SwizzlesTo (V3 a) (V2 a)
+instance SwizzlesTo (V2 a) (V2 a)
+
+class (Show a, Show b) => FieldsTo a b
+instance Show a => FieldsTo (V3 a) a
+instance Show a => FieldsTo (V2 a) a
 
 deriving instance Show a => Show (E a)
 
@@ -82,6 +138,7 @@ instance Addable Int Int Int
 instance Addable Int Float Float
 instance Addable Float Float Float
 -- I have no idea if this is how GLSL does it
+instance Addable Double Double Double
 instance Addable Float Double Double
 -- Could there be an abbreviation, like this?
 --   class SelfAddable a => Addable a a a
@@ -119,15 +176,10 @@ instance GlslType (V3 Float) where
   typeName _ = "vec3"
 instance GlslType (V3 Double) where
   typeName _ = "dvec3"
-
--- blah :: E Int
-blahii = Add (KI 1) (KI 2)
-blahif = Add (KI 1) (KF 2.0)
-blahvv = Add (V2 (KF 1.0) (KF 1.0)) (V2 (KF 1.0) (KF 1.0))
-blahvf = Add (V2 (KF 1.0) (KF 1.0)) (KF 2.0)
-blahdd = Add (V2 (KD 1.0) (KD 1.0)) (V2 (KD 1.0) (KD 1.0))
-blahdf = Add (V2 (KD 1.0) (KD 1.0)) (KD 2.0)
-blahfd = Add (KF 1.0) (KD 2.0)
+instance GlslType (Mat2 float) where
+  typeName _ = "mat2"
+instance GlslType Bul where
+  typeName _ = "bool"
 
 -- Show expression and type
 eat :: (GlslType a, Show a) => E a -> IO ()
@@ -142,6 +194,9 @@ etc e = do
   msp (typeName e)
   msp $ compileE e
 
+subexp :: Int -> String
+subexp n = "x" ++ show n
+
 parens :: String -> String
 parens x = concat ["(", x, ")"]
 
@@ -155,15 +210,27 @@ fun f args = parens $ concat [f, parens arglist]
 dot :: String -> String -> String
 dot e field = parens $ concat [e, ".", field]
 
-compileE :: E a -> String
+cond :: String -> String -> String -> String
+cond b t e = parens $ concat [parens b, "?", parens t , ":", parens e]
+
+-- It's assume the top level of any call to compileE is a call to parens
+compileE :: Show a => E a -> String
 compileE (KF n) = parens $ show n
 compileE (Add a b) = op "+" (compileE a) (compileE b)
 compileE (V2 a b) = fun "vec2" [compileE a, compileE b]
 compileE (V3 a b c) = fun "vec3" [compileE a, compileE b, compileE c]
 compileE (Length e) = fun "length" [compileE e]
-compileE (SW2 (Swizzler2 fields) v) = dot (compileE v) fields
-compileE (SW3 (Swizzler3 fields) v) = dot (compileE v) fields
 compileE (Uniform name) = parens name
+compileE (Swizzle swizzler v) = dot (compileE v) (swizzleFields swizzler)
+compileE (Field (Fielder field) v) = dot (compileE v) field
+compileE (Fun1 name arg1) = fun name [compileE arg1]
+compileE (Fun2 name arg1 arg2) = fun name [compileE arg1, compileE arg2]
+compileE (Neg a) = parens $ concat ["-", compileE a]
+compileE (Mat2 xs) = fun "mat2" (map compileE xs)
+compileE (Comparison name a b) = op name (compileE a) (compileE b)
+compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
+compileE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
+compileE (ShareRef n) = parens $ subexp n
 
 -- v2 = V2 (KF 1.0) (KF 1.0)
 
@@ -177,22 +244,54 @@ typedMain = do
   let v2 = V2 (KF 1.0) (KF 1.0)
       v2' = V2 (KF 2.0) (KF 2.0)
       v3 = V3 (KF 2.0) (KF 2.0) (KF 3.0)
-  etc f
-  etc v2
-  etc v3
-  etc $ V2 (Add (KF 1.0) (KF 2.0)) (KF 3.0)
-  etc $ Length v2
-  etc $ Length v3
-  etc $ xy v2
-  etc $ xy v3
-  etc $ yx v2
-  etc $ yx v3
-  etc $ xyz v3
-  etc $ yxz v3
-  etc $ time
+      m2 = Mat2 [(KF 2.0), (KF 2.0), (KF 2.0), (KF 2.0)]
+  etc $ f + f
+  -- etc $ f + 1.0
+  -- etc $ v2 - 1.0
+  -- etc $ Length xy - 1.0
+
+  -- works
+  -- etc $ ssqrt f
+  -- etc $ ssin f
+  -- etc $ scos f
+  -- etc $ satan (ssin f) (scos f)
+  -- etc $ Neg f
+  -- etc $ m2
+  -- etc $ f ==. f2
+  -- etc $ f <. f2
+  -- etc $ f >. f2
+  -- etc $ f <=. f2
+  -- etc $ f >=. f2
+  -- etc $ Cond (f >=. f2) (ssin f) (scos f)
+
+  -- works
+  -- etc f
+  -- etc v2
+  -- etc v3
+  -- etc $ V2 (Add (KF 1.0) (KF 2.0)) (KF 3.0)
+  -- etc $ Length v2
+  -- etc $ Length v3
+  -- etc $ time
+  -- etc $ xy v2
+  -- etc $ xy v3
+  -- etc $ yx v2
+  -- etc $ yx v3
+  -- etc $ xyz v3
+  -- etc $ yxz v3
+  -- etc $ x v2
+  -- etc $ y v2
+  -- etc $ x v3
+  -- etc $ y v3
   -- etc $ x v2
 
   -- works
+  -- let blahii = Add (KI 1) (KI 2)
+  --     blahif = Add (KI 1) (KF 2.0)
+  --     blahvv = Add (V2 (KF 1.0) (KF 1.0)) (V2 (KF 1.0) (KF 1.0))
+  --     blahvf = Add (V2 (KF 1.0) (KF 1.0)) (KF 2.0)
+  --     blahdd = Add (V2 (KD 1.0) (KD 1.0)) (V2 (KD 1.0) (KD 1.0))
+  --     blahdf = Add (V2 (KD 1.0) (KD 1.0)) (KD 2.0)
+  --     blahfd = Add (KF 1.0) (KD 2.0)
   -- eat blahii
   -- eat blahif
   -- eat blahvv
