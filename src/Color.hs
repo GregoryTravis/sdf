@@ -45,7 +45,7 @@ smooth fg bg dist =
       dDistY = sdFdy dist
       dDistXY = V2 dDistX dDistY
       dDist = Length dDistXY
-      smoothRadius = 1.0 * dDist
+      smoothRadius = dDist
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
       color = bwBlend * bg + (1.0 - bwBlend) * fg;
    in sh color
