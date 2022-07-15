@@ -11,6 +11,9 @@ sabs = sh . Abs
 smod x y = sh $ Fun2 "mod" TF TF TF x y
 sfloor = sh . Fun1 "floor" TF TF
 
+smin x y = sh $ Fun2 "min" TF TF TF x y
+smax x y = sh $ Fun2 "max" TF TF TF x y
+
 smoothstep edge0 edge1 x = sh $ Fun "smoothstep" [TF, TF, TF] TF [edge0, edge1, x]
 
 -- types are for alpha blending

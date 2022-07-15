@@ -31,6 +31,8 @@ app = do
   route "/rr" (htmlHandler (realRandom >>= singleHandler))
   route "/rro" (htmlHandler (realRandomOsc >>= singleHandler))
   route "/rrp" (htmlHandler (realRandomPile >>= singleHandler))
+  route "/outline" (htmlHandler (anOutlineE >>= singleHandler))
+  route "/ocr" (htmlHandler (outlinecrecipes >>= singleHandler))
   route "/function" (htmlHandler getShapeFunction)
   route "/twgl-full.module.js" twglHandler
   route "/infinity.html" $ htmlFileHandler "infinity.html"

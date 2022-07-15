@@ -4,12 +4,14 @@ module Random
 ( randomShape
 , recipe
 , crecipes
+, outlinecrecipes
 , realRandom
 , realRandomOsc
 , realRandomPile
 , randomTiming
 , interpo1
-, interpoPile ) where
+, interpoPile
+, anOutlineE ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
@@ -85,6 +87,10 @@ coolShape :: IO E
 coolShape = do
   r <- evalRandIO $ oscRecipe recipe
   return $ evalShape r
+  -- return $ outline 0.05 0.15 $ evalShape r
+
+outlineCoolShape :: IO E
+outlineCoolShape = outline 0.05 0.15 <$> coolShape
 
 crecipe :: IO E -> IO E
 crecipe shaper = do
@@ -92,6 +98,9 @@ crecipe shaper = do
   shape <- shaper
   let color = smooth col nothing shape
   return color
+
+outlinecrecipes :: IO E
+outlinecrecipes = pile 2 outlineCoolShape
 
 crecipes :: IO E
 crecipes = pile 4 coolShape
@@ -118,6 +127,28 @@ _crecipes = do
   -- let s =  transform (flowerize 5.0) limonTwaist -- (pfGrid 1.5 1.5 circle)
   let s = scale 0.25 $ transform (siney 0.1 10 time) $ transform (siney 1 1 time) $ pfGrid 1.5 1.5 circle
   return $ justShape s
+
+anOutline :: E
+anOutline =
+  let thing = vlad 1.5 1.0 1.0 1.0 1.0 0.25
+      things = smoothUnion (scale 0.5 thing) (rotation time thing)
+  in outline 0.02 0.05 $ evalShape $ things
+  -- let trx = transform (sinex 1.5 1.0 time)
+  --     try = transform (siney 1.0 1.0 time)
+  -- in outline 0.02 0.05 $ evalShape $ trx $ try $ scale 0.25 $ pfGrid 1.5 1.5 circle
+
+-- Distance -> distance
+edge :: E -> E -> E
+edge w x = (abs (x + w)) - w
+
+outline :: E -> E -> E -> E
+outline lineWidth gap x =
+  let outer = edge lineWidth (x - (gap / 2.0))
+      inner = edge lineWidth (x + (gap / 2.0))
+   in smin outer inner
+
+anOutlineE :: IO E
+anOutlineE = return $ smooth white black anOutline
 
 classicZinny :: Rnd Shape
 classicZinny = zinny <$> pure 10.0 <*> pure 5.0 <*> pure 1.5 <*> pure 1.5
