@@ -76,13 +76,17 @@ float linmap(float a, float b, float c, float d, float x) {
   return ((x - a) * ((d - c) / (b - a))) + c;
 }
 
-void main() {
-  // Assumes horizontal
+vec2 toUV(float x, float y) {
+  // Assumes horizontal?
   float m = (resolution.x - resolution.y) / 2.0;
-  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, gl_FragCoord.x),
-                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, gl_FragCoord.y));
-  vec2 mouse = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, mx),
-                    linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, my));
+  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, x),
+                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, y));
+  return uv;
+}
+
+void main() {
+  vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
+  vec2 mouse = toUV(mx, my);
 
   SHAPE_ASDF
   // Works

@@ -11,7 +11,8 @@ module Random
 , randomTiming
 , interpo1
 , interpoPile
-, anOutlineE ) where
+, anOutlineE
+, aCircle ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
@@ -32,6 +33,16 @@ import Transform
 import Util hiding (die, time)
 
 -- default (Double)
+
+-- a few circles actually
+aCircle :: IO E
+aCircle = return $ smooth white black $ evalShape circles
+   where circles = union tiny $ union smaller $ union medium $ union big small
+         big = translation (V2 1.5 0.0) circle
+         medium = scale 0.5 circle
+         smaller = translation (V2 (-1.0) 0.0) (scale 0.125 circle)
+         tiny = translation (V2 (-0.7) 0.0) (scale 0.0625 circle)
+         small = translation (V2 (-1.5) 0.0) (scale 0.25 circle)
 
 recipe :: Rnd Shape
 recipe = uniformM

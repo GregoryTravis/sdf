@@ -11,6 +11,9 @@ sabs = sh . Abs
 smod x y = sh $ Fun2 "mod" TF TF TF x y
 sfloor = sh . Fun1 "floor" TF TF
 
+sdFdx = sh . Fun1 "dFdx" TF TF
+sdFdy = sh . Fun1 "dFdy" TF TF
+
 smin x y = sh $ Fun2 "min" TF TF TF x y
 smax x y = sh $ Fun2 "max" TF TF TF x y
 
