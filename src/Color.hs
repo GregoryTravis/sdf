@@ -37,15 +37,19 @@ randomMaybeTransparentColor transparencyLikelihood = do
     then randomTransparentColor
     else randomColor
 
--- scale-aware anti-aliased edge
--- slow
-smooth :: E -> E -> E -> E
-smooth fg bg dist =
+scaleAwareAA :: E -> E
+scaleAwareAA dist =
   let dDistX = sdFdx dist
       dDistY = sdFdy dist
       dDistXY = V2 dDistX dDistY
       dDist = Length dDistXY
-      smoothRadius = dDist
+   in dDist
+
+-- scale-aware anti-aliased edge
+-- slow
+smooth :: E -> E -> E -> E
+smooth fg bg dist =
+  let smoothRadius = scaleAwareAA dist
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
       color = bwBlend * bg + (1.0 - bwBlend) * fg;
    in sh color
