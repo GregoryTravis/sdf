@@ -49,5 +49,13 @@ transform transformer p = p . transformer
 idTransform :: Transform
 idTransform = Transform XY time
 
+scaleAwareAA :: E -> E
+scaleAwareAA dist =
+  let dDistX = sdFdx dist
+      dDistY = sdFdy dist
+      dDistXY = V2 dDistX dDistY
+      dDist = Length dDistXY
+   in dDist
+
 evalShape :: Shape -> E
-evalShape p = p idTransform
+evalShape p = scaleAwareAA $ p idTransform
