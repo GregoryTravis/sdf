@@ -25,7 +25,10 @@ flower :: E -> Shape
 flower numPetals (Transform xy t) =
   let ang = sh $ satan (Y xy) (X xy)
       raw_dist = sh $ ssqrt (Length xy)
-      radius = sh $ sabs $ ssin $ (ang * (numPetals / 2.0))
+      radius = sh $ liftedAmp
+      amp = sabs $ ssin $ (ang * (numPetals / 2.0))
+      liftedAmp = lift + (1.0 - lift) * amp
+      lift = 0.2
       dist = sh $ raw_dist / radius
    in dist - 1.0
 

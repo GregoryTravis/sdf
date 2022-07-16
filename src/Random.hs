@@ -38,11 +38,12 @@ import Util hiding (die, time)
 aCircle :: IO E
 aCircle = return $ smooth white black $ evalShape circles
    where circles = union tiny $ union smaller $ union medium $ union big small
-         big = translation (V2 1.5 0.0) circle
-         medium = scale 0.5 circle
-         smaller = translation (V2 (-1.0) 0.0) (scale 0.125 circle)
-         tiny = translation (V2 (-0.7) 0.0) (scale 0.0625 circle)
-         small = translation (V2 (-1.5) 0.0) (scale 0.25 circle)
+         big = translation (V2 1.5 0.0) c
+         medium = scale 0.5 c
+         smaller = translation (V2 (-1.0) 0.0) (scale 0.125 c)
+         tiny = translation (V2 (-0.7) 0.0) (scale 0.0625 c)
+         small = translation (V2 (-1.5) 0.0) (scale 0.25 c)
+         c = flower 4.0
 
 recipe :: Rnd Shape
 recipe = uniformM
