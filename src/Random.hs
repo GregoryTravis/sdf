@@ -35,15 +35,16 @@ import Util hiding (die, time)
 -- default (Double)
 
 -- a few circles actually
-aCircle :: IO E
-aCircle = return $ smooth white black $ evalShape circles
-   where circles = union tiny $ union smaller $ union medium $ union big small
-         big = translation (V2 1.5 0.0) c
-         medium = scale 0.5 c
-         smaller = translation (V2 (-1.0) 0.0) (scale 0.125 c)
-         tiny = translation (V2 (-0.7) 0.0) (scale 0.0625 c)
-         small = translation (V2 (-1.5) 0.0) (scale 0.25 c)
-         c = flower 4.0
+sizes :: Shape -> IO E
+sizes s = return $ smooth white black $ evalShape shapes
+   where shapes = union tiny $ union smaller $ union medium $ union big small
+         big = translation (V2 1.5 0.0) s
+         medium = scale 0.5 s
+         smaller = translation (V2 (-1.0) 0.0) (scale 0.125 s)
+         tiny = translation (V2 (-0.7) 0.0) (scale 0.0625 s)
+         small = translation (V2 (-1.5) 0.0) (scale 0.25 s)
+
+aCircle = sizes circle -- $ flower 4.0
 
 recipe :: Rnd Shape
 recipe = uniformM
