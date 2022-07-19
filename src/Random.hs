@@ -36,12 +36,15 @@ import Util hiding (die, time)
 
 -- a few circles actually
 sizes :: Shape -> IO E
-sizes s = return $ smooth white black $ evalShape shapes
-   where shapes = union tiny $ union smaller $ union medium $ union big small
+sizes s = return $ bandy white black $ evalShape shapes
+   where shapes = union vvbig $ union vbig $ union tiny2 $ union tiny $ union smaller $ union medium $ union big small
          big = translation (V2 1.5 0.0) s
+         vbig = translation (V2 (-0.58) 4.58) (scale 4 s)
+         vvbig = translation (V2 (-0.63) (-8.8)) (scale 8 s)
          medium = scale 0.5 s
          smaller = translation (V2 (-1.0) 0.0) (scale 0.125 s)
-         tiny = translation (V2 (-0.7) 0.0) (scale 0.0625 s)
+         tiny = translation (V2 (-0.7) 0.0) (scale (1.0 / 16.0) s)
+         tiny2 = translation (V2 (-0.6) 0.0) (scale (1.0 / 32.0) s)
          small = translation (V2 (-1.5) 0.0) (scale 0.25 s)
 
 aCircle = sizes circle -- $ flower 4.0

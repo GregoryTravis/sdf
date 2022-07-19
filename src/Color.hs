@@ -10,6 +10,7 @@ black = V4 0.0 0.0 0.0 1.0
 white = V4 1.0 1.0 1.0 1.0
 gray = V4 0.5 0.5 0.5 1.0
 red = V4 1.0 0.0 0.0 1.0
+blue = V4 0.0 0.0 1.0 1.0
 green = V4 0.0 1.0 0.0 1.0
 nothing = V4 0.0 0.0 0.0 0.0
 
@@ -52,6 +53,24 @@ smooth fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
       color = bwBlend * bg + (1.0 - bwBlend) * fg;
+   in sh color
+
+bandy :: E -> E -> E -> E
+bandy fg bg dist =
+  let smoothRadius = scaleAwareAA dist
+      bwBlend1 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
+        where x = 0.0
+      bwBlend2 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
+        where x = (-0.1)
+      bwBlend3 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
+        where x = (-0.2)
+      bwBlend = bwBlend2
+      color1 = bwBlend1 * bg + (1.0 - bwBlend1) * red;
+      color2 = bwBlend2 * color1 + (1.0 - bwBlend2) * blue;
+      color3 = bwBlend3 * color2 + (1.0 - bwBlend3) * fg;
+      color = color3
+      -- color = bwBlend * bg + (1.0 - bwBlend) * fg;
+      -- color' = bwBlend2 * color + (1.0 - bwBlend2) * red
    in sh color
 
 -- anti-aliased edge
