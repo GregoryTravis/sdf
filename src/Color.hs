@@ -58,17 +58,18 @@ smooth fg bg dist =
 bandy :: E -> E -> E -> E
 bandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
-      bwBlend1 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
-        where x = 0.0
-      bwBlend2 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
-        where x = (-0.1)
-      bwBlend3 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
-        where x = (-0.2)
+      bwBlend1 = smoothstep (x-1.0) (x+1.0) (dist / smoothRadius)
+        where x = 0.0 / smoothRadius
+      bwBlend2 = smoothstep (x-1.0) (x+1.0) (dist / smoothRadius)
+        where x = -20.0
+      bwBlend3 = smoothstep (x-1.0) (x+1.0) (dist / smoothRadius)
+        where x = -40.0 -- / smoothRadius
       bwBlend = bwBlend2
       color1 = bwBlend1 * bg + (1.0 - bwBlend1) * red;
       color2 = bwBlend2 * color1 + (1.0 - bwBlend2) * blue;
       color3 = bwBlend3 * color2 + (1.0 - bwBlend3) * fg;
       color = color3
+      pixelWidth = 1.0 / smin (X (U (UF "resolution"))) (Y (U (UF "resolution")))
       -- color = bwBlend * bg + (1.0 - bwBlend) * fg;
       -- color' = bwBlend2 * color + (1.0 - bwBlend2) * red
    in sh color
