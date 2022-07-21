@@ -35,8 +35,8 @@ import Util hiding (die, time)
 -- default (Double)
 
 -- a few circles actually
-sizes :: Shape -> IO E
-sizes s = return $ bandy white black $ evalShape shapes
+sizes :: E -> E -> E -> Shape -> IO E
+sizes rotvel xvel yvel s = return $ siBandy white black $ evalShape $ trans shapes
    where shapes = union vvbig $ union vbig $ union tiny2 $ union tiny $ union smaller $ union medium $ union big small
          big = translation (V2 1.5 0.0) s
          vbig = translation (V2 (-0.58) 4.58) (scale 4 s)
@@ -46,8 +46,9 @@ sizes s = return $ bandy white black $ evalShape shapes
          tiny = translation (V2 (-0.7) 0.0) (scale (1.0 / 16.0) s)
          tiny2 = translation (V2 (-0.6) 0.0) (scale (1.0 / 32.0) s)
          small = translation (V2 (-1.5) 0.0) (scale 0.25 s)
+         trans s = translation (V2 (xvel * time) (yvel * time)) $ rotation (rotvel * time) $ s
 
-aCircle = sizes circle -- $ flower 4.0
+aCircle = sizes 0.1 0.1 0.0 circle -- $ flower 4.0
 
 recipe :: Rnd Shape
 recipe = uniformM
