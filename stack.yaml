@@ -152,6 +152,7 @@ extra-deps:
 - monad-par-extras-0.3.3@sha256:b448c7565958ba5dfe8a0f88f17574059176cbd26e632e40c361520e63a206fd,2106
 - parallel-3.2.2.0@sha256:19ff631f3a26ee7cf0603e2b80fc375d77d3f350ae460ae72fe4cf5da665c90b,1821
 - cereal-0.5.8.2@sha256:046ab07bfe82770e209a2ef57382171c88f7a194d020b768b7d8131299c7f023,2767
+- split-0.2.3.4@sha256:a6df9c3e806ee7cb50bc980a183fc1156f35022a39430dabac0bf9456fe18a4b,2647
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

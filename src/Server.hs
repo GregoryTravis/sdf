@@ -1,10 +1,11 @@
-{-# language OverloadedStrings #-}
+{-# language OverloadedStrings, RankNTypes #-}
 
 module Server
 ( runServer ) where
 
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Lazy as LBS
+import Data.List.Split (splitOn)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
@@ -13,6 +14,8 @@ import qualified Data.Text.Lazy.Encoding as LT
 import Network.Wai as W
 import Web.Firefly
 
+import E
+import Commander
 import Infinity
 import Interactive
 import Random
@@ -38,6 +41,21 @@ app = do
   route "/twgl-full.module.js" twglHandler
   route "/infinity.html" $ htmlFileHandler "infinity.html"
   route "/infinity-main.glsl" $ htmlFileHandler "infinity-main.glsl"
+  route ".*" commanderHandler
+
+commanderRoutes :: Commander (IO E)
+commanderRoutes = randomCommander
+
+commanderHandler :: Handler W.Response
+commanderHandler = do
+  p <- getPath
+  let s = "hey " ++ show ss
+      ss = case splitOn "/" (T.unpack p) of ("":ss) -> ss
+      ioe = (case appl commanderRoutes ss of Just ioe -> ioe) -- :: Handler W.Response
+  e <- liftIO ioe
+  let ios' = (singleHandler e) :: IO String
+  s' <- liftIO ios'
+  return $ toResponse (T.pack s, ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
 
 htmlHandler :: IO String -> Handler W.Response
 htmlHandler handler = do

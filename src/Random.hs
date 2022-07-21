@@ -12,17 +12,21 @@ module Random
 , interpo1
 , interpoPile
 , anOutlineE
-, aCircle ) where
+, aCircle
+, randomCommander ) where
 
 import Control.Monad (join)
 import Control.Monad.Random.Class
 import Control.Monad.Random.Strict
 import Criterion.Main
+import qualified Data.Map.Strict as M
 import System.Random hiding (uniform)
+import Text.Read (readMaybe)
 
 import Alg
 import BinOp
 import Color
+import Commander
 import E
 import Funs
 import Grid
@@ -33,6 +37,19 @@ import Transform
 import Util hiding (die, time)
 
 -- default (Double)
+
+primPick :: Commander Shape
+primPick = mapCvt $ M.fromList
+  [ ("circle", circle)
+  , ("square", square)
+  , ("flower", flower 4.0) ]
+
+randomCommander :: Commander (IO E)
+randomCommander = nest $ M.fromList
+  [ ("sizes", sizes <$> c <*> c <*> c <*> primPick)
+  ]
+  where c = converterMaybe (\s -> case readMaybe s of Just f -> Just $ KF f
+                                                      Nothing -> Nothing)
 
 -- a few circles actually
 sizes :: E -> E -> E -> Shape -> IO E

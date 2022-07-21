@@ -5,6 +5,7 @@ module Main where
 import qualified Data.Map as M
 
 import BinOp
+import Commander
 import E
 import Color
 import Compile
@@ -36,3 +37,4 @@ main = do
   -- randomTiming
   -- snTest
   runServer
+  -- commanderMain
