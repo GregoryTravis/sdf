@@ -10,6 +10,7 @@ module Commander
 , converterMaybe ) where
 
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import Text.Read (readMaybe)
 
 import Util
@@ -55,9 +56,9 @@ rm :: Read a => Commander a
 rm = converterMaybe readMaybe
 
 -- TODO use Maybe properly here
-mapCvt :: M.Map String b -> Commander b
+mapCvt :: Show b => M.Map String b -> Commander b
 mapCvt m = converterMaybe cvt
-  where cvt s = M.lookup s m
+  where cvt s = eeesp ("mapCVT", m, s) $ M.lookup s m
 
 -- TODO use Maybe properly here
 mapCvtR :: (Read a, Ord a) => M.Map a b -> Commander b
@@ -70,8 +71,8 @@ mapCvtR m = converterMaybe cvt
 nest :: M.Map String (Commander a) -> Commander a
 nest m = Commander r
   where r (s:ss) =
-          case M.lookup s m
-            of Just c -> appl c ss
+          case eesp ("nest lookup", s, M.keys m, s == head (M.keys m), isNothing $ M.lookup s m) $ M.lookup s m
+            of Just c -> eesp ("nest appl") $ appl c ss
                Nothing -> Nothing
 
 ilala :: Int -> Double

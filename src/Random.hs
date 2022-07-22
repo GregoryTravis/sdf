@@ -20,6 +20,7 @@ import Control.Monad.Random.Class
 import Control.Monad.Random.Strict
 import Criterion.Main
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import System.Random hiding (uniform)
 import Text.Read (readMaybe)
 
@@ -44,16 +45,20 @@ primPick = mapCvt $ M.fromList
   , ("square", square)
   , ("flower", flower 4.0) ]
 
+instance Show Shape where
+  show _ = "<shape>"
+
 randomCommander :: Commander (IO E)
 randomCommander = nest $ M.fromList
   [ ("sizes", sizes <$> c <*> c <*> c <*> primPick)
   ]
-  where c = converterMaybe (\s -> case readMaybe s of Just f -> Just $ KF f
-                                                      Nothing -> Nothing)
+  where c = converterMaybe (\s -> case eesp ("rc c", s) $ readMaybe s
+                                    of Just f -> Just $ KF f
+                                       Nothing -> Nothing)
 
 -- a few circles actually
 sizes :: E -> E -> E -> Shape -> IO E
-sizes rotvel xvel yvel s = return $ siBandy white black $ evalShape $ trans shapes
+sizes rotvel xvel yvel s = return $ bandy white black $ evalShape $ trans shapes
    where shapes = union vvbig $ union vbig $ union tiny2 $ union tiny $ union smaller $ union medium $ union big small
          big = translation (V2 1.5 0.0) s
          vbig = translation (V2 (-0.58) 4.58) (scale 4 s)

@@ -49,13 +49,15 @@ commanderRoutes = randomCommander
 commanderHandler :: Handler W.Response
 commanderHandler = do
   p <- getPath
+  liftIO $ msp ("Path", p)
   let s = "hey " ++ show ss
-      ss = case splitOn "/" (T.unpack p) of ("":ss) -> ss
+      -- ss = eeesp ("split") $ case splitOn "+" (T.unpack p) of ("":ss) -> ss
+      ss = eeesp ("split") $ splitOn "+" (tail (T.unpack p))
       ioe = (case appl commanderRoutes ss of Just ioe -> ioe) -- :: Handler W.Response
   e <- liftIO ioe
   let ios' = (singleHandler e) :: IO String
   s' <- liftIO ios'
-  return $ toResponse (T.pack s, ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
+  return $ toResponse (T.pack (s ++ s'), ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
 
 htmlHandler :: IO String -> Handler W.Response
 htmlHandler handler = do
