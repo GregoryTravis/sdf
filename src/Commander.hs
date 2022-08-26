@@ -5,10 +5,12 @@ module Commander
 , Commander(..)
 , mapCvt
 , appl
+, applWithDefault
 , nest
 , rm
 , converterMaybe ) where
 
+import Control.Applicative
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Text.Read (readMaybe)
@@ -20,12 +22,8 @@ data Commander a = Commander ([String] -> Maybe a) deriving Functor
 -- TODO use Maybe properly here
 heck :: Commander (a -> b) -> Commander a -> Commander b
 heck (Commander ssab) (Commander ssa) = Commander r
-  where r (s:ss) =
-          let mf = ssab ss
-              ma = ssa [s]
-           in case (mf, ma)
-                of (Just f, Just a) -> Just (f a)
-                   _ -> Nothing
+  where r [] = error "heck: empty"
+        r ss = ($) <$> ssab (init ss) <*> ssa [last ss]
 
 pur :: a -> Commander a
 pur a = Commander r
@@ -38,9 +36,7 @@ instance Applicative Commander where
 -- TODO use Maybe properly here
 instance Semigroup (Commander a) where
   Commander f <> Commander g = Commander r
-    where r ss = case f ss
-                   of Just x -> Just x
-                      Nothing -> g ss
+    where r ss = f ss <|> g ss
 
 converter :: (String -> a) -> Commander a
 converter c = Commander r
@@ -63,17 +59,11 @@ mapCvt m = converterMaybe cvt
 -- TODO use Maybe properly here
 mapCvtR :: (Read a, Ord a) => M.Map a b -> Commander b
 mapCvtR m = converterMaybe cvt
-  where cvt s =
-          case readMaybe s
-            of Just s -> M.lookup s m
-               Nothing -> Nothing
+  where cvt s = readMaybe s >>= flip M.lookup m
 
 nest :: M.Map String (Commander a) -> Commander a
 nest m = Commander r
-  where r (s:ss) =
-          case eesp ("nest lookup", s, M.keys m, s == head (M.keys m), isNothing $ M.lookup s m) $ M.lookup s m
-            of Just c -> eesp ("nest appl") $ appl c ss
-               Nothing -> Nothing
+  where r (s:ss) = M.lookup s m >>= flip appl ss
 
 ilala :: Int -> Double
 ilala x = fromIntegral $ x + 1
@@ -83,6 +73,9 @@ flala x = x + 100.0
 
 appl :: Commander a -> [String] -> Maybe a
 appl (Commander f) ss = f ss
+
+applWithDefault :: Commander a -> a -> [String] -> a
+applWithDefault commander def command = fromMaybe def (appl commander command)
 
 iplus :: Int -> Int -> Int
 iplus = (+)
