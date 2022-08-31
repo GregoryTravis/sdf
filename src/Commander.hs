@@ -61,7 +61,7 @@ rm = p2c $ baseParser "rm"
 heck :: Commander (a -> b) -> Commander a -> Commander b
 heck (Commander ssab) (Commander ssa) = Commander r
   where r [] = error "heck: empty"
-        r ss = ($) <$> ssab (init ss) <*> ssa [last ss]
+        r (s:ss) = ($) <$> ssab ss <*> ssa [s]
 
 -- TODO remove "pur" string?
 pur :: a -> Commander a
