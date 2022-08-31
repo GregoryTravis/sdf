@@ -35,7 +35,8 @@ type Parser a = String -> Result a
 p2c :: Parser a -> Commander a
 p2c p = Commander r
   where r [s] = p s
-        r _ = error "p2c"
+        r ss = Result Nothing ["p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")"]
+        -- r ss = error ("p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")")
 
 cvtParser :: Read a => String -> (a -> b) -> Parser b
 -- cvtParser ty cvt s = Result (fmap cvt $ readMaybe s) ["base " ++ ty ++ " \"" ++ s ++ "\""]
