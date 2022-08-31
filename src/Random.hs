@@ -48,13 +48,15 @@ primPick = mapCvt $ M.fromList
 instance Show Shape where
   show _ = "<shape>"
 
+-- TODO share this
+eParser :: Commander E
+eParser = p2c (cvtParser "KF" KF)
+
 randomCommander :: Commander (IO E)
 randomCommander = nest $ M.fromList
   [ ("sizes", sizes <$> c <*> c <*> c <*> primPick)
   ]
-  where c = converterMaybe (\s -> case eesp ("rc c", s) $ readMaybe s
-                                    of Just f -> Just $ KF f
-                                       Nothing -> Nothing)
+  where c = eParser
 
 -- a few circles actually
 sizes :: E -> E -> E -> Shape -> IO E

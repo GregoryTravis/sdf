@@ -51,9 +51,12 @@ commanderHandler = do
   p <- getPath
   let command = splitOn "+" (tail (T.unpack p))
       render ioe = liftIO (ioe >>= singleHandler)
-  s <- case appl commanderRoutes command
-         of Just ioe -> render ioe
-            Nothing -> return "??"
+      renderWithLog ioe s = do liftIO $ msp ("Commander log: " ++ s)
+                               render ioe
+  let result = appl commanderRoutes command
+  s <- case result
+         of Result (Just ioe) _ -> renderWithLog ioe (formatLog result)
+            Result Nothing _ -> return ("??" ++ formatLog result)
   return $ toResponse (T.pack s, ok200, M.fromList [("Content-type", ["text/html"])] :: HeaderMap)
 
 htmlHandler :: IO String -> Handler W.Response
