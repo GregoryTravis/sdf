@@ -1,4 +1,4 @@
-{-# Language DeriveFunctor, StandaloneDeriving #-}
+{-# Language DeriveFunctor, ScopedTypeVariables, StandaloneDeriving, TypeApplications #-}
 
 module Commander
 ( commanderMain
@@ -10,12 +10,13 @@ module Commander
 , nest
 -- , rm
 , formatLog
-, as ) where
+, via ) where
 
 import Control.Applicative
 import qualified Data.Map.Strict as M
 import Data.List (intercalate)
 import Data.Maybe
+import Data.Typeable
 import Text.Read (readMaybe)
 
 import Util
@@ -37,7 +38,13 @@ p2c p = Commander r
         r ss = Result Nothing ["p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")"]
         -- r ss = error ("p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")")
 
-as s f = p2c $ cvtParser s f
+parse :: forall a. (Typeable a, Read a) => Commander a
+parse = p2c $ baseParser s
+  where s = "parse " ++ show (typeOf (Proxy @a))
+
+via :: (Typeable a, Typeable b, Read a) => (a -> b) -> Commander b
+via f = p2c $ cvtParser s f
+  where s = "via (" ++ show (typeOf f) ++ ")"
 
 cvtParser :: Read a => String -> (a -> b) -> Parser b
 -- cvtParser ty cvt s = Result (fmap cvt $ readMaybe s) ["base " ++ ty ++ " \"" ++ s ++ "\""]
@@ -46,7 +53,7 @@ cvtParser ty cvt s =
       success = case parsedMaybe
                   of Just _ -> "success"
                      Nothing -> "failure"
-   in Result (fmap cvt parsedMaybe) [success ++ " " ++ ty ++ " \"" ++ s ++ "\""]
+   in Result (fmap cvt parsedMaybe) [success ++ ": " ++ ty ++ " \"" ++ s ++ "\""]
 
 baseParser :: Read a => String -> Parser a
 baseParser ty = cvtParser ty id
@@ -172,8 +179,10 @@ commanderMain = do
   -- msp $ appl il ["30.0"]
   -- let mc = mapCvt $ M.fromList [("a", 1::Int), ("b", 2)]
   -- msp $ appl mc ["a"]
-  msp $ appl aNest ["ilala", "122"]
-  msp $ appl aNest ["flala", "122.0"]
-  msp $ appl aNest ["fplus", "1000.0", "300.0"]
-  msp $ appl aNest ["sub", "a"]
+
+  -- works
+  -- msp $ appl aNest ["ilala", "122"]
+  -- msp $ appl aNest ["flala", "122.0"]
+  -- msp $ appl aNest ["fplus", "1000.0", "300.0"]
+  -- msp $ appl aNest ["sub", "a"]
   msp "hi commander"

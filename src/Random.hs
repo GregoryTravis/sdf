@@ -48,12 +48,9 @@ primPick = mapCvt $ M.fromList
 instance Show Shape where
   show _ = "<shape>"
 
--- TODO share this
-pkf = as "KF" KF
-
 randomCommander :: Commander (IO E)
 randomCommander = nest $ M.fromList
-  [ ("sizes", sizes <$> pkf <*> pkf <*> pkf <*> primPick)
+  [ ("sizes", sizes <$> via KF <*> via KF <*> via KF <*> primPick)
   ]
 
 -- a few circles actually
