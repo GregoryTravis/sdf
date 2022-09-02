@@ -36,5 +36,5 @@ main = do
   noBuffering
   -- randomTiming
   -- snTest
-  -- runServer
-  commanderMain
+  runServer
+  -- commanderMain
