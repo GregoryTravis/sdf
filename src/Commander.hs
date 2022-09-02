@@ -6,9 +6,7 @@ module Commander
 , Result(..)
 , mapCvt
 , appl
--- , applWithDefault
 , nest
--- , rm
 , formatLog
 , via ) where
 
@@ -36,7 +34,6 @@ p2c :: Parser a -> Commander a
 p2c p = Commander r
   where r [s] = p s
         r ss = Result Nothing ["p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")"]
-        -- r ss = error ("p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")")
 
 parse :: forall a. (Typeable a, Read a) => Commander a
 parse = p2c $ baseParser s
@@ -47,7 +44,6 @@ via f = p2c $ cvtParser s f
   where s = "via (" ++ show (typeOf f) ++ ")"
 
 cvtParser :: Read a => String -> (a -> b) -> Parser b
--- cvtParser ty cvt s = Result (fmap cvt $ readMaybe s) ["base " ++ ty ++ " \"" ++ s ++ "\""]
 cvtParser ty cvt s =
   let parsedMaybe = readMaybe s
       success = case parsedMaybe
@@ -65,17 +61,6 @@ floatParser = baseParser "Float"
 rm :: Read a => Commander a
 rm = p2c $ baseParser "rm"
 
--- TODO use Maybe properly here
-heck :: Commander (a -> b) -> Commander a -> Commander b
-heck (Commander ssab) (Commander ssa) = Commander r
-  where r [] = error "heck: empty"
-        r (s:ss) = ($) <$> ssab ss <*> ssa [s]
-
--- TODO remove "pur" string?
-pur :: a -> Commander a
-pur a = Commander r
-  where r [] = Result (Just a) ["pur"]
-
 -- TODO remove "pure" string?
 instance Applicative Result where
   pure a = Result (Just a) ["pure"]
@@ -89,32 +74,20 @@ instance Monad Result where
   Result (Just a) ssa >>= k =
     case k a of Result mb ssb -> Result mb (ssa ++ ssb)
   Result Nothing ssa >>= _ = Result Nothing ssa
-  -- Result ma ssa >>= k =
-  --   case ma of
-  --     Just a -> case k a of Result mb ssb -> Result mb (ssa ++ ssb)
-  --     Nothing -> Result ma nothing
 
 instance Applicative Commander where
-  pure = pur
-  (<*>) = heck
+  -- TODO remove "pur" string?
+  pure a = error "undefined (just uncomment the commented-out definition)"
+  -- pure a = Commander r
+  --   where r [] = Result (Just a) ["pur"]
+  (Commander ssab) <*> (Commander ssa) = Commander r
+    where r [] = error "heck: empty"
+          r (s:ss) = ($) <$> ssab ss <*> ssa [s]
 
 -- TODO use Maybe properly here
 instance Semigroup (Commander a) where
   Commander f <> Commander g = Commander r
     where r ss = f ss <|> g ss
-
--- converter :: (String -> a) -> Commander a
--- converter c = Commander r
---   where r [s] = Just (c s)
-
--- converterMaybe :: (String -> Result a) -> Commander a
--- converterMaybe c = Commander r
---   where r [s] = c s
-
--- converterWith :: Read a => (a -> b) -> (???) -> Commander b
-
--- rm :: Read a => Commander a
--- rm = p2c readMaybe
 
 lookupWithExplanation :: (Show k, Ord k) => k -> M.Map k a -> Result a
 lookupWithExplanation k m =
@@ -126,11 +99,6 @@ lookupWithExplanation k m =
 mapCvt :: Show b => M.Map String b -> Commander b
 mapCvt m = p2c cvt
   where cvt s = eeesp ("mapCVT", m, s) $ lookupWithExplanation s m
-
--- TODO use Maybe properly here
--- mapCvtR :: (Read a, Ord a) => M.Map a b -> Commander b
--- mapCvtR m = p2c cvt
---   where cvt s = readMaybe s >>= flip lookupWithExplanation m
 
 nest :: M.Map String (Commander a) -> Commander a
 nest m = Commander r
