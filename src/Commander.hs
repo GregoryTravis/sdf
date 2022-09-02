@@ -10,8 +10,7 @@ module Commander
 , nest
 -- , rm
 , formatLog
-, p2c
-, cvtParser ) where
+, as ) where
 
 import Control.Applicative
 import qualified Data.Map.Strict as M
@@ -37,6 +36,8 @@ p2c p = Commander r
   where r [s] = p s
         r ss = Result Nothing ["p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")"]
         -- r ss = error ("p2c: expected 1, got " ++ show (length ss) ++ "(\"" ++ intercalate ", " ss ++ "\")")
+
+as s f = p2c $ cvtParser s f
 
 cvtParser :: Read a => String -> (a -> b) -> Parser b
 -- cvtParser ty cvt s = Result (fmap cvt $ readMaybe s) ["base " ++ ty ++ " \"" ++ s ++ "\""]

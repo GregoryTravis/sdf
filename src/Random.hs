@@ -49,14 +49,12 @@ instance Show Shape where
   show _ = "<shape>"
 
 -- TODO share this
-eParser :: Commander E
-eParser = p2c (cvtParser "KF" KF)
+pkf = as "KF" KF
 
 randomCommander :: Commander (IO E)
 randomCommander = nest $ M.fromList
-  [ ("sizes", sizes <$> c <*> c <*> c <*> primPick)
+  [ ("sizes", sizes <$> pkf <*> pkf <*> pkf <*> primPick)
   ]
-  where c = eParser
 
 -- a few circles actually
 sizes :: E -> E -> E -> Shape -> IO E
