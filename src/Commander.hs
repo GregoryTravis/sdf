@@ -23,9 +23,6 @@ data Result a = Result (Maybe a) [String] deriving Functor
 
 deriving instance Show a => Show (Result a)
 
-formatLog :: Result a -> String
-formatLog (Result _ ss) = intercalate ", " ss
-
 data Commander a = Commander ([String] -> Result a) deriving Functor
 
 type Parser a = String -> Result a
@@ -53,13 +50,6 @@ cvtParser ty cvt s =
 
 baseParser :: Read a => String -> Parser a
 baseParser ty = cvtParser ty id
-
--- TODO use TypeRep to get the type automatically
-floatParser :: Parser Float
-floatParser = baseParser "Float"
-
-rm :: Read a => Commander a
-rm = p2c $ baseParser "rm"
 
 -- TODO remove "pure" string?
 instance Applicative Result where
@@ -98,20 +88,25 @@ lookupWithExplanation k m =
 -- TODO use Maybe properly here
 mapCvt :: Show b => M.Map String b -> Commander b
 mapCvt m = p2c cvt
-  where cvt s = eeesp ("mapCVT", m, s) $ lookupWithExplanation s m
+  where cvt s = lookupWithExplanation s m
 
 nest :: M.Map String (Commander a) -> Commander a
 nest m = Commander r
   where r (s:ss) = lookupWithExplanation s m >>= flip appl ss
+
+formatLog :: Result a -> String
+formatLog (Result _ ss) = intercalate ", " ss
+
+appl :: Commander a -> [String] -> Result a
+appl (Commander f) ss = f ss
+
+-- Test code
 
 ilala :: Int -> Double
 ilala x = fromIntegral $ x + 1
 
 flala :: Double -> Double
 flala x = x + 100.0
-
-appl :: Commander a -> [String] -> Result a
-appl (Commander f) ss = f ss
 
 -- applWithDefault :: Commander a -> a -> [String] -> a
 -- applWithDefault commander def command = fromMaybe def (appl commander command)
@@ -124,9 +119,9 @@ fplus = (+)
 
 aNest :: Commander Double
 aNest = nest $ M.fromList
-  [ ("ilala", ilala <$> rm)
-  , ("flala", flala <$> rm)
-  , ("fplus", fplus <$> rm <*> rm)
+  [ ("ilala", ilala <$> parse)
+  , ("flala", flala <$> parse)
+  , ("fplus", fplus <$> parse <*> parse)
   , ("sub", mapCvt $ M.fromList [("a", 110), ("b", 220)])
   ]
 
@@ -135,10 +130,10 @@ commanderMain = do
   -- msp $ appl (heck (heck (pur iplus) (converter read)) (converter read)) ["4", "5"]
   -- msp $ appl (ilala <$> converter read) ["30"]
   -- msp $ appl (iplus <$> converter read <*> converter read) ["30", "41"]
-  -- msp $ appl (fplus <$> converter read <*> rm) ["30.0", "41"]
-  -- msp $ appl (iplus <$> converter read <*> rm) ["30.0", "41"]
-  -- let il = ilala <$> rm
-  --     fl = flala <$> rm
+  -- msp $ appl (fplus <$> converter read <*> parse) ["30.0", "41"]
+  -- msp $ appl (iplus <$> converter read <*> parse) ["30.0", "41"]
+  -- let il = ilala <$> parse
+  --     fl = flala <$> parse
   --     ifl = il <> fl
   -- msp $ appl il ["30"]
   -- msp $ appl fl ["30.0"]
