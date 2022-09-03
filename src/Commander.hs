@@ -67,9 +67,9 @@ instance Monad Result where
 
 instance Applicative Commander where
   -- TODO remove "pur" string?
-  pure a = error "undefined (just uncomment the commented-out definition)"
-  -- pure a = Commander r
-  --   where r [] = Result (Just a) ["pur"]
+  -- pure a = error "undefined (just uncomment the commented-out definition)"
+  pure a = Commander r
+    where r [] = Result (Just a) ["pur"]
   (Commander ssab) <*> (Commander ssa) = Commander r
     where r [] = error "heck: empty"
           r (s:ss) = ($) <$> ssab ss <*> ssa [s]

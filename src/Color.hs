@@ -59,12 +59,13 @@ bandy :: E -> E -> E -> E
 bandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend1 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
-        where x = 0.0
+        where x = 0.0 * k
       bwBlend2 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
-        where x = (-0.1)
+        where x = (-0.1 * k)
       bwBlend3 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
-        where x = (-0.96)
+        where x = (-0.96 * k)
       bwBlend = bwBlend2
+      k = 2.5
       color1 = bwBlend1 * bg + (1.0 - bwBlend1) * red;
       color2 = bwBlend2 * color1 + (1.0 - bwBlend2) * blue;
       color3 = bwBlend3 * color2 + (1.0 - bwBlend3) * fg;

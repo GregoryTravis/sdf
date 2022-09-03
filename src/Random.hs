@@ -51,6 +51,9 @@ instance Show Shape where
 randomCommander :: Commander (IO E)
 randomCommander = nest $ M.fromList
   [ ("sizes", sizes <$> via KF <*> via KF <*> via KF <*> primPick)
+  -- , ("filaoa", pure $ crecipe $ return $ evalShape filaoa)
+  , ("filaoa", pure $ return $ bandy black white $ evalShape filaoa)
+  , ("vlad", pure $ (evalRandIO rvlad) >>= (\s -> return $ siBandy black white $ evalShape s))
   ]
 
 -- a few circles actually
@@ -133,6 +136,7 @@ crecipe shaper = do
   col <- randomMaybeTransparentColor 0.333
   shape <- shaper
   let color = smooth col nothing shape
+  -- let color = bandy black white shape
   return color
 
 outlinecrecipes :: IO E
@@ -216,6 +220,7 @@ rvlad = vlad <$> (1.0...1.8) <*> s <*> s <*> s <*> s <*> sc
   where s = 0.2...3.0
         sc = pure 0.25 -- 0.05...0.3
 
+-- rLimonTwaist :: RandT StdGen Data.Functor.Identity.Identity Shape
 rLimonTwaist = limonTwaist <$> 1.1...1.7 <*> 1.0...6.0 <*> 3.0...12.0
 limonTwaist :: E -> E -> E -> Shape
 limonTwaist gs wf wa =
