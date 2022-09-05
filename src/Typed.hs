@@ -3,6 +3,7 @@
 module Typed
 ( typedMain ) where
 
+import Control.Monad (when)
 import Data.List (intercalate)
 import System.Mem.StableName
 
@@ -10,13 +11,13 @@ import Util hiding (time)
 
 -- Use DataKinds?
 data V2 a
-  deriving Show
+  deriving (Eq, Show)
 data V3 a
-  deriving Show
+  deriving (Eq, Show)
 data Mat2 a
-  deriving Show
+  deriving (Eq, Show)
 data Bul
-  deriving Show
+  deriving (Eq, Show)
 
 -- goals
 -- data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY | Mouse
@@ -32,7 +33,7 @@ data E a where
   KI :: Int -> E Int
   V2 :: Show a => E a -> E a -> E (V2 a)
   V3 :: Show a => E a -> E a -> E a -> E (V3 a)
-  Add :: Addable a b c => E a -> E b -> E c
+  Add :: Promotable a b c => E a -> E b -> E c
   Length :: Lengthable a b => E a -> E b
   Uniform :: String  -> E a
   Swizzle :: SwizzlesTo (vv n) (v n) => Swizzler (v n) -> E (vv n) -> E (v n)
@@ -66,6 +67,9 @@ instance Num (E Double) where
   signum = error "signum not implemented"
   fromInteger i = KD (fromInteger i)
   negate = Neg
+
+(+^) :: Promotable a b c => E a -> E b -> E c
+(+^) = Add
 
 -- -- fromRational, (recip | (/))
 -- instance Fractional (E a) where
@@ -132,21 +136,20 @@ instance Show a => FieldsTo (V2 a) a
 
 deriving instance Show a => Show (E a)
 
--- TODO: maybe "Promotable"?
-class (Show a, Show b, Show c) => Addable a b c | a b -> c
-instance Addable Int Int Int
-instance Addable Int Float Float
-instance Addable Float Float Float
+class (Show a, Show b, Show c) => Promotable a b c | a b -> c
+instance Promotable Int Int Int
+instance Promotable Int Float Float
+instance Promotable Float Float Float
 -- I have no idea if this is how GLSL does it
-instance Addable Double Double Double
-instance Addable Float Double Double
+instance Promotable Double Double Double
+instance Promotable Float Double Double
 -- Could there be an abbreviation, like this?
---   class SelfAddable a => Addable a a a
-instance Addable (V2 Float) (V2 Float) (V2 Float)
-instance Addable (V3 Float) (V3 Float) (V3 Float)
-instance Addable (V2 Float) Float (V2 Float)
-instance Addable (V2 Double) (V2 Double) (V2 Double)
-instance Addable (V2 Double) Double (V2 Double)
+--   class SelfPromotable a => Promotable a a a
+instance Promotable (V2 Float) (V2 Float) (V2 Float)
+instance Promotable (V3 Float) (V3 Float) (V3 Float)
+instance Promotable (V2 Float) Float (V2 Float)
+instance Promotable (V2 Double) (V2 Double) (V2 Double)
+instance Promotable (V2 Double) Double (V2 Double)
 
 class Show a => Lengthable a b | a -> b
 -- works
@@ -237,15 +240,37 @@ compileE (ShareRef n) = parens $ subexp n
 time :: E Float
 time = Uniform "time"
 
+tstVerbose = False
+
+tst :: (Eq a, Show a) => String -> a -> a -> IO ()
+tst info e a = do
+  when tstVerbose $
+    msp ("tsteq", info, e, a)
+  when (a /= e) $
+    msp $ "Test Failure: " ++ info ++ ": " ++ (show e) ++ " /= " ++ (show a)
+
+tstEq :: (Eq a, Show a) => a -> a -> IO ()
+tstEq = tst "equal"
+-- tstEq e a = do
+--   msp ("tsteq", e, a)
+--   when (a /= e) $
+--     msp $ "Test Failure: " ++ (show e) ++ "/=" ++ (show a)
+
+tstType :: (GlslType a, Eq a, Show a) => E a -> String -> IO ()
+tstType e a = tst info (typeName e) a
+  where info = "typeName " ++ show e
+
 -- Experimenting with a type paramter for E.
 typedMain = do
-  let f = KF 1.0
-      f2 = KF 2.0
-  let v2 = V2 (KF 1.0) (KF 1.0)
-      v2' = V2 (KF 2.0) (KF 2.0)
-      v3 = V3 (KF 2.0) (KF 2.0) (KF 3.0)
-      m2 = Mat2 [(KF 2.0), (KF 2.0), (KF 2.0), (KF 2.0)]
-  etc $ f + f
+  -- works
+  -- let f = KF 1.0
+  --     f2 = KF 2.0
+  -- let v2 = V2 (KF 1.0) (KF 1.0)
+  --     v2' = V2 (KF 2.0) (KF 2.0)
+  --     v3 = V3 (KF 2.0) (KF 2.0) (KF 3.0)
+  --     m2 = Mat2 [(KF 2.0), (KF 2.0), (KF 2.0), (KF 2.0)]
+  -- etc $ f + f
+  -- etc m2
   -- etc $ f + 1.0
   -- etc $ v2 - 1.0
   -- etc $ Length xy - 1.0
@@ -285,6 +310,20 @@ typedMain = do
   -- etc $ x v2
 
   -- works
+  tstType (Add (KI 1) (KI 2)) "int"
+  tstType (Add (KI 1) (KF 2.0)) "float"
+  tstType (Add (V2 (KF 1.0) (KF 1.0)) (V2 (KF 1.0) (KF 1.0))) "vec2"
+  tstType (Add (V2 (KF 1.0) (KF 1.0)) (KF 2.0)) "vec2"
+  tstType (Add (V2 (KD 1.0) (KD 1.0)) (V2 (KD 1.0) (KD 1.0))) "dvec2"
+  tstType (Add (V2 (KD 1.0) (KD 1.0)) (KD 2.0)) "dvec2"
+
+  tstType ((KI 1) +^ (KI 2)) "int"
+  tstType ((KI 1) +^ (KF 2.0)) "float"
+  tstType ((V2 (KF 1.0) (KF 1.0)) +^ (V2 (KF 1.0) (KF 1.0))) "vec2"
+  tstType ((V2 (KF 1.0) (KF 1.0)) +^ (KF 2.0)) "vec2"
+  tstType ((V2 (KD 1.0) (KD 1.0)) +^ (V2 (KD 1.0) (KD 1.0))) "dvec2"
+  tstType ((V2 (KD 1.0) (KD 1.0)) +^ (KD 2.0)) "dvec2"
+
   -- let blahii = Add (KI 1) (KI 2)
   --     blahif = Add (KI 1) (KF 2.0)
   --     blahvv = Add (V2 (KF 1.0) (KF 1.0)) (V2 (KF 1.0) (KF 1.0))
