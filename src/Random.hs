@@ -54,6 +54,7 @@ randomCommander = nest $ M.fromList
   -- , ("filaoa", pure $ crecipe $ return $ evalShape filaoa)
   , ("filaoa", pure $ return $ bandy black white $ evalShape filaoa)
   , ("vlad", pure $ (evalRandIO rvlad) >>= (\s -> return $ siBandy black white $ evalShape s))
+  , ("hrLimonTwaist", pure $ (evalRandIO hrLimonTwaist) >>= (\s -> return $ smooth black white $ evalShape s))
   ]
 
 -- a few circles actually
@@ -76,6 +77,7 @@ recipe :: Rnd Shape
 recipe = uniformM
   [
     rLimonTwaist
+  , hrLimonTwaist
   , thang
   , pure filaoa
   , rAnotherGreatOne
@@ -221,16 +223,32 @@ rvlad = vlad <$> (1.0...1.8) <*> s <*> s <*> s <*> s <*> sc
         sc = pure 0.25 -- 0.05...0.3
 
 -- rLimonTwaist :: RandT StdGen Data.Functor.Identity.Identity Shape
+rLimonTwaist :: Rnd Shape
 rLimonTwaist = limonTwaist <$> 1.1...1.7 <*> 1.0...6.0 <*> 3.0...12.0
 limonTwaist :: E -> E -> E -> Shape
 limonTwaist gs wf wa =
   let g = pfGrid gs gs circle
    in scale 0.25 $ transform (whorl wf wa) g
 
+hrLimonTwaist :: Rnd Shape
+hrLimonTwaist = hlimonTwaist <$> 1.1...1.7 <*> 1.0...6.0 <*> 3.0...12.0
+hlimonTwaist :: E -> E -> E -> Shape
+hlimonTwaist gs wf wa =
+  let g = pfGrid gs gs circle
+   in scale 0.25 $ transform (hwhorl wf wa) g
+
 whorl :: E -> E -> Transformer
 whorl wf wa tr@(Transform xy t) =
   let ang = Length xy * 2.0 * KF pi * (ssin (t / wf) / wa)
    in rotation' ang tr
+
+-- Rotation varies as x, not dist
+hwhorl :: E -> E -> Transformer
+hwhorl wf wa tr@(Transform xy t) =
+  -- let ang = ssin (X xy - Y xy) * 2.0 * KF pi * (ssin (t / wf) / wa)
+  let ang = ssin (X xy) - scos (Y xy) * 5.0 * KF pi * (ssin (t / wf) / wa)
+   in rotation' ang tr
+-- hwhorl _ _ (Transform e _) = error $ "huh " ++ show e
 
 flowerize :: E -> Transformer
 flowerize numPetals (Transform xy t) =
