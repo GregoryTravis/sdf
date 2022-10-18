@@ -34,6 +34,7 @@ data E a where
   V2 :: Show a => E a -> E a -> E (V2 a)
   V3 :: Show a => E a -> E a -> E a -> E (V3 a)
   Add :: Promotable a b c => E a -> E b -> E c
+  Sub :: Promotable a b c => E a -> E b -> E c
   Length :: Lengthable a b => E a -> E b
   Uniform :: String  -> E a
   Swizzle :: SwizzlesTo (vv n) (v n) => Swizzler (v n) -> E (vv n) -> E (v n)
@@ -70,6 +71,9 @@ instance Num (E Double) where
 
 (+^) :: Promotable a b c => E a -> E b -> E c
 (+^) = Add
+
+(-^) :: Promotable a b c => E a -> E b -> E c
+(-^) = Sub
 
 -- -- fromRational, (recip | (/))
 -- instance Fractional (E a) where
@@ -120,13 +124,15 @@ y e = Field (Fielder "y") e
 xy :: SwizzlesTo (vv n) (V2 n) => Typed.E (vv n) -> Typed.E (V2 n)
 xy e = Swizzle (SW2 "xy") e
 yx e = Swizzle (SW2 "yx") e
-xyz e = Swizzle (SW2 "xyz") e
-yxz e = Swizzle (SW2 "yxz") e
+xyz e = Swizzle (SW3 "xyz") e
+yxz e = Swizzle (SW3 "yxz") e
 
 deriving instance Show v => Show (Swizzler v)
 deriving instance Show v => Show (Fielder v)
 
+-- SwizzlesTo x y means that an x can be swizzled to a y
 class (Show a, Show b) => SwizzlesTo a b
+instance SwizzlesTo (V3 a) (V3 a)
 instance SwizzlesTo (V3 a) (V2 a)
 instance SwizzlesTo (V2 a) (V2 a)
 
@@ -260,56 +266,88 @@ tstType :: (GlslType a, Eq a, Show a) => E a -> String -> IO ()
 tstType e a = tst info (typeName e) a
   where info = "typeName " ++ show e
 
--- Experimenting with a type paramter for E.
-typedMain = do
-  -- works
-  -- let f = KF 1.0
-  --     f2 = KF 2.0
-  -- let v2 = V2 (KF 1.0) (KF 1.0)
-  --     v2' = V2 (KF 2.0) (KF 2.0)
-  --     v3 = V3 (KF 2.0) (KF 2.0) (KF 3.0)
-  --     m2 = Mat2 [(KF 2.0), (KF 2.0), (KF 2.0), (KF 2.0)]
-  -- etc $ f + f
-  -- etc m2
-  -- etc $ f + 1.0
-  -- etc $ v2 - 1.0
-  -- etc $ Length xy - 1.0
+{-
 
-  -- works
-  -- etc $ ssqrt f
-  -- etc $ ssin f
-  -- etc $ scos f
-  -- etc $ satan (ssin f) (scos f)
-  -- etc $ Neg f
-  -- etc $ m2
-  -- etc $ f ==. f2
-  -- etc $ f <. f2
-  -- etc $ f >. f2
-  -- etc $ f <=. f2
-  -- etc $ f >=. f2
-  -- etc $ Cond (f >=. f2) (ssin f) (scos f)
+-- FAVORITE don't lose this!!
+-- fall in love all over again
+filaoa :: Shape
+filaoa = scale 0.1 $ smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
+  where filaoa' = pfGrid 2.25 2.25 circle
 
-  -- works
-  -- etc f
-  -- etc v2
-  -- etc v3
-  -- etc $ V2 (Add (KF 1.0) (KF 2.0)) (KF 3.0)
-  -- etc $ Length v2
-  -- etc $ Length v3
-  -- etc $ time
-  -- etc $ xy v2
-  -- etc $ xy v3
-  -- etc $ yx v2
-  -- etc $ yx v3
-  -- etc $ xyz v3
-  -- etc $ yxz v3
-  -- etc $ x v2
-  -- etc $ y v2
-  -- etc $ x v3
-  -- etc $ y v3
-  -- etc $ x v2
+scale :: E -> UnOp
+scale s = transform (scale' s)
 
-  -- works
+scale' :: E -> Transformer
+scale' s (Transform xy t) = Transform (xy / s) t
+
+translation :: E -> UnOp
+translation dxy = transform (translation' dxy)
+
+translation' :: E -> Transformer
+translation' dxy (Transform xy t) = Transform (xy - dxy) t
+
+rotation :: E -> UnOp
+rotation ang = transform (rotation' ang)
+
+rotation' :: E -> Transformer
+rotation' ang (Transform xy t) =
+  let c = sh $ scos ang
+      s = sh $ ssin ang
+      mat = sh $ Mat2 [c, s, -s, c]
+   in Transform (mat * xy) t
+
+pfGrid :: E -> E -> UnOp
+pfGrid w h = transform (pfGrid' w h)
+
+-- I tried using mod to calculate xx, yy, xi, yi, but it was wrong, so I just inlined the original rust grid_fmod2()
+pfGrid' :: E -> E -> Transformer
+pfGrid' w h (Transform xy t) =
+  let x = X xy
+      y = Y xy
+      xow = sh $ x / w
+      yoh = sh $ y / h
+      xx = sh $ (xow - sfloor xow) * w
+      xi = sh $ sfloor xow
+      yy = sh $ (yoh - sfloor yoh) * h
+      yi = sh $ sfloor yoh
+      xx2 = sh $ Cond (smod (Abs xi) 2.0 ==. 1.0) (w - xx) xx
+      yy2 = sh $ Cond (smod (Abs yi) 2.0 ==. 1.0) (h - yy) yy
+   in Transform (V2 xx2 yy2) t
+
+circle :: Shape
+circle (Transform xy _) =
+  let dist = Length xy - 1.0
+   in dist
+
+type Shape = Transform -> E
+type UnOp = Shape -> Shape
+type BinOp = Shape -> Shape -> Shape
+
+data Transform = Transform E E
+type Transformer = Transform -> Transform
+
+binopper :: (E -> E -> E) -> BinOp
+binopper distCombiner p0 p1 tr = distCombiner (sh $ p0 tr) (sh $ p1 tr)
+
+smoothUnion :: BinOp
+smoothUnion = binopper smoothUnion'
+
+smoothUnion' :: E -> E -> E
+smoothUnion' usd0 usd1 =
+  let d0 = sh usd0
+      d1 = sh usd1
+      r = 0.3
+      md0 = sh $ Min (d0 - r) 0.0
+      md1 = sh $ Min (d1 - r) 0.0
+      inside_distance = - (ssqrt $ (md0 * md0) + (md1 * md1))
+      simple_union = Min d0 d1
+      outside_distance = Max simple_union r
+      dist = inside_distance + outside_distance
+   in dist
+
+-}
+
+tests = do
   tstType (Add (KI 1) (KI 2)) "int"
   tstType (Add (KI 1) (KF 2.0)) "float"
   tstType (Add (V2 (KF 1.0) (KF 1.0)) (V2 (KF 1.0) (KF 1.0))) "vec2"
@@ -324,27 +362,53 @@ typedMain = do
   tstType ((V2 (KD 1.0) (KD 1.0)) +^ (V2 (KD 1.0) (KD 1.0))) "dvec2"
   tstType ((V2 (KD 1.0) (KD 1.0)) +^ (KD 2.0)) "dvec2"
 
-  -- let blahii = Add (KI 1) (KI 2)
-  --     blahif = Add (KI 1) (KF 2.0)
-  --     blahvv = Add (V2 (KF 1.0) (KF 1.0)) (V2 (KF 1.0) (KF 1.0))
-  --     blahvf = Add (V2 (KF 1.0) (KF 1.0)) (KF 2.0)
-  --     blahdd = Add (V2 (KD 1.0) (KD 1.0)) (V2 (KD 1.0) (KD 1.0))
-  --     blahdf = Add (V2 (KD 1.0) (KD 1.0)) (KD 2.0)
-  --     blahfd = Add (KF 1.0) (KD 2.0)
-  -- eat blahii
-  -- eat blahif
-  -- eat blahvv
-  -- eat blahvf
-  -- eat blahdd
-  -- eat blahdf
-  -- eat blahfd
-  -- let v2 = V2 (KF 1.0) (KF 1.0)
-  --     v2' = V2 (KF 2.0) (KF 2.0)
-  --     v3 = V3 (KF 2.0) (KF 2.0) (KF 3.0)
-  -- eat $ Length v2
-  -- eat $ v3
-  -- eat $ Add v3 v3
-  -- eat $ Length v3
-  -- eat $ yx v2
+  let f = KF 1.0
+      f2 = KF 2.0
+  let v2 = V2 (KF 1.0) (KF 1.0)
+      v2' = V2 (KF 2.0) (KF 2.0)
+      v3 = V3 (KF 2.0) (KF 2.0) (KF 3.0)
+      m2 = Mat2 [(KF 2.0), (KF 2.0), (KF 2.0), (KF 2.0)]
+  tstType f "float"
+  tstType f2 "float"
+  tstType v2 "vec2"
+  tstType v2' "vec2"
+  tstType v3 "vec3"
+  tstType m2 "mat2"
+  tstType (f +^ f) "float"
+  tstType (f +^ KF 1.0) "float"
+  tstType (v2 -^ KF 1.0) "vec2"
+  tstType (Length (xy v3) -^ KF 1.0) "float"
+
+  tstType (ssqrt f) "float"
+  tstType (ssin f) "float"
+  tstType (scos f) "float"
+  tstType (satan (ssin f) (scos f)) "float"
+  tstType (Neg f) "float"
+  tstType (f ==. f2) "bool"
+  tstType (f <. f2) "bool"
+  tstType (f >. f2) "bool"
+  tstType (f <=. f2) "bool"
+  tstType (f >=. f2) "bool"
+  tstType (Cond (f >=. f2) (ssin f) (scos f)) "float"
+
+  tstType (V2 (Add (KF 1.0) (KF 2.0)) (KF 3.0)) "vec2"
+  tstType (Length v2) "float"
+  tstType (Length v3) "float"
+  tstType (time) "float"
+  tstType (xy v2) "vec2"
+  tstType (xy v3) "vec2"
+  tstType (yx v2) "vec2"
+  tstType (yx v3) "vec2"
+  tstType (xyz v3) "vec3"
+  tstType (yxz v3) "vec3"
+  tstType (x v2) "float"
+  tstType (y v2) "float"
+  tstType (x v3) "float"
+  tstType (y v3) "float"
+  tstType (x v2) "float"
+
+-- Experimenting with a type paramter for E.
+typedMain = do
+  tests
 
   msp "typed hi"
