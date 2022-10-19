@@ -5,6 +5,7 @@ module Typed
 
 import Control.Monad (when)
 import Data.List (intercalate)
+import System.IO.Unsafe
 import System.Mem.StableName
 
 import Util hiding (time)
@@ -35,6 +36,8 @@ data E a where
   V3 :: Show a => E a -> E a -> E a -> E (V3 a)
   Add :: Promotable a b c => E a -> E b -> E c
   Sub :: Promotable a b c => E a -> E b -> E c
+  Mul :: Promotable a b c => E a -> E b -> E c
+  Div :: Promotable a b c => E a -> E b -> E c
   Length :: Lengthable a b => E a -> E b
   Uniform :: String  -> E a
   Swizzle :: SwizzlesTo (vv n) (v n) => Swizzler (v n) -> E (vv n) -> E (v n)
@@ -52,6 +55,10 @@ data E a where
   -- RGB, A etc aliases for XYZ, W etc
   Share :: E a -> StableName (E a) -> E a
   ShareRef :: Int -> E a
+
+sh :: E a -> E a
+sh e = Share e sn
+  where sn = unsafePerformIO $ makeStableName e
 
 instance Num (E Float) where
   (+) = Add
@@ -74,6 +81,12 @@ instance Num (E Double) where
 
 (-^) :: Promotable a b c => E a -> E b -> E c
 (-^) = Sub
+
+(*^) :: Promotable a b c => E a -> E b -> E c
+(*^) = Mul
+
+(/^) :: Promotable a b c => E a -> E b -> E c
+(/^) = Div
 
 -- -- fromRational, (recip | (/))
 -- instance Fractional (E a) where
@@ -108,6 +121,17 @@ ssin = Fun1 "sin"
 scos :: E Float -> E Float
 scos = Fun1 "cos"
 
+sfloor :: E Float -> E Float
+sfloor = Fun1 "floor"
+smod :: E Float -> E Float -> E Float
+smod = (Fun2 "mod")
+sabs :: E Float -> E Float
+sabs = Fun1 "abs"
+smin :: E Float -> E Float -> E Float
+smin = Fun2 "min"
+smax :: E Float -> E Float -> E Float
+smax = Fun2 "max"
+
 data Swizzler v where
   SW2 :: String -> Swizzler (V2 a)
   SW3 :: String -> Swizzler (V3 a)
@@ -119,8 +143,8 @@ swizzleFields (SW3 s) = s
 data Fielder v where
   Fielder :: String -> Fielder a
 
-x e = Field (Fielder "x") e
-y e = Field (Fielder "y") e
+_x e = Field (Fielder "x") e
+_y e = Field (Fielder "y") e
 xy :: SwizzlesTo (vv n) (V2 n) => Typed.E (vv n) -> Typed.E (V2 n)
 xy e = Swizzle (SW2 "xy") e
 yx e = Swizzle (SW2 "yx") e
@@ -142,6 +166,7 @@ instance Show a => FieldsTo (V2 a) a
 
 deriving instance Show a => Show (E a)
 
+-- a `op` b results in type c
 class (Show a, Show b, Show c) => Promotable a b c | a b -> c
 instance Promotable Int Int Int
 instance Promotable Int Float Float
@@ -156,6 +181,7 @@ instance Promotable (V3 Float) (V3 Float) (V3 Float)
 instance Promotable (V2 Float) Float (V2 Float)
 instance Promotable (V2 Double) (V2 Double) (V2 Double)
 instance Promotable (V2 Double) Double (V2 Double)
+instance Promotable (Mat2 Float) (V2 Float) (V2 Float)
 
 class Show a => Lengthable a b | a -> b
 -- works
@@ -245,6 +271,8 @@ compileE (ShareRef n) = parens $ subexp n
 
 time :: E Float
 time = Uniform "time"
+uv :: E (V2 Float)
+uv = Uniform "uv"
 
 tstVerbose = False
 
@@ -266,86 +294,91 @@ tstType :: (GlslType a, Eq a, Show a) => E a -> String -> IO ()
 tstType e a = tst info (typeName e) a
   where info = "typeName " ++ show e
 
-{-
-
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
-filaoa = scale 0.1 $ smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
-  where filaoa' = pfGrid 2.25 2.25 circle
+filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) filaoa')
+  where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
 
-scale :: E -> UnOp
+transform :: Transformer -> Shape -> Shape
+transform transformer p = p . transformer
+
+idTransform :: Transform
+idTransform = Transform uv time
+
+evalShape :: Shape -> E Float
+evalShape p = p idTransform
+
+scale :: E Float -> UnOp
 scale s = transform (scale' s)
 
-scale' :: E -> Transformer
-scale' s (Transform xy t) = Transform (xy / s) t
+scale' :: E Float -> Transformer
+scale' s (Transform xy t) = Transform (xy /^ s) t
 
-translation :: E -> UnOp
+translation :: E (V2 Float) -> UnOp
 translation dxy = transform (translation' dxy)
 
-translation' :: E -> Transformer
-translation' dxy (Transform xy t) = Transform (xy - dxy) t
+translation' :: E (V2 Float) -> Transformer
+translation' dxy (Transform xy t) = Transform (xy -^ dxy) t
 
-rotation :: E -> UnOp
+rotation :: E Float -> UnOp
 rotation ang = transform (rotation' ang)
 
-rotation' :: E -> Transformer
+rotation' :: E Float -> Transformer
 rotation' ang (Transform xy t) =
   let c = sh $ scos ang
       s = sh $ ssin ang
       mat = sh $ Mat2 [c, s, -s, c]
-   in Transform (mat * xy) t
+   in Transform (mat *^ xy) t
 
-pfGrid :: E -> E -> UnOp
+pfGrid :: E Float -> E Float -> UnOp
 pfGrid w h = transform (pfGrid' w h)
 
 -- I tried using mod to calculate xx, yy, xi, yi, but it was wrong, so I just inlined the original rust grid_fmod2()
-pfGrid' :: E -> E -> Transformer
+pfGrid' :: E Float -> E Float -> Transformer
 pfGrid' w h (Transform xy t) =
-  let x = X xy
-      y = Y xy
-      xow = sh $ x / w
-      yoh = sh $ y / h
-      xx = sh $ (xow - sfloor xow) * w
+  let x = _x xy
+      y = _y xy
+      xow = sh $ x /^ w
+      yoh = sh $ y /^ h
+      xx = sh $ (xow -^ sfloor xow) * w
       xi = sh $ sfloor xow
-      yy = sh $ (yoh - sfloor yoh) * h
+      yy = sh $ (yoh -^ sfloor yoh) * h
       yi = sh $ sfloor yoh
-      xx2 = sh $ Cond (smod (Abs xi) 2.0 ==. 1.0) (w - xx) xx
-      yy2 = sh $ Cond (smod (Abs yi) 2.0 ==. 1.0) (h - yy) yy
+      xx2 = sh $ Cond (smod (sabs xi) (KF 2.0) ==. (KF 1.0)) (w -^ xx) xx
+      yy2 = sh $ Cond (smod (sabs yi) (KF 2.0) ==. (KF 1.0)) (h -^ yy) yy
    in Transform (V2 xx2 yy2) t
 
 circle :: Shape
 circle (Transform xy _) =
-  let dist = Length xy - 1.0
+  let dist = Length xy -^ KF 1.0
    in dist
 
-type Shape = Transform -> E
+type Shape = Transform -> E Float
 type UnOp = Shape -> Shape
 type BinOp = Shape -> Shape -> Shape
 
-data Transform = Transform E E
+data Transform = Transform (E (V2 Float)) (E Float)
 type Transformer = Transform -> Transform
 
-binopper :: (E -> E -> E) -> BinOp
+binopper :: (E Float -> E Float -> E Float) -> BinOp
 binopper distCombiner p0 p1 tr = distCombiner (sh $ p0 tr) (sh $ p1 tr)
 
 smoothUnion :: BinOp
 smoothUnion = binopper smoothUnion'
 
-smoothUnion' :: E -> E -> E
+smoothUnion' :: E Float -> E Float -> E Float
 smoothUnion' usd0 usd1 =
   let d0 = sh usd0
       d1 = sh usd1
-      r = 0.3
-      md0 = sh $ Min (d0 - r) 0.0
-      md1 = sh $ Min (d1 - r) 0.0
-      inside_distance = - (ssqrt $ (md0 * md0) + (md1 * md1))
-      simple_union = Min d0 d1
-      outside_distance = Max simple_union r
+      r = KF 0.3
+      md0 = sh $ smin (d0 -^ r) (KF 0.0)
+      md1 = sh $ smin (d1 -^ r) (KF 0.0)
+      inside_distance = - (ssqrt $ (md0 *^ md0) +^ (md1 *^ md1))
+      simple_union = smin d0 d1
+      outside_distance = smax simple_union r
       dist = inside_distance + outside_distance
    in dist
-
--}
 
 tests = do
   tstType (Add (KI 1) (KI 2)) "int"
@@ -401,11 +434,11 @@ tests = do
   tstType (yx v3) "vec2"
   tstType (xyz v3) "vec3"
   tstType (yxz v3) "vec3"
-  tstType (x v2) "float"
-  tstType (y v2) "float"
-  tstType (x v3) "float"
-  tstType (y v3) "float"
-  tstType (x v2) "float"
+  tstType (_x v2) "float"
+  tstType (_y v2) "float"
+  tstType (_x v3) "float"
+  tstType (_y v3) "float"
+  tstType (_x v2) "float"
 
 -- Experimenting with a type paramter for E.
 typedMain = do
