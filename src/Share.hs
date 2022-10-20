@@ -55,9 +55,9 @@ toRefs capMap refMap =
       caps = Prelude.map (\sn -> capMap HM.! sn) sns
    in M.fromList (zip refs caps)
 
--- Allocate a fresh tag n for this node, add (n -> e) to the map state, and
--- return (ShRef n).
--- Also recursively call share on the contents of the Sh node.
+-- Allocate a fresh tag n for expression e, add (n -> e') to the map state,
+-- where e' is the result of the recursive call to share' on e.
+-- Return (ShRef n).
 share' :: E -> State ShareState E
 share' (Share e sn) = do
   hc <- hasCap sn
