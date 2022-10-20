@@ -17,6 +17,7 @@ import Infinity
 import Interactive
 import Random
 import Single
+import TSingle
 import Util
 
 runServer :: IO ()
@@ -25,6 +26,7 @@ runServer = run 8000 app
 app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
+  route "/t" (htmlHandler tsingleHandler)
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
   route "/i" (htmlHandler (interpo1 >>= singleHandler))
   route "/ip" (htmlHandler (interpoPile >>= singleHandler))

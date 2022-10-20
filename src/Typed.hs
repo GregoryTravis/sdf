@@ -1,7 +1,17 @@
 {-# LANGUAGE AllowAmbiguousTypes, DeriveGeneric, EmptyDataDeriving, FlexibleContexts, FlexibleInstances, FunctionalDependencies, GADTs, MultiParamTypeClasses, StandaloneDeriving #-}
 
 module Typed
-( typedMain ) where
+( E(..)
+, V4(..)
+, typedMain
+, typeName
+, compileE
+, (+^)
+, (-^)
+, (*^)
+, sh
+, evalShape
+, filaoa ) where
 
 import Control.Monad (when)
 import Data.List (intercalate)
@@ -14,6 +24,8 @@ import Util hiding (time)
 data V2 a
   deriving (Eq, Show)
 data V3 a
+  deriving (Eq, Show)
+data V4 a
   deriving (Eq, Show)
 data Mat2 a
   deriving (Eq, Show)
@@ -34,6 +46,7 @@ data E a where
   KI :: Int -> E Int
   V2 :: Show a => E a -> E a -> E (V2 a)
   V3 :: Show a => E a -> E a -> E a -> E (V3 a)
+  V4 :: Show a => E a -> E a -> E a -> E a -> E (V4 a)
   Add :: Promotable a b c => E a -> E b -> E c
   Sub :: Promotable a b c => E a -> E b -> E c
   Mul :: Promotable a b c => E a -> E b -> E c
@@ -44,6 +57,7 @@ data E a where
   Field :: FieldsTo (vv n) n => Fielder n -> E (vv n) -> E n
   Fun1 :: Show a => String -> E a -> E b
   Fun2 :: (Show a, Show b) => String -> E a -> E b -> E c
+  Fun3 :: (Show a, Show b, Show c) => String -> E a -> E b -> E c -> E d
   Neg :: E a -> E a
   Mat2 :: Show a => [E a] -> E (Mat2 a)
   Comparison :: Show a => String -> E a -> E a -> E Bul
@@ -53,25 +67,25 @@ data E a where
   -- App :: (Show a, Show b) => E (a -> b) -> E a -> E b
   -- XY, Mouse are just globals, not their own types
   -- RGB, A etc aliases for XYZ, W etc
-  Share :: E a -> StableName (E a) -> E a
+  Share :: StableName (E a) -> E a -> E a
   ShareRef :: Int -> E a
 
 sh :: E a -> E a
-sh e = Share e sn
+sh e = Share sn e
   where sn = unsafePerformIO $ makeStableName e
 
 instance Num (E Float) where
   (+) = Add
-  (*) = undefined
-  abs = undefined
+  (*) = Mul
+  abs = error "abs"
   signum = error "signum not implemented"
   fromInteger i = KF (fromInteger i)
   negate = Neg
 
 instance Num (E Double) where
   (+) = Add
-  (*) = undefined
-  abs = undefined
+  (*) = Mul
+  abs = error "abs"
   signum = error "signum not implemented"
   fromInteger i = KD (fromInteger i)
   negate = Neg
@@ -182,6 +196,8 @@ instance Promotable (V2 Float) Float (V2 Float)
 instance Promotable (V2 Double) (V2 Double) (V2 Double)
 instance Promotable (V2 Double) Double (V2 Double)
 instance Promotable (Mat2 Float) (V2 Float) (V2 Float)
+instance Promotable Float (V4 Float) (V4 Float)
+instance Promotable (V4 Float) (V4 Float) (V4 Float)
 
 class Show a => Lengthable a b | a -> b
 -- works
@@ -211,6 +227,8 @@ instance GlslType (V3 Float) where
   typeName _ = "vec3"
 instance GlslType (V3 Double) where
   typeName _ = "dvec3"
+instance GlslType (V4 Float) where
+  typeName _ = "vec4"
 instance GlslType (Mat2 float) where
   typeName _ = "mat2"
 instance GlslType Bul where
@@ -252,20 +270,27 @@ cond b t e = parens $ concat [parens b, "?", parens t , ":", parens e]
 compileE :: Show a => E a -> String
 compileE (KF n) = parens $ show n
 compileE (Add a b) = op "+" (compileE a) (compileE b)
+compileE (Sub a b) = op "-" (compileE a) (compileE b)
+compileE (Mul a b) = op "*" (compileE a) (compileE b)
+compileE (Div a b) = op "/" (compileE a) (compileE b)
 compileE (V2 a b) = fun "vec2" [compileE a, compileE b]
 compileE (V3 a b c) = fun "vec3" [compileE a, compileE b, compileE c]
+compileE (V4 a b c d) = fun "vec4" [compileE a, compileE b, compileE c, compileE d]
 compileE (Length e) = fun "length" [compileE e]
 compileE (Uniform name) = parens name
 compileE (Swizzle swizzler v) = dot (compileE v) (swizzleFields swizzler)
 compileE (Field (Fielder field) v) = dot (compileE v) field
 compileE (Fun1 name arg1) = fun name [compileE arg1]
 compileE (Fun2 name arg1 arg2) = fun name [compileE arg1, compileE arg2]
+compileE (Fun3 name arg1 arg2 arg3) = fun name [compileE arg1, compileE arg2, compileE arg3]
 compileE (Neg a) = parens $ concat ["-", compileE a]
 compileE (Mat2 xs) = fun "mat2" (map compileE xs)
 compileE (Comparison name a b) = op name (compileE a) (compileE b)
 compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
-compileE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
+-- compileE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
+compileE (Share _ e) = compileE e
 compileE (ShareRef n) = parens $ subexp n
+compileE e = error $ "compileE: " ++ show e
 
 -- v2 = V2 (KF 1.0) (KF 1.0)
 
@@ -443,5 +468,7 @@ tests = do
 -- Experimenting with a type paramter for E.
 typedMain = do
   tests
+
+  msp $ compileE $ evalShape filaoa
 
   msp "typed hi"

@@ -19,9 +19,9 @@ import Transform
 import Typed
 import Util hiding (time)
 
-genShape :: IO E
-genShape = do
-  crecipes
+-- genShape :: IO E
+-- genShape = do
+--   crecipes
 
 -- handler :: IO String
 -- handler = do
@@ -36,5 +36,5 @@ main = do
   noBuffering
   -- randomTiming
   -- snTest
-  -- runServer
-  typedMain
+  runServer
+  -- typedMain
