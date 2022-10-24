@@ -4,17 +4,19 @@ module Typed
 ( E(..)
 , V4(..)
 , typedMain
+, GlslType
 , typeName
-, compileE
 , (+^)
 , (-^)
 , (*^)
 , sh
 , evalShape
+, Fielder(..)
+, swizzleFields
 , filaoa ) where
 
 import Control.Monad (when)
-import Data.List (intercalate)
+import GHC.Generics (Generic)
 import System.IO.Unsafe
 import System.Mem.StableName
 
@@ -32,45 +34,39 @@ data Mat2 a
 data Bul
   deriving (Eq, Show)
 
--- goals
--- data E = KF Double | U Uniform | Add E E | Sub E E | Mul E E | Div E E | Length E | V2 E E | V3 E E E | V4 E E E E | XY | Mouse
---        | Abs E | Min E E | Max E E | X E | Y E | Neg E | Fun1 String Ty Ty E | Fun2 String Ty Ty Ty E E | Fun String [Ty] Ty [E] | Mat2 [E]
---        | Comparison String E E | Cond E E E -- | V String
---        | RGB E | A E
---        | Share E (StableName E)
---        | ShareRef Int
-
 data E a where
   KF :: Float -> E Float
   KD :: Double -> E Double
   KI :: Int -> E Int
-  V2 :: Show a => E a -> E a -> E (V2 a)
-  V3 :: Show a => E a -> E a -> E a -> E (V3 a)
-  V4 :: Show a => E a -> E a -> E a -> E a -> E (V4 a)
-  Add :: Promotable a b c => E a -> E b -> E c
-  Sub :: Promotable a b c => E a -> E b -> E c
-  Mul :: Promotable a b c => E a -> E b -> E c
-  Div :: Promotable a b c => E a -> E b -> E c
-  Length :: Lengthable a b => E a -> E b
-  Uniform :: String  -> E a
-  Swizzle :: SwizzlesTo (vv n) (v n) => Swizzler (v n) -> E (vv n) -> E (v n)
-  Field :: FieldsTo (vv n) n => Fielder n -> E (vv n) -> E n
-  Fun1 :: Show a => String -> E a -> E b
-  Fun2 :: (Show a, Show b) => String -> E a -> E b -> E c
-  Fun3 :: (Show a, Show b, Show c) => String -> E a -> E b -> E c -> E d
-  Neg :: E a -> E a
-  Mat2 :: Show a => [E a] -> E (Mat2 a)
-  Comparison :: Show a => String -> E a -> E a -> E Bul
-  Cond :: E Bul -> E a -> E a -> E a
+  V2 :: (Show a, GlslType a) => E a -> E a -> E (V2 a)
+  V3 :: (Show a, GlslType a) => E a -> E a -> E a -> E (V3 a)
+  V4 :: (Show a, GlslType a) => E a -> E a -> E a -> E a -> E (V4 a)
+  Add :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
+  Sub :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
+  Mul :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
+  Div :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
+  Length :: (GlslType a, GlslType b, Lengthable a b) => E a -> E b
+  Uniform :: GlslType a => String -> E a
+  Swizzle :: (GlslType (vv n), GlslType (v n), SwizzlesTo (vv n) (v n)) => Swizzler (v n) -> E (vv n) -> E (v n)
+  Field :: (GlslType (vv n), FieldsTo (vv n) n) => Fielder n -> E (vv n) -> E n
+  Fun1 :: (GlslType a, GlslType b, Show a) => String -> E a -> E b
+  Fun2 :: (Show a, Show b, GlslType a, GlslType b) => String -> E a -> E b -> E c
+  Fun3 :: (Show a, Show b, Show c, GlslType a, GlslType b, GlslType c) => String -> E a -> E b -> E c -> E d
+  Neg :: GlslType a => E a -> E a
+  Mat2 :: (Show a, GlslType a) => [E a] -> E (Mat2 a)
+  Comparison :: (Show a, GlslType a) => String -> E a -> E a -> E Bul
+  Cond :: GlslType a => E Bul -> E a -> E a -> E a
   -- These require a dummy Show instance for E (a -> b) and IncoherentInstances
   -- Fun :: String -> E (a -> b)
   -- App :: (Show a, Show b) => E (a -> b) -> E a -> E b
   -- XY, Mouse are just globals, not their own types
   -- RGB, A etc aliases for XYZ, W etc
-  Share :: StableName (E a) -> E a -> E a
-  ShareRef :: Int -> E a
+  Share :: GlslType a => StableName (E a) -> E a -> E a
+  ShareRef :: GlslType a => Int -> E a
 
-sh :: E a -> E a
+-- deriving instance Generic a => Generic (E a)
+
+sh :: GlslType a => E a -> E a
 sh e = Share sn e
   where sn = unsafePerformIO $ makeStableName e
 
@@ -90,16 +86,16 @@ instance Num (E Double) where
   fromInteger i = KD (fromInteger i)
   negate = Neg
 
-(+^) :: Promotable a b c => E a -> E b -> E c
+(+^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (+^) = Add
 
-(-^) :: Promotable a b c => E a -> E b -> E c
+(-^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (-^) = Sub
 
-(*^) :: Promotable a b c => E a -> E b -> E c
+(*^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (*^) = Mul
 
-(/^) :: Promotable a b c => E a -> E b -> E c
+(/^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (/^) = Div
 
 -- -- fromRational, (recip | (/))
@@ -111,19 +107,19 @@ instance Show (StableName a) where
   show sn = show (hashStableName sn)
 
 infix 4 ==.
-(==.) :: Show a => E a -> E a -> E Bul
+(==.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (==.) = Comparison "=="
 infix 4 <.
-(<.) :: Show a => E a -> E a -> E Bul
+(<.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (<.) = Comparison "<"
 infix 4 >.
-(>.) :: Show a => E a -> E a -> E Bul
+(>.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (>.) = Comparison ">"
 infix 4 <=.
-(<=.) :: Show a => E a -> E a -> E Bul
+(<=.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (<=.) = Comparison "<="
 infix 4 >=.
-(>=.) :: Show a => E a -> E a -> E Bul
+(>=.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (>=.) = Comparison ">="
 
 ssqrt :: E Float -> E Float
@@ -157,9 +153,10 @@ swizzleFields (SW3 s) = s
 data Fielder v where
   Fielder :: String -> Fielder a
 
+_x :: (GlslType (v n), FieldsTo (v n) n) => E (v n) -> E n
 _x e = Field (Fielder "x") e
 _y e = Field (Fielder "y") e
-xy :: SwizzlesTo (vv n) (V2 n) => Typed.E (vv n) -> Typed.E (V2 n)
+xy :: (GlslType (V2 n), GlslType (vv n), SwizzlesTo (vv n) (V2 n)) => Typed.E (vv n) -> Typed.E (V2 n)
 xy e = Swizzle (SW2 "xy") e
 yx e = Swizzle (SW2 "yx") e
 xyz e = Swizzle (SW3 "xyz") e
@@ -241,58 +238,11 @@ eat e = do
   msp (typeName e)
 
 -- Show expression, type, and compiled expressions
-etc :: (GlslType a, Show a) => E a -> IO ()
-etc e = do
-  msp e
-  msp (typeName e)
-  msp $ compileE e
-
-subexp :: Int -> String
-subexp n = "x" ++ show n
-
-parens :: String -> String
-parens x = concat ["(", x, ")"]
-
-op :: String -> String -> String -> String
-op operator a b = parens $ concat [parens a, operator, parens b]
-
-fun :: String -> [String] -> String
-fun f args = parens $ concat [f, parens arglist]
-  where arglist = intercalate ", " args
-
-dot :: String -> String -> String
-dot e field = parens $ concat [e, ".", field]
-
-cond :: String -> String -> String -> String
-cond b t e = parens $ concat [parens b, "?", parens t , ":", parens e]
-
--- It's assume the top level of any call to compileE is a call to parens
-compileE :: Show a => E a -> String
-compileE (KF n) = parens $ show n
-compileE (Add a b) = op "+" (compileE a) (compileE b)
-compileE (Sub a b) = op "-" (compileE a) (compileE b)
-compileE (Mul a b) = op "*" (compileE a) (compileE b)
-compileE (Div a b) = op "/" (compileE a) (compileE b)
-compileE (V2 a b) = fun "vec2" [compileE a, compileE b]
-compileE (V3 a b c) = fun "vec3" [compileE a, compileE b, compileE c]
-compileE (V4 a b c d) = fun "vec4" [compileE a, compileE b, compileE c, compileE d]
-compileE (Length e) = fun "length" [compileE e]
-compileE (Uniform name) = parens name
-compileE (Swizzle swizzler v) = dot (compileE v) (swizzleFields swizzler)
-compileE (Field (Fielder field) v) = dot (compileE v) field
-compileE (Fun1 name arg1) = fun name [compileE arg1]
-compileE (Fun2 name arg1 arg2) = fun name [compileE arg1, compileE arg2]
-compileE (Fun3 name arg1 arg2 arg3) = fun name [compileE arg1, compileE arg2, compileE arg3]
-compileE (Neg a) = parens $ concat ["-", compileE a]
-compileE (Mat2 xs) = fun "mat2" (map compileE xs)
-compileE (Comparison name a b) = op name (compileE a) (compileE b)
-compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
--- compileE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
-compileE (Share _ e) = compileE e
-compileE (ShareRef n) = parens $ subexp n
-compileE e = error $ "compileE: " ++ show e
-
--- v2 = V2 (KF 1.0) (KF 1.0)
+-- etc :: (GlslType a, Show a) => E a -> IO ()
+-- etc e = do
+--   msp e
+--   msp (typeName e)
+--   msp $ compileE e
 
 time :: E Float
 time = Uniform "time"
@@ -399,10 +349,10 @@ smoothUnion' usd0 usd1 =
       r = KF 0.3
       md0 = sh $ smin (d0 -^ r) (KF 0.0)
       md1 = sh $ smin (d1 -^ r) (KF 0.0)
-      inside_distance = - (ssqrt $ (md0 *^ md0) +^ (md1 *^ md1))
-      simple_union = smin d0 d1
-      outside_distance = smax simple_union r
-      dist = inside_distance + outside_distance
+      inside_distance = sh $ - (ssqrt $ (md0 *^ md0) +^ (md1 *^ md1))
+      simple_union = sh $ smin d0 d1
+      outside_distance = sh $ smax simple_union r
+      dist = sh $ inside_distance + outside_distance
    in dist
 
 tests = do
@@ -468,7 +418,5 @@ tests = do
 -- Experimenting with a type paramter for E.
 typedMain = do
   tests
-
-  msp $ compileE $ evalShape filaoa
 
   msp "typed hi"

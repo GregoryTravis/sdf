@@ -38,3 +38,4 @@ main = do
   -- snTest
   runServer
   -- typedMain
+  -- tshareMain
