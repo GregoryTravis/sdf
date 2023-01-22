@@ -2,21 +2,38 @@ module Lib where
 
 import E
 
-ssqrt = sh . Fun1 "sqrt" TF TF
-ssin = sh . Fun1 "sin" TF TF
-scos = sh . Fun1 "cos" TF TF
-satan y x = sh $ Fun2 "atan" TF TF TF y x
+ssqrt :: E Float -> E Float
+ssqrt x = Fun1 "sqrt" x
+satan :: E Float -> E Float -> E Float
+satan y x = Fun2 "atan" y x
+ssin :: E Float -> E Float
+ssin = Fun1 "sin"
+scos :: E Float -> E Float
+scos = Fun1 "cos"
 
-sabs = sh . Abs
-smod x y = sh $ Fun2 "mod" TF TF TF x y
-sfloor = sh . Fun1 "floor" TF TF
+sfloor :: E Float -> E Float
+sfloor = Fun1 "floor"
+smod :: E Float -> E Float -> E Float
+smod = (Fun2 "mod")
+sabs :: E Float -> E Float
+sabs = Fun1 "abs"
+smin :: E Float -> E Float -> E Float
+smin = Fun2 "min"
+smax :: E Float -> E Float -> E Float
+smax = Fun2 "max"
 
-smoothstep edge0 edge1 x = sh $ Fun "smoothstep" [TF, TF, TF] TF [edge0, edge1, x]
+-- smoothstep edge0 edge1 x = sh $ Fun "smoothstep" [TF, TF, TF] TF [edge0, edge1, x]
+smoothstep :: E Float -> E Float -> E Float -> E Float
+smoothstep = Fun3 "smoothstep"
 
 -- types are for alpha blending
-mix x y a = sh $ Fun "mix" [TV3, TV3, TF] TV3 [x, y, a]
+-- mix x y a = sh $ Fun "mix" [TV3, TV3, TF] TV3 [x, y, a]
+mix :: (Show a, GlslType a, GlslType (V3 a)) => E (V3 a) -> E (V3 a) -> E a -> E (V3 a)
+mix = Fun3 "mix"
 -- specific to (rgb, a)
-vec4 rgb a = sh $ Fun "vec4" [TV3, TF] TV4 [rgb, a]
+-- vec4 rgb a = sh $ Fun "vec4" [TV3, TF] TV4 [rgb, a]
+vec4 :: (Show a, GlslType a, GlslType (V3 a), GlslType (V4 a)) => E (V3 a) -> E a -> E (V4 a)
+vec4 = Fun2 "vec4"
 
 time :: E Float
 time = Uniform "time"

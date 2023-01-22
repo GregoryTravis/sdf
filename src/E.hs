@@ -18,6 +18,11 @@ module E
 -- , time
 -- , snTest
 , GlslType
+, V2
+, V3
+, V4
+, Bul
+, Mat2
 ) where
 
 import Control.DeepSeq
@@ -157,26 +162,6 @@ infix 4 <=.
 infix 4 >=.
 (>=.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (>=.) = Comparison ">="
-
-ssqrt :: E Float -> E Float
-ssqrt x = Fun1 "sqrt" x
-satan :: E Float -> E Float -> E Float
-satan y x = Fun2 "atan" y x
-ssin :: E Float -> E Float
-ssin = Fun1 "sin"
-scos :: E Float -> E Float
-scos = Fun1 "cos"
-
-sfloor :: E Float -> E Float
-sfloor = Fun1 "floor"
-smod :: E Float -> E Float -> E Float
-smod = (Fun2 "mod")
-sabs :: E Float -> E Float
-sabs = Fun1 "abs"
-smin :: E Float -> E Float -> E Float
-smin = Fun2 "min"
-smax :: E Float -> E Float -> E Float
-smax = Fun2 "max"
 
 data Swizzler v where
   SW2 :: String -> Swizzler (V2 a)
