@@ -34,6 +34,7 @@ module E
   , yx
   , xyz
   , yxz
+  , Fieldee
 ) where
 
 import Control.DeepSeq
