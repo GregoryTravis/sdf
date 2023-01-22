@@ -9,10 +9,10 @@ import Lib
 
 square :: Shape
 square (Transform xy _) =
-  let center = sh $ V2 0.0 0.0
+  let center = sh $ V2 (0.0 :: E Float) 0.0
       radius = sh 1.0
-      sd = sh $ Abs (xy - center)
-      dist = sh $ (Max (X sd) (Y sd) / radius) - 1.0
+      sd = sh $ sabs (xy -^ center)
+      dist = sh $ (smax (_x sd) (_y sd) / radius) - 1.0
    in dist
 
 circle :: Shape
@@ -21,9 +21,9 @@ circle (Transform xy _) =
    in dist
 
 -- E should be integral
-flower :: E -> Shape
+flower :: E Float -> Shape
 flower numPetals (Transform xy t) =
-  let ang = sh $ satan (Y xy) (X xy)
+  let ang = sh $ satan (_y xy) (_x xy)
       raw_dist = sh $ ssqrt (Length xy)
       radius = sh $ sabs $ ssin $ (ang * (numPetals / 2.0))
       dist = sh $ raw_dist / radius

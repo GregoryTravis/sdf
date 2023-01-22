@@ -1,8 +1,11 @@
 module Test
 ( testMain ) where
 
+import Control.Monad (when)
+
 import E
 import Lib
+import Util hiding (time)
 
 -- Show expression and type
 eat :: (GlslType a, Show a) => E a -> IO ()

@@ -1,28 +1,39 @@
 {-# LANGUAGE AllowAmbiguousTypes, EmptyDataDeriving, FlexibleContexts, FlexibleInstances, FunctionalDependencies, GADTs, MultiParamTypeClasses, StandaloneDeriving #-}
 
 module E
-( E(..)
-, sh
--- , Ty(..)
-, Uniform(..)
-, (==.)
-, (<.)
-, (>.)
-, (<=.)
-, (>=.)
-, Transform(..)
-, Transformer
-, Shape
-, UnOp
-, BinOp
--- , time
--- , snTest
-, GlslType
-, V2
-, V3
-, V4
-, Bul
-, Mat2
+(   E(..)
+  , sh
+  -- , Ty(..)
+  , Uniform(..)
+  , (==.)
+  , (<.)
+  , (>.)
+  , (<=.)
+  , (>=.)
+  , Transform(..)
+  , Transformer
+  , Shape
+  , UnOp
+  , BinOp
+  -- , time
+  -- , snTest
+  , GlslType
+  , V2
+  , V3
+  , V4
+  , Bul
+  , Mat2
+  , (+^)
+  , (-^)
+  , (*^)
+  , (/^)
+  , typeName
+  , _x
+  , _y
+  , xy
+  , yx
+  , xyz
+  , yxz
 ) where
 
 import Control.DeepSeq

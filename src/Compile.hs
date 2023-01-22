@@ -11,35 +11,35 @@ import E
 import Share
 import Transform
 
-typeOf :: Refs -> E -> Ty
-typeOf refs (KF _) = TF
-typeOf refs (U (UF _)) = TF
-typeOf refs (Add a b) = opType refs a b
-typeOf refs (Sub a b) = opType refs a b
-typeOf refs (Mul a b) = opType refs a b
-typeOf refs (Div a b) = opType refs a b
-typeOf refs (Length e) = mustType refs e [TV2] TF
-typeOf refs (V2 _ _) = TV2
-typeOf refs (V3 _ _ _) = TV3
-typeOf refs (V4 _ _ _ _) = TV4
-typeOf refs XY = TV2
-typeOf refs Mouse = TV2
-typeOf refs (ShareRef n) = typeOf refs (refs M.! n)
-typeOf refs (Abs e) = typeOf refs e
-typeOf refs (Min a b) = sameType refs a b
-typeOf refs (Max a b) = sameType refs a b
-typeOf refs (X e) = TF
-typeOf refs (Y e) = TF
-typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
-typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
-typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
-typeOf refs (Fun name tins tout args) = tout -- should check both
-typeOf refs (Mat2 _) = TM2
-typeOf refs (Comparison _ _ _) = TB
-typeOf refs (Cond _ t e) = sameType refs t e
-typeOf refs (RGB e) = TV3
-typeOf refs (A e) = TF
--- typeOf refs (Var name) = sameType refs t e
+-- typeOf :: Refs -> E -> Ty
+-- typeOf refs (KF _) = TF
+-- typeOf refs (U (UF _)) = TF
+-- typeOf refs (Add a b) = opType refs a b
+-- typeOf refs (Sub a b) = opType refs a b
+-- typeOf refs (Mul a b) = opType refs a b
+-- typeOf refs (Div a b) = opType refs a b
+-- typeOf refs (Length e) = mustType refs e [TV2] TF
+-- typeOf refs (V2 _ _) = TV2
+-- typeOf refs (V3 _ _ _) = TV3
+-- typeOf refs (V4 _ _ _ _) = TV4
+-- typeOf refs XY = TV2
+-- typeOf refs Mouse = TV2
+-- typeOf refs (ShareRef n) = typeOf refs (refs M.! n)
+-- typeOf refs (Abs e) = typeOf refs e
+-- typeOf refs (Min a b) = sameType refs a b
+-- typeOf refs (Max a b) = sameType refs a b
+-- typeOf refs (X e) = TF
+-- typeOf refs (Y e) = TF
+-- typeOf refs (Neg e) = mustType refs e [TF, TV2] TF
+-- typeOf refs (Fun1 name tin tout arg) = mustType refs arg [tin] tout
+-- typeOf refs (Fun2 name tin tin2 tout arg0 arg1) = tout -- should check both
+-- typeOf refs (Fun name tins tout args) = tout -- should check both
+-- typeOf refs (Mat2 _) = TM2
+-- typeOf refs (Comparison _ _ _) = TB
+-- typeOf refs (Cond _ t e) = sameType refs t e
+-- typeOf refs (RGB e) = TV3
+-- typeOf refs (A e) = TF
+-- -- typeOf refs (Var name) = sameType refs t e
 
 glslType :: Ty -> String
 glslType TF = "float"

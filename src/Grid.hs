@@ -6,41 +6,41 @@ import E
 import Lib
 import Transform
 
-grid :: E -> E -> UnOp
+grid :: E Float -> E Float -> UnOp
 grid w h = transform (grid' w h)
 
-grid' :: E -> E -> Transformer
+grid' :: E Float -> E Float -> Transformer
 grid' w h (Transform xy t) =
-  let x = sh $ X xy
-      y = sh $ Y xy
+  let x = sh $ _x xy
+      y = sh $ _y xy
       xx = sh $ smod x w
       yy = sh $ smod y h
       xi = sh $ sfloor x
       yi = sh $ sfloor y
    in Transform (V2 xx yy) t
 
-bugPfGrid :: E -> E -> UnOp
+bugPfGrid :: E Float -> E Float -> UnOp
 bugPfGrid w h = transform (bugPfGrid' w h)
 
-bugPfGrid' :: E -> E -> Transformer
+bugPfGrid' :: E Float -> E Float -> Transformer
 bugPfGrid' w h (Transform xy t) =
-  let x = X xy
-      y = Y xy
+  let x = _x xy
+      y = _y xy
       xx = smod x w
       yy = smod y h
       xi = sfloor x
       yi = sfloor y
-      xx2 = Cond (smod (Abs xi) 2 ==. 1) (w - xx) xx
-      yy2 = Cond (smod (Abs yi) 2 ==. 1) (h - yy) yy
+      xx2 = Cond (smod (sabs xi) 2 ==. 1) (w - xx) xx
+      yy2 = Cond (smod (sabs yi) 2 ==. 1) (h - yy) yy
    in Transform (V2 xx2 yy2) t
 
-bugPfGrid2 :: E -> E -> UnOp
+bugPfGrid2 :: E Float -> E Float -> UnOp
 bugPfGrid2 w h = transform (bugPfGrid2' w h)
 
-bugPfGrid2' :: E -> E -> Transformer
+bugPfGrid2' :: E Float -> E Float -> Transformer
 bugPfGrid2' w h (Transform xy t) =
-  let x = X xy
-      y = Y xy
+  let x = _x xy
+      y = _y xy
       xx = smod x w
       yy = smod y h
       xi = sfloor x
