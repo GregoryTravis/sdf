@@ -48,6 +48,7 @@ smooth fg bg dist =
 alphaBlend :: E -> E -> E
 alphaBlend bg fg = sh $ vec4 (mix (RGB $ sh bg) (RGB $ sh fg) (A fg)) 1.0
 
+-- This is a fold
 alphaBlends :: [E] -> E
 alphaBlends es = sh $ alphaBlends' (black : es)
   where alphaBlends' [] = error "alphaBlends: impossible"
