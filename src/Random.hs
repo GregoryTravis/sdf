@@ -55,7 +55,8 @@ interpo :: IO E
 interpo = do
   -- [a, b, c, d] <- (evalRandIO $ nRand recipe 4) >>= randColorsFor
   [a, b, c, d] <- (evalRandIO $ nRand recipe 4)
-  -- let [a, b, c, d] = [square, circle, square, circle]
+  -- let
+  -- [a, b, c, d] = [square, circle, square, circle]
   -- let ae = evalShape a
   --     be = evalShape b
   --     ce = evalShape c
@@ -322,8 +323,8 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
-filaoa = scale 0.1 $ smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
-  where filaoa' = pfGrid 2.25 2.25 circle
+filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) filaoa')
+  where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
 
 classicAnotherGreatOne :: Rnd Shape
 classicAnotherGreatOne = anotherGreatOne <$> pure 0.4 <*> pure 2.5 <*> pure (-0.3) <*> pure 2.5 <*> pure 0.5 <*> pure 2

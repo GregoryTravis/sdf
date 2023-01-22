@@ -92,35 +92,56 @@ dot e field = parens $ concat [e, ".", field]
 cond :: String -> String -> String -> String
 cond b t e = parens $ concat [parens b, "?", parens t , ":", parens e]
 
-compileE :: E -> String
-compileE (KF d) = parens $ show d
-compileE (U (UF name)) = parens name
-compileE (Add a b) = op "+" (compileE a) (compileE b)
-compileE (Sub a b) = op "-" (compileE a) (compileE b)
-compileE (Mul a b) = op "*" (compileE a) (compileE b)
-compileE (Div a b) = op "/" (compileE a) (compileE b)
-compileE (Length e) = fun "length" [compileE e]
-compileE (V2 a b) = fun "vec2" [compileE a, compileE b]
-compileE (V3 a b c) = fun "vec3" [compileE a, compileE b, compileE c]
-compileE (V4 a b c d) = fun "vec4" [compileE a, compileE b, compileE c, compileE d]
-compileE XY = "(uv)"
-compileE Mouse = "(mouse)"
-compileE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
-compileE (ShareRef n) = parens $ subexp n
-compileE (Abs e) = fun "abs" [compileE e]
-compileE (Min a b) = fun "min" [compileE a, compileE b]
-compileE (Max a b) = fun "max" [compileE a, compileE b]
-compileE (X e) = dot (compileE e) "x"
-compileE (Y e) = dot (compileE e) "y"
-compileE (Neg e) = parens $ concat ["-", compileE e]
-compileE (Fun1 name _ _ arg) = fun name [compileE arg]
-compileE (Fun2 name _ _ _ arg0 arg1) = fun name [compileE arg0, compileE arg1]
-compileE (Fun name _ _ args) = fun name (map compileE args)
-compileE (Mat2 es) = fun "mat2" (map compileE es)
-compileE (Comparison opS a b) = op opS (compileE a) (compileE b)
-compileE (Cond b t e) = cond (compileE b) (compileE t) (compileE e)
-compileE (RGB e) = dot (compileE e) "rgb"
-compileE (A e) = dot (compileE e) "a"
+-- It's assume the top level of any call to compileE is a call to parens
+compileSubE :: Show a => E a -> String
+compileSubE (KF n) = parens $ show n
+compileSubE (Add a b) = op "+" (compileSubE a) (compileSubE b)
+compileSubE (Sub a b) = op "-" (compileSubE a) (compileSubE b)
+compileSubE (Mul a b) = op "*" (compileSubE a) (compileSubE b)
+compileSubE (Div a b) = op "/" (compileSubE a) (compileSubE b)
+compileSubE (V2 a b) = fun "vec2" [compileSubE a, compileSubE b]
+compileSubE (V3 a b c) = fun "vec3" [compileSubE a, compileSubE b, compileSubE c]
+compileSubE (V4 a b c d) = fun "vec4" [compileSubE a, compileSubE b, compileSubE c, compileSubE d]
+compileSubE (Length e) = fun "length" [compileSubE e]
+compileSubE (Uniform name) = parens name
+compileSubE (Swizzle swizzler v) = dot (compileSubE v) (swizzleFields swizzler)
+compileSubE (Field (Fielder field) v) = dot (compileSubE v) field
+compileSubE (Fun1 name arg1) = fun name [compileSubE arg1]
+compileSubE (Fun2 name arg1 arg2) = fun name [compileSubE arg1, compileSubE arg2]
+compileSubE (Fun3 name arg1 arg2 arg3) = fun name [compileSubE arg1, compileSubE arg2, compileSubE arg3]
+compileSubE (Neg a) = parens $ concat ["-", compileSubE a]
+compileSubE (Mat2 xs) = fun "mat2" (map compileSubE xs)
+compileSubE (Comparison name a b) = op name (compileSubE a) (compileSubE b)
+compileSubE (Cond b t e) = cond (compileSubE b) (compileSubE t) (compileSubE e)
+compileSubE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
+-- compileSubE (Share _ e) = compileSubE e
+compileSubE (ShareRef n) = parens $ subexp n
+compileSubE e = error $ "compileSubE: " ++ show e
+
+-- Compile an expression to a list of bindings, with the specified name for the
+-- outermost expression binding.
+compileE :: (Show a, GlslType a) => String -> E a -> String
+compileE topVar e = renderBindings (compileEToBindings topVar e)
+
+compileEToBindings :: (Show a, GlslType a) => String -> E a -> [(String, String, String)]
+compileEToBindings topVar e =
+  let (e', (_, seMap)) = runState (share' e) initState
+      compiledE = compileSubE e'
+      ty = typeName e'
+  in toBindings seMap ++ [(topVar, ty, compiledE)]
+
+renderBindings :: [(String, String, String)] -> String
+renderBindings bindings = intercalate ";\n" lines ++ ";\n"
+  where lines = map renderBinding bindings
+
+renderBinding :: (String, String, String) -> String
+renderBinding (var, ty, se) = concat [ty, " ", var, " = ", se]
+
+toBindings :: SEMap -> [(String, String, String)]
+toBindings seMap = map f sortedElems
+  where f (n, ty, se) = (subexp n, ty, se)
+        sortedElems = sortOn fst3 (HM.elems seMap)
+        fst3 (a, _, _) = a
 
 compileBinding :: Refs -> String -> E -> String
 compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]

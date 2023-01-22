@@ -17,3 +17,8 @@ smoothstep edge0 edge1 x = sh $ Fun "smoothstep" [TF, TF, TF] TF [edge0, edge1, 
 mix x y a = sh $ Fun "mix" [TV3, TV3, TF] TV3 [x, y, a]
 -- specific to (rgb, a)
 vec4 rgb a = sh $ Fun "vec4" [TV3, TF] TV4 [rgb, a]
+
+time :: E Float
+time = Uniform "time"
+uv :: E (V2 Float)
+uv = Uniform "uv"

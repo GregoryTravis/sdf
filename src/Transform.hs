@@ -21,33 +21,33 @@ rotMat ang =
       mat = Mat2 [c, s, -s, c]
    in mat
 
-scale :: E -> UnOp
+scale :: E Float -> UnOp
 scale s = transform (scale' s)
 
-scale' :: E -> Transformer
-scale' s (Transform xy t) = Transform (xy / s) t
+scale' :: E Float -> Transformer
+scale' s (Transform xy t) = Transform (xy /^ s) t
 
-translation :: E -> UnOp
+translation :: E (V2 Float) -> UnOp
 translation dxy = transform (translation' dxy)
 
-translation' :: E -> Transformer
-translation' dxy (Transform xy t) = Transform (xy - dxy) t
+translation' :: E (V2 Float) -> Transformer
+translation' dxy (Transform xy t) = Transform (xy -^ dxy) t
 
-rotation :: E -> UnOp
+rotation :: E Float -> UnOp
 rotation ang = transform (rotation' ang)
 
-rotation' :: E -> Transformer
+rotation' :: E Float -> Transformer
 rotation' ang (Transform xy t) =
   let c = sh $ scos ang
       s = sh $ ssin ang
       mat = sh $ Mat2 [c, s, -s, c]
-   in Transform (mat * xy) t
+   in Transform (mat *^ xy) t
 
 transform :: Transformer -> Shape -> Shape
 transform transformer p = p . transformer
 
 idTransform :: Transform
-idTransform = Transform XY time
+idTransform = Transform uv time
 
-evalShape :: Shape -> E
+evalShape :: Shape -> E Float
 evalShape p = p idTransform

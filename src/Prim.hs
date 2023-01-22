@@ -17,7 +17,7 @@ square (Transform xy _) =
 
 circle :: Shape
 circle (Transform xy _) =
-  let dist = Length xy - 1.0
+  let dist = Length xy -^ KF 1.0
    in dist
 
 -- E should be integral

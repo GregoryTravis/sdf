@@ -15,8 +15,8 @@ import Prim
 import Random
 import Server
 import Template
+import Test
 import Transform
-import Typed
 import Util hiding (time)
 
 -- genShape :: IO E
@@ -36,6 +36,6 @@ main = do
   noBuffering
   -- randomTiming
   -- snTest
-  runServer
-  -- typedMain
+  -- runServer
+  testMain
   -- tshareMain

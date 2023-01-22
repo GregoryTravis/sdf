@@ -1,6 +1,7 @@
+{-# LANGUAGE GADTs #-}
+
 module Share
-( share
-, Refs ) where
+( share ) where
 
 import Control.Monad.State
 import Data.HashMap.Strict as HM
@@ -10,84 +11,91 @@ import System.Mem.StableName
 
 import E
 
-type CapMap = HM.HashMap (StableName E) E
-type RefMap = HM.HashMap (StableName E) Int
-type Refs = M.Map Int E
+data DSN where
+  DSN :: StableName (E a) -> DSN
 
-type ShareState = (Int, CapMap, RefMap)
+instance Hashable DSN where
+  -- hashWithSalt :: Int -> a -> Int
+  hashWithSalt salt (DSN sn) = (salt * 10) + (hashStableName sn)
+
+instance Eq DSN where
+  DSN sn0 == DSN sn1 = eqStableName sn0 sn1
+
+type SEMap = HM.HashMap DSN (Int, String, String)
+
+type ShareState = (Int, SEMap)
 
 initState :: ShareState
-initState = (0, HM.empty, HM.empty)
+initState = (0, HM.empty)
 
-addCap :: E -> (StableName E) -> State ShareState ()
-addCap cap sn = do
-  (n, capMap, refMap) <- get
+addSE :: (Show a, GlslType a) => (StableName (E a)) -> E a -> State ShareState ()
+addSE sn se = do
+  (n, seMap) <- get
   let n' = n + 1
-      capMap' = HM.insert sn cap capMap
-      refMap' = HM.insert sn n refMap
-  put (n', capMap', refMap')
+      cse = compileSubE se
+      ty = typeName se
+      seMap' = HM.insert (DSN sn) (n, ty, cse) seMap
+  put (n', seMap')
 
-hasCap :: (StableName E) -> State ShareState Bool
-hasCap sn = do
-  (_, capMap, _) <- get
-  return $ HM.member sn capMap
+hasSE :: (StableName (E a)) -> State ShareState Bool
+hasSE sn = do
+  (_, seMap) <- get
+  return $ HM.member (DSN sn) seMap
 
-getRef :: (StableName E) -> State ShareState Int
+getRef :: (StableName (E a)) -> State ShareState Int
 getRef sn = do
-  (_, _, refMap) <- get
-  case HM.lookup sn refMap of
-    Just n -> return n
+  (_, seMap) <- get
+  case HM.lookup (DSN sn) seMap of
+    Just (n, _, _) -> return n
     Nothing -> error "missing from refMap"
 
--- Extract Sh nodes from e and store them in the map.
-share :: E -> (E, Refs)
-share e =
-  let (e', (_, capMap, refMap)) = runState (share' e) initState
-      refs = toRefs capMap refMap
-   in (e', refs)
+-- -- Extract Sh nodes from e and store them in the map.
+-- share :: E -> (E, Refs)
+-- share e =
+--   let (e', (_, capMap, refMap)) = runState (share' e) initState
+--       refs = toRefs capMap refMap
+--    in (e', refs)
 
--- Assign a unique small integer to each sn. Maybe I could use hashStableName
--- but it's not clear how unlikely that is to have a collision
-toRefs :: CapMap -> RefMap -> Refs
-toRefs capMap refMap =
-  let sns = HM.keys capMap
-      refs = Prelude.map (\sn -> refMap HM.! sn) sns
-      caps = Prelude.map (\sn -> capMap HM.! sn) sns
-   in M.fromList (zip refs caps)
+-- -- Assign a unique small integer to each sn. Maybe I could use hashStableName
+-- -- but it's not clear how unlikely that is to have a collision
+-- toRefs :: CapMap -> RefMap -> Refs
+-- toRefs capMap refMap =
+--   let sns = HM.keys capMap
+--       refs = Prelude.map (\sn -> refMap HM.! sn) sns
+--       caps = Prelude.map (\sn -> capMap HM.! sn) sns
+--    in M.fromList (zip refs caps)
 
 -- Allocate a fresh tag n for expression e, add (n -> e') to the map state,
 -- where e' is the result of the recursive call to share' on e.
 -- Return (ShRef n).
-share' :: E -> State ShareState E
-share' (Share e sn) = do
-  hc <- hasCap sn
+share' :: (Show a, GlslType a) => E a -> State ShareState (E a)
+share' (Share sn e) = do
+  hc <- hasSE sn
   if hc
     then do n <- getRef sn
             return $ ShareRef n
-    else do eCap <- share' e
-            addCap eCap sn
+    else do e' <- share' e
+            addSE sn e'
             n <- getRef sn
             return $ ShareRef n
-
-  -- capMap <- get
-  -- case HM.lookup sn capMap of
-  --   Nothing -> do
-  --     e' <- share' e
-  --     capMap' <- get
-  --     put $ HM.insert sn e' capMap'
-  --     return (ShareRef sn)
-  --   Just e' -> do
-  --     return (ShareRef sn)
-
-  -- e' <- share' e
-  -- (n, refs, revRefs) <- get
-  -- case revRefs M.!? e' of
-  --   Just n -> return $ ShRef n
-  --   Nothing -> do
-  --     let refs' = M.insert n e' refs
-  --     let revRefs' = M.insert e' n revRefs
-  --     put (n + 1, refs', revRefs')
-  --     return $ ShRef n
+share' e@(KF _) = return e
+share' e@(KD _) = return e
+share' e@(KI _) = return e
+share' (V2 a b) = do
+  a' <- share' a
+  b' <- share' b
+  return $ V2 a' b'
+share' (V3 a b c) = do
+  a' <- share' a
+  b' <- share' b
+  c' <- share' c
+  return $ V3 a' b' c'
+share' (V4 a b c d) = do
+  a' <- share' a
+  b' <- share' b
+  c' <- share' c
+  d' <- share' d
+  return $ V4 a' b' c' d'
 share' (Add a b) = do
   a' <- share' a
   b' <- share' b
@@ -107,51 +115,28 @@ share' (Div a b) = do
 share' (Length e) = do
   e' <- share' e
   return $ Length e'
-share' (V2 a b) = do
+share' e@(Uniform _) = return e
+share' (Swizzle swizzler e) = do
+  e' <- share' e
+  return $ Swizzle swizzler e'
+share' (Field fielder e) = do
+  e' <- share' e
+  return $ Field fielder e'
+share' (Fun1 name a) = do
+  a' <- share' a
+  return $ Fun1 name a'
+share' (Fun2 name a b) = do
   a' <- share' a
   b' <- share' b
-  return $ V2 a' b'
-share' (V3 a b c) = do
+  return $ Fun2 name a' b'
+share' (Fun3 name a b c) = do
   a' <- share' a
   b' <- share' b
   c' <- share' c
-  return $ V3 a' b' c'
-share' (V4 a b c d) = do
-  a' <- share' a
-  b' <- share' b
-  c' <- share' c
-  d' <- share' d
-  return $ V4 a' b' c' d'
-share' (Abs e) = do
-  e' <- share' e
-  return $ Abs e'
-share' (Min a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Min a' b'
-share' (Max a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Max a' b'
-share' (X e) = do
-  e' <- share' e
-  return $ X e'
-share' (Y e) = do
-  e' <- share' e
-  return $ Y e'
+  return $ Fun3 name a' b' c'
 share' (Neg e) = do
   e' <- share' e
   return $ Neg e'
-share' (Fun1 name tin tout e) = do
-  e' <- share' e
-  return $ Fun1 name tin tout e'
-share' (Fun2 name tin tin2 tout e0 e1) = do
-  e0' <- share' e0
-  e1' <- share' e1
-  return $ Fun2 name tin tin2 tout e0' e1'
-share' (Fun name tins tout es) = do
-  es' <- mapM share' es
-  return $ Fun name tins tout es'
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
@@ -164,10 +149,4 @@ share' (Cond b t e) = do
   t' <- share' t
   e' <- share' e
   return $ Cond b' t' e'
-share' (RGB e) = do
-  e' <- share' e
-  return $ RGB e'
-share' (A e) = do
-  e' <- share' e
-  return $ A e'
-share' x = return x
+share' x = error $ "share': " ++ show x

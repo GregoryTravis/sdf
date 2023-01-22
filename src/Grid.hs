@@ -49,20 +49,20 @@ bugPfGrid2' w h (Transform xy t) =
       yy2 = Cond (smod yi 2 ==. 1) (h - yy) yy
    in Transform (V2 xx2 yy2) t
 
-pfGrid :: E -> E -> UnOp
+pfGrid :: E Float -> E Float -> UnOp
 pfGrid w h = transform (pfGrid' w h)
 
 -- I tried using mod to calculate xx, yy, xi, yi, but it was wrong, so I just inlined the original rust grid_fmod2()
-pfGrid' :: E -> E -> Transformer
+pfGrid' :: E Float -> E Float -> Transformer
 pfGrid' w h (Transform xy t) =
-  let x = X xy
-      y = Y xy
-      xow = sh $ x / w
-      yoh = sh $ y / h
-      xx = sh $ (xow - sfloor xow) * w
+  let x = _x xy
+      y = _y xy
+      xow = sh $ x /^ w
+      yoh = sh $ y /^ h
+      xx = sh $ (xow -^ sfloor xow) * w
       xi = sh $ sfloor xow
-      yy = sh $ (yoh - sfloor yoh) * h
+      yy = sh $ (yoh -^ sfloor yoh) * h
       yi = sh $ sfloor yoh
-      xx2 = sh $ Cond (smod (Abs xi) 2.0 ==. 1.0) (w - xx) xx
-      yy2 = sh $ Cond (smod (Abs yi) 2.0 ==. 1.0) (h - yy) yy
+      xx2 = sh $ Cond (smod (sabs xi) (KF 2.0) ==. (KF 1.0)) (w -^ xx) xx
+      yy2 = sh $ Cond (smod (sabs yi) (KF 2.0) ==. (KF 1.0)) (h -^ yy) yy
    in Transform (V2 xx2 yy2) t
