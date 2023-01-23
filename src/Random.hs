@@ -25,7 +25,6 @@ import Funs
 import Grid
 import Lib
 import Prim
-import Share
 import Transform
 import Util hiding (die, time)
 

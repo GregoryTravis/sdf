@@ -20,19 +20,19 @@ data Shp =
   -- prims
     Circle
   | Square
-  | Flower E
+  | Flower (E Float)
   -- unops
-  | Scale E Shp
-  | Translation E Shp
-  | Rotation E Shp
-  | Grid E E Shp
-  | PfGrid E E Shp
+  | Scale (E Float) Shp
+  | Translation (E (V2 Float)) Shp
+  | Rotation (E Float) Shp
+  | Grid (E Float) (E Float) Shp
+  | PfGrid (E Float) (E Float) Shp
   -- binops
   | Union Shp Shp
   | Intersection Shp Shp
   | Difference Shp Shp
   | SmoothUnion Shp Shp
-  | Interp E Shp Shp
+  | Interp (E Float) Shp Shp
   deriving Show
 
 shpEval :: Shp -> Shape

@@ -39,3 +39,5 @@ time :: E Float
 time = Uniform "time"
 uv :: E (V2 Float)
 uv = Uniform "uv"
+mouse :: E (V2 Float)
+mouse = Uniform "mouse"
