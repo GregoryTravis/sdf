@@ -1,8 +1,8 @@
 {-# LANGUAGE GADTs #-}
 
 module Compile
-( compileSingle
-, compileFunction ) where
+(   compileBinding
+  , compileFunction ) where
 
 import Control.Monad.State
 import qualified Data.HashMap.Strict as HM
@@ -66,7 +66,7 @@ compileE topVar e = renderBindings (compileEToBindings topVar e)
 
 compileEToBindings :: (Show a, GlslType a) => String -> E a -> [(String, String, String)]
 compileEToBindings topVar e =
-  let (e', (_, seMap)) = runState (share' e) initState
+  let (e', seMap) = share e -- runState (share' e) initState
       compiledE = compileSubE e'
       ty = typeName e'
   in toBindings seMap ++ [(topVar, ty, compiledE)]
@@ -84,30 +84,39 @@ toBindings seMap = map f sortedElems
         sortedElems = sortOn fst3 (HM.elems seMap)
         fst3 (a, _, _) = a
 
--- compileBinding :: Refs -> String -> E -> String
+-- public
+-- compileBinding :: Refs -> String -> E a -> String
 -- compileBinding refs var e = concat [ty, " ", var, " = ", compileE e]
 --   where ty = glslType $ typeOf refs e
+compileBinding :: (Show a, GlslType a) => String -> E a -> String
+compileBinding var e = compileE var e
+-- compileBinding var e = concat [ty, " ", var, " = ", compileE e, ";"]
+--   where ty = typeName e
 
--- compileBindings :: Refs -> [(String, E)] -> String
+-- -- private
+-- compileBindings :: SEMap -> [(String, E a)] -> String
 -- compileBindings refs bindings = intercalate ";\n" cbs ++ ";\n"
 --   where cbs = map (\(var, e) -> compileBinding refs var e) bindings
 
--- compileGroup :: (E, Refs) -> String -> String
--- compileGroup (top, refs) topName = compileBindings refs bindings
---   where bindings =  shares ++ [(topName, top)]
---         shares = map (\(n, e) -> (subexp n, e)) (M.toList refs)
+-- -- private
+-- compileGroup :: (E,  SEMap) -> String -> String
+-- compileGroup (top, semap) topName = compileBindings semap bindings
+--   where bindings = shares ++ [(topName, typeOf top, top)]
+--         shares = map (\(n, ty, e) -> (subexp n, ty, e)) (M.toList semap)
 
--- compileSingle :: E -> String
+-- compileSingle :: E a -> String
 -- compileSingle e = compileGroup (share e) "topColor"
 
 -- Should add return, functions, etc to the DSL
-compileFunction :: E -> String
-compileFunction e =
-  let top = "toppppp"
-      bindings = compileGroup (share e) top
-      -- all = "vec4 " ++ name ++ "() {\n" ++ bindings ++ "return " ++ top ++ ";\n}\n"
-      all = bindings ++ "return " ++ top ++ ";\n"
-   in all
+-- public
+compileFunction :: (Show a, GlslType a) => E a -> String
+compileFunction = compileBinding "toppppp"
+-- compileFunction e =
+--   let top = "toppppp"
+--       bindings = compileGroup (share e) top
+--       -- all = "vec4 " ++ name ++ "() {\n" ++ bindings ++ "return " ++ top ++ ";\n}\n"
+--       all = bindings ++ "return " ++ top ++ ";\n"
+--    in all
 
 data DSN where
   DSN :: StableName (E a) -> DSN
@@ -147,12 +156,11 @@ getRef sn = do
     Just (n, _, _) -> return n
     Nothing -> error "missing from refMap"
 
--- -- Extract Sh nodes from e and store them in the map.
--- share :: E -> (E, Refs)
--- share e =
---   let (e', (_, capMap, refMap)) = runState (share' e) initState
---       refs = toRefs capMap refMap
---    in (e', refs)
+-- Extract Sh nodes from e and store them in the map.
+share :: (Show a, GlslType a) => E a -> (E a, SEMap)
+share e =
+  let (e', (_, semap)) = runState (share' e) initState
+   in (e', semap)
 
 -- -- Assign a unique small integer to each sn. Maybe I could use hashStableName
 -- -- but it's not clear how unlikely that is to have a collision
@@ -170,6 +178,7 @@ share' :: (Show a, GlslType a) => E a -> State ShareState (E a)
 share' (Share sn e) = do
   hc <- hasSE sn
   if hc
+    -- TODO factor out here
     then do n <- getRef sn
             return $ ShareRef n
     else do e' <- share' e

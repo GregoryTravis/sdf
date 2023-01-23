@@ -34,7 +34,10 @@ module E
   , yx
   , xyz
   , yxz
-  , Fieldee
+  , rgb
+  , _a
+  , Fielder(..)
+  , swizzleFields
 ) where
 
 import Control.DeepSeq
@@ -195,16 +198,24 @@ yx e = Swizzle (SW2 "yx") e
 xyz e = Swizzle (SW3 "xyz") e
 yxz e = Swizzle (SW3 "yxz") e
 
+rgb e = Swizzle (SW3 "rgb") e
+_a :: (GlslType (v n), FieldsTo (v n) n) => E (v n) -> E n
+_a e = Field (Fielder "a") e
+
 deriving instance Show v => Show (Swizzler v)
 deriving instance Show v => Show (Fielder v)
 
 -- SwizzlesTo x y means that an x can be swizzled to a y
 class (Show a, Show b) => SwizzlesTo a b
+instance SwizzlesTo (V4 a) (V4 a)
+instance SwizzlesTo (V4 a) (V3 a)
+instance SwizzlesTo (V4 a) (V2 a)
 instance SwizzlesTo (V3 a) (V3 a)
 instance SwizzlesTo (V3 a) (V2 a)
 instance SwizzlesTo (V2 a) (V2 a)
 
 class (Show a, Show b) => FieldsTo a b
+instance Show a => FieldsTo (V4 a) a
 instance Show a => FieldsTo (V3 a) a
 instance Show a => FieldsTo (V2 a) a
 
@@ -223,6 +234,8 @@ instance Promotable Float Double Double
 instance Promotable (V2 Float) (V2 Float) (V2 Float)
 instance Promotable (V3 Float) (V3 Float) (V3 Float)
 instance Promotable (V2 Float) Float (V2 Float)
+instance Promotable (V3 Float) Float (V3 Float)
+instance Promotable (V4 Float) Float (V4 Float)
 instance Promotable (V2 Double) (V2 Double) (V2 Double)
 instance Promotable (V2 Double) Double (V2 Double)
 instance Promotable (Mat2 Float) (V2 Float) (V2 Float)

@@ -6,21 +6,24 @@ import E
 import Lib
 import Util
 
-black = V4 0.0 0.0 0.0 1.0
-white = V4 1.0 1.0 1.0 1.0
-gray = V4 0.5 0.5 0.5 1.0
-red = V4 1.0 0.0 0.0 1.0
-green = V4 0.0 1.0 0.0 1.0
-nothing = V4 0.0 0.0 0.0 0.0
+mkCol :: Float -> Float -> Float -> Float -> E (V4 Float)
+mkCol r g b a = V4 (KF r) (KF g) (KF b) (KF a)
 
-randomColor :: IO E
+black = mkCol 0.0 0.0 0.0 1.0
+white = mkCol 1.0 1.0 1.0 1.0
+gray = mkCol 0.5 0.5 0.5 1.0
+red = mkCol 1.0 0.0 0.0 1.0
+green = mkCol 0.0 1.0 0.0 1.0
+nothing = mkCol 0.0 0.0 0.0 0.0
+
+randomColor :: IO (E (V4 Float))
 randomColor = do
   r <- getStdRandom (randomR (0.0, 1.0))
   g <- getStdRandom (randomR (0.0, 1.0))
   b <- getStdRandom (randomR (0.0, 1.0))
   return $ V4 (KF r) (KF g) (KF b) 1.0
 
-randomTransparentColor :: IO E
+randomTransparentColor :: IO (E (V4 Float))
 randomTransparentColor = do
   r <- getStdRandom (randomR (0.0, 1.0))
   g <- getStdRandom (randomR (0.0, 1.0))
@@ -29,7 +32,7 @@ randomTransparentColor = do
   return $ V4 (KF r) (KF g) (KF b) (KF a)
 
 -- likelihood 0..1
-randomMaybeTransparentColor :: Double -> IO E
+randomMaybeTransparentColor :: Double -> IO (E (V4 Float))
 randomMaybeTransparentColor transparencyLikelihood = do
   n <- getStdRandom (randomR (0.0, 1.0))
   let transparent = n < transparencyLikelihood
@@ -38,18 +41,18 @@ randomMaybeTransparentColor transparencyLikelihood = do
     else randomColor
 
 -- anti-aliased edge
-smooth :: E -> E -> E -> E
+smooth :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
 smooth fg bg dist =
   let smoothRadius = 0.03
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
-      color = bwBlend * bg + (1.0 - bwBlend) * fg;
+      color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
-alphaBlend :: E -> E -> E
-alphaBlend bg fg = sh $ vec4 (mix (RGB $ sh bg) (RGB $ sh fg) (A fg)) 1.0
+alphaBlend :: E (V4 Float) -> E (V4 Float) -> E (V4 Float)
+alphaBlend bg fg = sh $ vec4 (mix (rgb $ sh bg) (rgb $ sh fg) (_a fg)) 1.0
 
 -- This is a fold
-alphaBlends :: [E] -> E
+alphaBlends :: [E (V4 Float)] -> E (V4 Float)
 alphaBlends es = sh $ alphaBlends' (black : es)
   where alphaBlends' [] = error "alphaBlends: impossible"
         alphaBlends' [e] = e
@@ -57,12 +60,12 @@ alphaBlends es = sh $ alphaBlends' (black : es)
 
 ---- half-completed bevel edge, needs entire shader to be in E
 
-bevelWidth :: Double
+bevelWidth :: Float
 bevelWidth = 0.075
 
-bevelDistToHeight :: E -> E
+bevelDistToHeight :: E Float -> E Float
 bevelDistToHeight dist =
-  Cond (dist <. KF (-bevelWidth))
+  Cond (dist <. KF (negate bevelWidth))
        1.0
        (let sd = dist / KF bevelWidth
          in scos ((KF pi / 2.0) * (sd + 1.0)))

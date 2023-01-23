@@ -12,18 +12,18 @@ import Lib
 
 union :: BinOp
 union = binopper union'
-union' :: E -> E -> E
-union' a b = Min a b
+union' :: E Float -> E Float -> E Float
+union' a b = smin a b
 
 intersection :: BinOp
 intersection = binopper intersection'
-intersection' :: E -> E -> E
-intersection' a b = Max a b
+intersection' :: E Float -> E Float -> E Float
+intersection' a b = smax a b
 
 difference :: BinOp
 difference = binopper difference'
-difference' :: E -> E -> E
-difference' a b = Max a (- b)
+difference' :: E Float -> E Float -> E Float
+difference' a b = smax a (- b)
 
 binopper :: (E Float -> E Float -> E Float) -> BinOp
 binopper distCombiner p0 p1 tr = distCombiner (sh $ p0 tr) (sh $ p1 tr)
@@ -44,9 +44,9 @@ smoothUnion' usd0 usd1 =
       dist = sh $ inside_distance + outside_distance
    in dist
 
-interp :: E -> BinOp
+interp :: E Float -> BinOp
 interp alpha = binopper (interp' alpha)
-interp' :: E -> E -> E -> E
+interp' :: E Float -> E Float -> E Float -> E Float
 interp' alpha a b = (1.0 - alpha) * a + alpha * b
 
 allBinOps :: [BinOp]
