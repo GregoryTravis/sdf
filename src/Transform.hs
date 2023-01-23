@@ -48,5 +48,5 @@ transform transformer p = p . transformer
 idTransform :: Transform
 idTransform = Transform uv time
 
-evalShape :: Shape -> E Float
+evalShape :: Shape -> Dist
 evalShape p = p idTransform

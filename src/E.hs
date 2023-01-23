@@ -38,6 +38,7 @@ module E
   , _a
   , Fielder(..)
   , swizzleFields
+  , Dist
 ) where
 
 import Control.DeepSeq
@@ -99,6 +100,8 @@ data E a where
   -- RGB, A etc aliases for XYZ, W etc
   Share :: GlslType a => StableName (E a) -> E a -> E a
   ShareRef :: GlslType a => Int -> E a
+
+type Dist = E Float
 
 -- deriving instance Generic a => Generic (E a)
 
