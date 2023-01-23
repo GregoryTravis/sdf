@@ -2,7 +2,9 @@
 
 module Compile
 (   compileBinding
-  , compileFunction ) where
+  , compileFunction
+  , compileSingle
+) where
 
 import Control.Monad.State
 import qualified Data.HashMap.Strict as HM
@@ -104,7 +106,8 @@ compileBinding var e = compileE var e
 --   where bindings = shares ++ [(topName, typeOf top, top)]
 --         shares = map (\(n, ty, e) -> (subexp n, ty, e)) (M.toList semap)
 
--- compileSingle :: E a -> String
+compileSingle :: (Show a, GlslType a) => E a -> String
+compileSingle = compileBinding "topColor"
 -- compileSingle e = compileGroup (share e) "topColor"
 
 -- Should add return, functions, etc to the DSL

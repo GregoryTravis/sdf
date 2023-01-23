@@ -20,10 +20,11 @@ import Util
 --       color = (bwBlend *^ bg) +^ ((KF 1.0 -^ bwBlend) *^ fg);
 --    in sh color
 
-singleHandler :: E Float -> IO String
+singleHandler :: Color -> IO String
 singleHandler pc = do
-  let c = compileBinding "topColor" col
-      col = smooth black white $ pc -- evalShape pc
+  let c = compileSingle pc
+  -- let c = compileBinding "topColor" col
+  --     col = smooth black white $ pc -- evalShape pc
   -- msp c -- slow
   html <- generateExe "single.html" $ M.fromList [("SHAPE_ASDF", c)]
   return html
