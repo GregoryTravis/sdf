@@ -16,12 +16,13 @@ import Prim
 import Random
 import Server
 import Template
+import Test
 import Transform
 import Util hiding (time)
 
-genShape :: IO E
-genShape = do
-  crecipes
+-- genShape :: IO E
+-- genShape = do
+--   crecipes
 
 -- handler :: IO String
 -- handler = do
@@ -38,3 +39,5 @@ main = do
   -- snTest
   runServer
   -- commanderMain
+  -- testMain
+  -- tshareMain

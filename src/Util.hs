@@ -123,7 +123,7 @@ faaresp2 s f a b = unsafePerformIO $ do
 lesp logFile a = leesp logFile (evalString $ show a) a
 
 leesp logFile s a = unsafePerformIO $ do
-  appendFile logFile (evalString $ show s ++ "\n")
+  appendFile logFile (evalString $ sp s ++ "\n")
   return a
 
 eeesp :: (Show s, Show a) => s -> a -> a

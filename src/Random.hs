@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies, GADTs , MultiParamTypeClasses, TypeOperators #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, FunctionalDependencies, GADTs, MultiParamTypeClasses, TypeOperators #-}
 
 module Random
 ( randomShape
@@ -8,7 +8,6 @@ module Random
 , realRandom
 , realRandomOsc
 , realRandomPile
-, randomTiming
 , interpo1
 , interpoPile
 , anOutlineE
@@ -33,7 +32,6 @@ import Funs
 import Grid
 import Lib
 import Prim
-import Share
 import Transform
 import Util hiding (die, time)
 
@@ -48,7 +46,7 @@ primPick = mapCvt $ M.fromList
 instance Show Shape where
   show _ = "<shape>"
 
-randomCommander :: Commander (IO E)
+randomCommander :: Commander (IO Color)
 randomCommander = nest $ M.fromList
   [ ("sizes", sizes <$> via KF <*> via KF <*> via KF <*> primPick)
   -- , ("filaoa", pure $ crecipe $ return $ evalShape filaoa)
@@ -58,7 +56,7 @@ randomCommander = nest $ M.fromList
   ]
 
 -- a few circles actually
-sizes :: E -> E -> E -> Shape -> IO E
+sizes :: E Float -> E Float -> E Float -> Shape -> IO Color
 sizes rotvel xvel yvel s = return $ bandy white black $ evalShape $ trans shapes
    where shapes = union vvbig $ union vbig $ union tiny2 $ union tiny $ union smaller $ union medium $ union big small
          big = translation (V2 1.5 0.0) s
@@ -94,46 +92,47 @@ oscRecipe3 r = interp (osc 0.5) <$> r <*> (interp <$> pure (osc 0.33) <*> r <*> 
 oscRecipe :: Rnd Shape -> Rnd Shape
 oscRecipe r = uniformM [oscRecipe2 r, oscRecipe3 r]
 
-interpo :: IO E
+interpo :: IO (E Float)
 interpo = do
   -- [a, b, c, d] <- (evalRandIO $ nRand recipe 4) >>= randColorsFor
   [a, b, c, d] <- (evalRandIO $ nRand recipe 4)
-  -- let [a, b, c, d] = [square, circle, square, circle]
+  -- let
+  -- [a, b, c, d] = [square, circle, square, circle]
   -- let ae = evalShape a
   --     be = evalShape b
   --     ce = evalShape c
   --     de = evalShape d
-  let top = interp (X Mouse) a b
-      bot = interp (X Mouse) c d
-      both = interp (Y Mouse) top bot
+  let top = interp (_x mouse) a b
+      bot = interp (_x mouse) c d
+      both = interp (_y mouse) top bot
   return $ evalShape both
 
-interpo1 :: IO E
+interpo1 :: IO (E (V4 Float))
 interpo1 = do
   s <- interpo
   return $ smooth white black s
 
-interpoPile :: IO E
+interpoPile :: IO Color
 interpoPile = pile 2 interpo
 
-randColorsFor :: [Shape] -> IO [E]
+randColorsFor :: [Shape] -> IO [Color]
 randColorsFor shapes = mapM randColorFor shapes
-randColorFor :: Shape -> IO E
+randColorFor :: Shape -> IO Color
 randColorFor shape = do
   col <- randomMaybeTransparentColor 0.333
   let color = smooth col nothing (evalShape shape)
   return color
 
-coolShape :: IO E
+coolShape :: IO Dist
 coolShape = do
   r <- evalRandIO $ oscRecipe recipe
   return $ evalShape r
   -- return $ outline 0.05 0.15 $ evalShape r
 
-outlineCoolShape :: IO E
+outlineCoolShape :: IO Dist
 outlineCoolShape = outline 0.05 0.15 <$> coolShape
 
-crecipe :: IO E -> IO E
+crecipe :: IO Dist -> IO Color
 crecipe shaper = do
   col <- randomMaybeTransparentColor 0.333
   shape <- shaper
@@ -141,13 +140,13 @@ crecipe shaper = do
   -- let color = bandy black white shape
   return color
 
-outlinecrecipes :: IO E
+outlinecrecipes :: IO Color
 outlinecrecipes = pile 2 outlineCoolShape
 
-crecipes :: IO E
+crecipes :: IO Color
 crecipes = pile 4 coolShape
 
-pile :: Int -> IO E -> IO E
+pile :: Int -> IO Dist -> IO Color
 pile maxN shaper = do
   -- determinisitic
   -- n <- return 1
@@ -159,7 +158,7 @@ determinisitic :: IO ()
 determinisitic = do
   setStdGen $ mkStdGen 123
 
-_crecipes :: IO E
+_crecipes :: IO Color
 _crecipes = do
   -- let s = trx $ try circle
   --     trx = transform sinex
@@ -170,7 +169,7 @@ _crecipes = do
   let s = scale 0.25 $ transform (siney 0.1 10 time) $ transform (siney 1 1 time) $ pfGrid 1.5 1.5 circle
   return $ justShape s
 
-anOutline :: E
+anOutline :: E Float
 anOutline =
   let thing = vlad 1.5 1.0 1.0 1.0 1.0 0.25
       things = smoothUnion (scale 0.5 thing) (rotation time thing)
@@ -180,16 +179,16 @@ anOutline =
   -- in outline 0.02 0.05 $ evalShape $ trx $ try $ scale 0.25 $ pfGrid 1.5 1.5 circle
 
 -- Distance -> distance
-edge :: E -> E -> E
+edge :: E Float -> E Float -> E Float
 edge w x = (abs (x + w)) - w
 
-outline :: E -> E -> E -> E
+outline :: E Float -> E Float -> E Float -> E Float
 outline lineWidth gap x =
-  let outer = edge lineWidth (x - (gap / 2.0))
-      inner = edge lineWidth (x + (gap / 2.0))
+  let outer = edge lineWidth (x -^ (gap /^ KF 2.0))
+      inner = edge lineWidth (x +^ (gap /^ KF 2.0))
    in smin outer inner
 
-anOutlineE :: IO E
+anOutlineE :: IO Color
 anOutlineE = return $ smooth white black anOutline
 
 classicZinny :: Rnd Shape
@@ -199,7 +198,7 @@ rZinny = zinny <$> ps <*> ps <*> g <*> g
   where ps = 2.0...16.0
         g = 1.2...2.8
 
-zinny :: E -> E -> E -> E -> Shape
+zinny :: E Float -> E Float -> E Float -> E Float -> Shape
 zinny p0 p1 g0 g1 =
   let whoa = transform (flowerize p0) $ transform (whorl 3.0 10.0) $ transform (flowerize p1) (pfGrid g0 g0 circle)
       g = translation (V2 time 0.0) $ pfGrid g1 g1  circle
@@ -207,7 +206,7 @@ zinny p0 p1 g0 g1 =
 
 -- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
 -- smoothUnion them
-vlad :: E -> E -> E -> E -> E -> E -> Shape
+vlad :: E Float -> E Float -> E Float -> E Float -> E Float -> E Float -> Shape
 vlad gr sxa sxb sya syb sc =
   let g = pfGrid gr gr circle
       trx = transform (sinex sxa sxb time)
@@ -225,55 +224,55 @@ rvlad = vlad <$> (1.0...1.8) <*> s <*> s <*> s <*> s <*> sc
 -- rLimonTwaist :: RandT StdGen Data.Functor.Identity.Identity Shape
 rLimonTwaist :: Rnd Shape
 rLimonTwaist = limonTwaist <$> 1.1...1.7 <*> 1.0...6.0 <*> 3.0...12.0
-limonTwaist :: E -> E -> E -> Shape
+limonTwaist :: E Float -> E Float -> E Float -> Shape
 limonTwaist gs wf wa =
   let g = pfGrid gs gs circle
    in scale 0.25 $ transform (whorl wf wa) g
 
 hrLimonTwaist :: Rnd Shape
 hrLimonTwaist = hlimonTwaist <$> 1.1...1.7 <*> 1.0...6.0 <*> 3.0...12.0
-hlimonTwaist :: E -> E -> E -> Shape
+hlimonTwaist :: E Float -> E Float -> E Float -> Shape
 hlimonTwaist gs wf wa =
   let g = pfGrid gs gs circle
    in scale 0.25 $ transform (hwhorl wf wa) g
 
-whorl :: E -> E -> Transformer
+whorl :: E Float -> E Float -> Transformer
 whorl wf wa tr@(Transform xy t) =
   let ang = Length xy * 2.0 * KF pi * (ssin (t / wf) / wa)
    in rotation' ang tr
 
 -- Rotation varies as x, not dist
-hwhorl :: E -> E -> Transformer
+hwhorl :: E Float -> E Float -> Transformer
 hwhorl wf wa tr@(Transform xy t) =
   -- let ang = ssin (X xy - Y xy) * 2.0 * KF pi * (ssin (t / wf) / wa)
-  let ang = ssin (X xy) - scos (Y xy) * 5.0 * KF pi * (ssin (t / wf) / wa)
+  let ang = ssin (_x xy) - scos (_y xy) * 5.0 * KF pi * (ssin (t / wf) / wa)
    in rotation' ang tr
 -- hwhorl _ _ (Transform e _) = error $ "huh " ++ show e
 
-flowerize :: E -> Transformer
+flowerize :: E Float -> Transformer
 flowerize numPetals (Transform xy t) =
-  let ang = sh $ satan (Y xy) (X xy)
+  let ang = sh $ satan (_y xy) (_x xy)
       mod = ssin t * (ssin $ (ang * numPetals))
-      xy' = xy * (1.0 + (mod / 4.0))
+      xy' = xy *^ (KF 1.0 +^ (mod /^ KF 4.0))
    in Transform xy' t
 
-sinex :: E -> E -> E -> Transformer
+sinex :: E Float -> E Float -> E Float -> Transformer
 sinex amp freq phase (Transform xy t) =
-  let x' = x + (amp * ssin (freq * y + phase))
-      x = X xy
-      y = Y xy
+  let x' = x +^ (amp *^ ssin (freq *^ y +^ phase))
+      x = _x xy
+      y = _y xy
       xy' = V2 x' y
    in Transform xy' t
 
-siney :: E -> E -> E -> Transformer
+siney :: E Float -> E Float -> E Float -> Transformer
 siney amp freq phase (Transform xy t) =
-  let y' = y + (amp * ssin (freq * x + phase))
-      x = X xy
-      y = Y xy
+  let y' = y +^ (amp *^ ssin (freq *^ x +^ phase))
+      x = _x xy
+      y = _y xy
       xy' = V2 x y'
    in Transform xy' t
 
-justShape :: Shape -> E
+justShape :: Shape -> Color
 justShape s =
   let c = smooth white nothing $ evalShape $ scale 0.5 s
    in alphaBlends [black, c]
@@ -298,16 +297,16 @@ undulum =
       r = rotation (- (KF pi / 2.0))
    in s
 
-undulo :: E -> E -> E -> E -> E -> E
+undulo :: E Float -> E Float -> E Float -> E Float -> E Float -> E Float
 undulo freq amp ampfreq t x =
   let amp' = amp * ssin (t * ampfreq)
    in amp' * ssin (freq * x)
 
 -- f :: t -> x -> y
-belowFun :: (E -> E -> E) -> Shape
+belowFun :: (E Float -> E Float -> E Float) -> Shape
 belowFun f (Transform xy t) =
-  let y = f t (X xy)
-      dist = (Y xy) - y
+  let y = f t (_x xy)
+      dist = (_y xy) - y
    in dist
 
 -- pthang :: E -> E -> E -> E -> E -> IO Shape
@@ -334,14 +333,14 @@ nRand rnd n = do
 
 type Rnd a = Rand StdGen a
 
-lo = randomR (KF 3.4, KF 4.5) :: StdGen -> (E, StdGen)
-loo = liftRand $ lo :: Rand StdGen E
-noo = evalRandIO loo
--- uniform :: (Foldable t, MonadRandom m) => t a -> m a
-uoo = uniform [circle] :: Rnd Shape
-soo = scale <$> loo <*> pure circle :: Rand StdGen Shape
+-- lo = randomR (KF 3.4, KF 4.5) :: StdGen -> (E, StdGen)
+-- loo = liftRand $ lo :: Rand StdGen E
+-- noo = evalRandIO loo
+-- -- uniform :: (Foldable t, MonadRandom m) => t a -> m a
+-- uoo = uniform [circle] :: Rnd Shape
+-- soo = scale <$> loo <*> pure circle :: Rand StdGen Shape
 
-(...) :: E -> E -> Rnd E
+(...) :: E Float -> E Float -> Rnd (E Float)
 a ... b = liftRand $ randomR (a, b)
 
 uniformM :: [Rnd a] -> Rnd a
@@ -373,13 +372,13 @@ randomBinOp = uniformM bos
   where bos = (map pure allBinOps) ++ [randInterp]
         randInterp = interp <$> (0.0...1.0)
 
-scalers :: Rnd E
+scalers :: Rnd (E Float)
 scalers = uniformM
   [ 0.25...4.0
   , osc <$> (0.25...4.0)
   ]
 
-translators :: Rnd E
+translators :: Rnd (E (V2 Float))
 translators = uniformM
   [ V2 <$> small <*> small
   , V2 <$> small <*> pure (KF 0.0)
@@ -387,7 +386,7 @@ translators = uniformM
   ]
   where small = ((-3.0)...3.0)
 
-rotators :: Rnd E
+rotators :: Rnd (E Float)
 rotators = uniformM
   [ (0.0...KF pi)
   ]
@@ -402,7 +401,7 @@ pfGridder = pfGrid <$> dim <*> dim
 
 thang :: Rnd Shape
 thang = sspthang' <$> randomShape <*> randomShape <*> (0.1...1.2) <*> ((-0.5)...0.9) <*> (0.5...2.5) <*> (1.0...3.0) <*> (0.1...4.0)
-sspthang' :: Shape -> Shape -> E -> E -> E -> E -> E -> Shape
+sspthang' :: Shape -> Shape -> E Float -> E Float -> E Float -> E Float -> E Float -> Shape
 sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
   let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
       rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
@@ -412,8 +411,8 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
-filaoa = scale 0.1 $ smoothUnion (scale (time / 10.0) filaoa') (rotation (time / 10.0) filaoa')
-  where filaoa' = pfGrid 2.25 2.25 circle
+filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) filaoa')
+  where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
 
 classicAnotherGreatOne :: Rnd Shape
 classicAnotherGreatOne = anotherGreatOne <$> pure 0.4 <*> pure 2.5 <*> pure (-0.3) <*> pure 2.5 <*> pure 0.5 <*> pure 2
@@ -421,7 +420,7 @@ classicAnotherGreatOne = anotherGreatOne <$> pure 0.4 <*> pure 2.5 <*> pure (-0.
 rAnotherGreatOne :: Rnd Shape
 rAnotherGreatOne = anotherGreatOne <$> (0.1...0.6) <*> (0.8...3.2) <*> ((-1.5)...(-0.1)) <*> (0.8...3.2) <*> (0.2...0.5) <*> (2...3)
 
-anotherGreatOne :: E -> E -> E -> E -> E -> E -> Shape
+anotherGreatOne :: E Float -> E Float -> E Float -> E Float -> E Float -> E Float -> Shape
 anotherGreatOne sr sg cr cg go mo =
   let ss = rotation (time * sr) $ pfGrid sg sg square
       cs = rotation (time * cr) $ pfGrid cg cg circle
@@ -457,14 +456,14 @@ repeatable Nothing = do
 -- shpEval
 -- share
 -- compile
-randomTiming :: IO ()
-randomTiming = do
-  let benchmark = env setupEnv $ \ ~e -> bench "bench" (nf share e)
-  defaultMainWith config [benchmark]
-  msp "hi randomTiming"
-  where config = defaultConfig -- { resamples = 1 }
+-- randomTiming :: IO ()
+-- randomTiming = do
+--   let benchmark = env setupEnv $ \ ~e -> bench "bench" (nf share e)
+--   defaultMainWith config [benchmark]
+--   msp "hi randomTiming"
+--   where config = defaultConfig -- { resamples = 1 }
 
-setupEnv :: IO E
+setupEnv :: IO Dist
 setupEnv = do
   repeatable (Just 33837) -- Nothing
   shp <- evalRandIO $ sizedProgram 6
@@ -472,18 +471,18 @@ setupEnv = do
       e = evalShape shape
   return e
 
-realRandom :: IO E
+realRandom :: IO Color
 realRandom = do
   e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
   return $ smooth white black $ evalShape (scale 0.25 e)
 
-realRandomOsc :: IO E
+realRandomOsc :: IO Color
 realRandomOsc = undefined
 -- realRandomOsc = do
 --   e <- shpEval <$> (evalRandIO $ oscRecipe $ sizedProgram 4)
 --   return $ smooth white black $ evalShape (scale 0.25 e)
 
-realRandomPile :: IO E
+realRandomPile :: IO Color
 realRandomPile = pile 4 rr
   where rr = do
           e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
@@ -534,7 +533,8 @@ applyOp (BO binop) (a : b : rest) = binop a b : rest
 -- TODO Rnd should be applicative, shouldn't it
 flowerNullOp :: Rnd Shp
 flowerNullOp = Flower <$> (flr <$> (3.0...8.0))
-  where flr (KF n) = KF (fromIntegral $ floor n)
+  where flr :: E Float -> E Float
+        flr (KF n) = KF (fromIntegral $ floor n)
 nullOps :: Rnd Shp
 nullOps = gr <*> (uniformM [pure Circle, pure Square, flowerNullOp])
   where gr = PfGrid <$> grs <*> grs

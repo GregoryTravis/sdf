@@ -14,6 +14,7 @@ import qualified Data.Text.Lazy.Encoding as LT
 import Network.Wai as W
 import Web.Firefly
 
+import Color
 import E
 import Commander
 import Infinity
@@ -43,7 +44,7 @@ app = do
   route "/infinity-main.glsl" $ htmlFileHandler "infinity-main.glsl"
   route ".*" commanderHandler
 
-commanderRoutes :: Commander (IO E)
+commanderRoutes :: Commander (IO Color)
 commanderRoutes = randomCommander
 
 commanderHandler :: Handler W.Response

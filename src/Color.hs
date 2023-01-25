@@ -6,22 +6,27 @@ import E
 import Lib
 import Util
 
-black = V4 0.0 0.0 0.0 1.0
-white = V4 1.0 1.0 1.0 1.0
-gray = V4 0.5 0.5 0.5 1.0
-red = V4 1.0 0.0 0.0 1.0
-blue = V4 0.0 0.0 1.0 1.0
-green = V4 0.0 1.0 0.0 1.0
-nothing = V4 0.0 0.0 0.0 0.0
+type Color = E (V4 Float)
 
-randomColor :: IO E
+mkCol :: Float -> Float -> Float -> Float -> E (V4 Float)
+mkCol r g b a = V4 (KF r) (KF g) (KF b) (KF a)
+
+black = mkCol 0.0 0.0 0.0 1.0
+white = mkCol 1.0 1.0 1.0 1.0
+gray = mkCol 0.5 0.5 0.5 1.0
+red = mkCol 1.0 0.0 0.0 1.0
+blue = mkCol 0.0 1.0 0.0 1.0
+green = mkCol 0.0 1.0 0.0 1.0
+nothing = mkCol 0.0 0.0 0.0 0.0
+
+randomColor :: IO (E (V4 Float))
 randomColor = do
   r <- getStdRandom (randomR (0.0, 1.0))
   g <- getStdRandom (randomR (0.0, 1.0))
   b <- getStdRandom (randomR (0.0, 1.0))
   return $ V4 (KF r) (KF g) (KF b) 1.0
 
-randomTransparentColor :: IO E
+randomTransparentColor :: IO (E (V4 Float))
 randomTransparentColor = do
   r <- getStdRandom (randomR (0.0, 1.0))
   g <- getStdRandom (randomR (0.0, 1.0))
@@ -30,7 +35,7 @@ randomTransparentColor = do
   return $ V4 (KF r) (KF g) (KF b) (KF a)
 
 -- likelihood 0..1
-randomMaybeTransparentColor :: Double -> IO E
+randomMaybeTransparentColor :: Double -> IO (E (V4 Float))
 randomMaybeTransparentColor transparencyLikelihood = do
   n <- getStdRandom (randomR (0.0, 1.0))
   let transparent = n < transparencyLikelihood
@@ -38,7 +43,7 @@ randomMaybeTransparentColor transparencyLikelihood = do
     then randomTransparentColor
     else randomColor
 
-scaleAwareAA :: E -> E
+scaleAwareAA :: E Float -> E Float
 scaleAwareAA dist =
   let dDistX = sdFdx dist
       dDistY = sdFdy dist
@@ -48,14 +53,14 @@ scaleAwareAA dist =
 
 -- scale-aware anti-aliased edge
 -- slow
-smooth :: E -> E -> E -> E
+smooth :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
 smooth fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
-      color = bwBlend * bg + (1.0 - bwBlend) * fg;
+      color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
-bandy :: E -> E -> E -> E
+bandy :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
 bandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend1 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
@@ -66,9 +71,9 @@ bandy fg bg dist =
         where x = (-0.96 * k)
       bwBlend = bwBlend2
       k = 2.5
-      color1 = bwBlend1 * bg + (1.0 - bwBlend1) * red;
-      color2 = bwBlend2 * color1 + (1.0 - bwBlend2) * blue;
-      color3 = bwBlend3 * color2 + (1.0 - bwBlend3) * fg;
+      color1 = bwBlend1 *^ bg +^ (KF 1.0 -^ bwBlend1) *^ red;
+      color2 = bwBlend2 *^ color1 +^ (KF 1.0 -^ bwBlend2) *^ blue;
+      color3 = bwBlend3 *^ color2 +^ (KF 1.0 -^ bwBlend3) *^ fg;
       color = color3
       -- color = bwBlend * bg + (1.0 - bwBlend) * fg;
       -- color' = bwBlend2 * color + (1.0 - bwBlend2) * red
@@ -77,7 +82,7 @@ bandy fg bg dist =
 -- This is bad beacuse the derivative (or the way I'm calculating it) is
 -- imprecise, and so using it to scale-independently set the band edges causes a
 -- weird feathering effect, but only if the bands aren't thin.
-siBandy :: E -> E -> E -> E
+siBandy :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
 siBandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend1 = smoothstep (x-1.0) (x+1.0) (dist / smoothRadius)
@@ -87,27 +92,30 @@ siBandy fg bg dist =
       bwBlend3 = smoothstep (x-1.0) (x+1.0) (dist / smoothRadius)
         where x = -40.0 -- / smoothRadius
       bwBlend = bwBlend2
-      color1 = bwBlend1 * bg + (1.0 - bwBlend1) * red;
-      color2 = bwBlend2 * color1 + (1.0 - bwBlend2) * blue;
-      color3 = bwBlend3 * color2 + (1.0 - bwBlend3) * fg;
+      color1 = bwBlend1 *^ bg +^ (KF 1.0 -^ bwBlend1) *^ red;
+      color2 = bwBlend2 *^ color1 +^ (KF 1.0 -^ bwBlend2) *^ blue;
+      color3 = bwBlend3 *^ color2 +^ (KF 1.0 -^ bwBlend3) *^ fg;
       color = color3
-      pixelWidth = 1.0 / smin (X (U (UF "resolution"))) (Y (U (UF "resolution")))
+      --pixelWidth = 1.0 / smin (_x (U (UF "resolution"))) (_y (U (UF "resolution")))
+      resolution = Uniform "resolution" :: E (V2 Float)
+      pixelWidth = 1.0 / smin (_x resolution) (_y resolution)
       -- color = bwBlend * bg + (1.0 - bwBlend) * fg;
       -- color' = bwBlend2 * color + (1.0 - bwBlend2) * red
    in sh color
 
 -- anti-aliased edge
-oldsmooth :: E -> E -> E -> E
+oldsmooth :: E Float -> E Float -> E Float -> E Float
 oldsmooth fg bg dist =
   let smoothRadius = 0.03
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
-      color = bwBlend * bg + (1.0 - bwBlend) * fg;
+      color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
-alphaBlend :: E -> E -> E
-alphaBlend bg fg = sh $ vec4 (mix (RGB $ sh bg) (RGB $ sh fg) (A fg)) 1.0
+alphaBlend :: E (V4 Float) -> E (V4 Float) -> E (V4 Float)
+alphaBlend bg fg = sh $ vec4 (mix (rgb $ sh bg) (rgb $ sh fg) (_a fg)) 1.0
 
-alphaBlends :: [E] -> E
+-- This is a fold
+alphaBlends :: [E (V4 Float)] -> E (V4 Float)
 alphaBlends es = sh $ alphaBlends' (black : es)
   where alphaBlends' [] = error "alphaBlends: impossible"
         alphaBlends' [e] = e
@@ -115,12 +123,12 @@ alphaBlends es = sh $ alphaBlends' (black : es)
 
 ---- half-completed bevel edge, needs entire shader to be in E
 
-bevelWidth :: Double
+bevelWidth :: Float
 bevelWidth = 0.075
 
-bevelDistToHeight :: E -> E
+bevelDistToHeight :: E Float -> E Float
 bevelDistToHeight dist =
-  Cond (dist <. KF (-bevelWidth))
+  Cond (dist <. KF (negate bevelWidth))
        1.0
        (let sd = dist / KF bevelWidth
          in scos ((KF pi / 2.0) * (sd + 1.0)))
