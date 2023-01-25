@@ -39,6 +39,7 @@ module E
   , Fielder(..)
   , swizzleFields
   , Dist
+  , sabs
 ) where
 
 import Control.DeepSeq
@@ -123,10 +124,13 @@ sh e = Share sn e
 -- type Env = [VarDecl]
 -- data Stmt = Decl VarDecl E | Assign E E | Return E
 
+sabs :: (Show a, GlslType a) => E a -> E a
+sabs = Fun1 "abs"
+
 instance Num (E Float) where
   (+) = Add
   (*) = Mul
-  abs = error "abs"
+  abs = sabs
   signum = error "signum not implemented"
   fromInteger i = KF (fromInteger i)
   negate = Neg
@@ -134,7 +138,7 @@ instance Num (E Float) where
 instance Num (E Double) where
   (+) = Add
   (*) = Mul
-  abs = error "abs"
+  abs = sabs
   signum = error "signum not implemented"
   fromInteger i = KD (fromInteger i)
   negate = Neg

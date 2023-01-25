@@ -15,8 +15,6 @@ sfloor :: E Float -> E Float
 sfloor = Fun1 "floor"
 smod :: E Float -> E Float -> E Float
 smod = Fun2 "mod"
-sabs :: (Show a, GlslType a) => E a -> E a
-sabs = Fun1 "abs"
 smin :: E Float -> E Float -> E Float
 smin = Fun2 "min"
 smax :: E Float -> E Float -> E Float
