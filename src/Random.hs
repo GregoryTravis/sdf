@@ -46,6 +46,7 @@ primPick = mapCvt $ M.fromList
 instance Show Shape where
   show _ = "<shape>"
 
+-- e.g. http://localhost:8000/sizes+circle+1.0+1.0+1.0
 randomCommander :: Commander (IO Color)
 randomCommander = nest $ M.fromList
   [ ("sizes", sizes <$> via KF <*> via KF <*> via KF <*> primPick)
