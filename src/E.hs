@@ -143,6 +143,9 @@ instance Num (E Double) where
   fromInteger i = KD (fromInteger i)
   negate = Neg
 
+infixl 6 +^, -^
+infixl 7 *^, /^
+
 (+^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (+^) = Add
 

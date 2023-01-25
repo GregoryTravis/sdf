@@ -15,8 +15,8 @@ black = mkCol 0.0 0.0 0.0 1.0
 white = mkCol 1.0 1.0 1.0 1.0
 gray = mkCol 0.5 0.5 0.5 1.0
 red = mkCol 1.0 0.0 0.0 1.0
-blue = mkCol 0.0 1.0 0.0 1.0
 green = mkCol 0.0 1.0 0.0 1.0
+blue = mkCol 0.0 0.0 1.0 1.0
 nothing = mkCol 0.0 0.0 0.0 0.0
 
 randomColor :: IO (E (V4 Float))
