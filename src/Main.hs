@@ -36,6 +36,6 @@ main = do
   noBuffering
   -- randomTiming
   -- snTest
-  -- runServer
-  testMain
+  runServer
+  -- testMain
   -- tshareMain
