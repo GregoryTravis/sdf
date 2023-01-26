@@ -54,7 +54,18 @@ randomCommander = nest $ M.fromList
   , ("filaoa", pure $ return $ bandy black white $ evalShape filaoa)
   , ("vlad", pure $ (evalRandIO rvlad) >>= (\s -> return $ siBandy black white $ evalShape s))
   , ("hrLimonTwaist", pure $ (evalRandIO hrLimonTwaist) >>= (\s -> return $ smooth black white $ evalShape s))
+  , ("winky", pure $ return $ smooth black white $ evalShape $ scale 0.1 winky)
   ]
+
+winky :: Shape
+winky =
+  let gr = pfGrid 1.3 1.3 circle
+      tra = sinex 1.0 2.0 time
+      trb = sinex 1.9 os time
+      os = (osc 2.0 * 0.4) + 1.8
+      csa = transform tra gr
+      csb = transform trb gr
+   in intersection csa csb
 
 -- a few circles actually
 sizes :: E Float -> E Float -> E Float -> Shape -> IO Color
