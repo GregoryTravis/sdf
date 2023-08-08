@@ -10,16 +10,6 @@ import Template
 import Transform
 import Util
 
--- smoothstep :: E Float -> E Float -> E Float -> E Float
--- smoothstep = Fun3 "smoothstep"
-
--- smooth :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
--- smooth fg bg dist =
---   let smoothRadius = KF 0.03
---       bwBlend = sh $ smoothstep (-smoothRadius) smoothRadius dist
---       color = (bwBlend *^ bg) +^ ((KF 1.0 -^ bwBlend) *^ fg);
---    in sh color
-
 singleHandler :: Color -> IO String
 singleHandler pc = do
   let c = compileSingle pc

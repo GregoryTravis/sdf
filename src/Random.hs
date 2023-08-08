@@ -119,7 +119,7 @@ interpo = do
       both = interp (_y mouse) top bot
   return $ evalShape both
 
-interpo1 :: IO (E (V4 Float))
+interpo1 :: IO Color
 interpo1 = do
   s <- interpo
   return $ smooth white black s

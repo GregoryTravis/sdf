@@ -13,5 +13,5 @@ mouseCircle (Transform xy _) =
       r = Length mouse
    in dist
 
-mouseCircleE :: IO (E (V4 Float))
+mouseCircleE :: IO Color
 mouseCircleE = return $ smooth white black $ evalShape mouseCircle

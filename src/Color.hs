@@ -8,7 +8,7 @@ import Util
 
 type Color = E (V4 Float)
 
-mkCol :: Float -> Float -> Float -> Float -> E (V4 Float)
+mkCol :: Float -> Float -> Float -> Float -> Color
 mkCol r g b a = V4 (KF r) (KF g) (KF b) (KF a)
 
 black = mkCol 0.0 0.0 0.0 1.0
@@ -19,14 +19,14 @@ green = mkCol 0.0 1.0 0.0 1.0
 blue = mkCol 0.0 0.0 1.0 1.0
 nothing = mkCol 0.0 0.0 0.0 0.0
 
-randomColor :: IO (E (V4 Float))
+randomColor :: IO Color
 randomColor = do
   r <- getStdRandom (randomR (0.0, 1.0))
   g <- getStdRandom (randomR (0.0, 1.0))
   b <- getStdRandom (randomR (0.0, 1.0))
   return $ V4 (KF r) (KF g) (KF b) 1.0
 
-randomTransparentColor :: IO (E (V4 Float))
+randomTransparentColor :: IO Color
 randomTransparentColor = do
   r <- getStdRandom (randomR (0.0, 1.0))
   g <- getStdRandom (randomR (0.0, 1.0))
@@ -35,7 +35,7 @@ randomTransparentColor = do
   return $ V4 (KF r) (KF g) (KF b) (KF a)
 
 -- likelihood 0..1
-randomMaybeTransparentColor :: Double -> IO (E (V4 Float))
+randomMaybeTransparentColor :: Double -> IO Color
 randomMaybeTransparentColor transparencyLikelihood = do
   n <- getStdRandom (randomR (0.0, 1.0))
   let transparent = n < transparencyLikelihood
@@ -53,14 +53,14 @@ scaleAwareAA dist =
 
 -- scale-aware anti-aliased edge
 -- slow
-smooth :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
+smooth :: Color -> Color -> E Float -> Color
 smooth fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
       color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
-bandy :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
+bandy :: Color -> Color -> E Float -> Color
 bandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend1 = smoothstep (x-smoothRadius) (x+smoothRadius) dist
@@ -82,7 +82,7 @@ bandy fg bg dist =
 -- This is bad beacuse the derivative (or the way I'm calculating it) is
 -- imprecise, and so using it to scale-independently set the band edges causes a
 -- weird feathering effect, but only if the bands aren't thin.
-siBandy :: E (V4 Float) -> E (V4 Float) -> E Float -> E (V4 Float)
+siBandy :: Color -> Color -> E Float -> Color
 siBandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend1 = smoothstep (x-1.0) (x+1.0) (dist / smoothRadius)
@@ -111,11 +111,11 @@ oldsmooth fg bg dist =
       color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
-alphaBlend :: E (V4 Float) -> E (V4 Float) -> E (V4 Float)
+alphaBlend :: Color -> Color -> Color
 alphaBlend bg fg = sh $ vec4 (mix (rgb $ sh bg) (rgb $ sh fg) (_a fg)) 1.0
 
 -- This is a fold
-alphaBlends :: [E (V4 Float)] -> E (V4 Float)
+alphaBlends :: [Color] -> Color
 alphaBlends es = sh $ alphaBlends' (black : es)
   where alphaBlends' [] = error "alphaBlends: impossible"
         alphaBlends' [e] = e
