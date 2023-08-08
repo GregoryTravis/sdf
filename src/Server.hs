@@ -29,6 +29,7 @@ runServer = run 8000 app
 app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
+  route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
   route "/i" (htmlHandler (interpo1 >>= singleHandler))

@@ -12,6 +12,7 @@ module Random
 , interpoPile
 , anOutlineE
 , aCircle
+, legg
 , randomCommander ) where
 
 import Control.Monad (join)
@@ -36,6 +37,30 @@ import Transform
 import Util hiding (die, time)
 
 -- default (Double)
+
+-- sinex :: E Float -> E Float -> E Float -> Transformer
+-- sinex amp freq phase (Transform xy t) =
+--   let x' = x +^ (amp *^ ssin (freq *^ y +^ phase))
+--       x = _x xy
+--       y = _y xy
+--       xy' = V2 x' y
+--    in Transform xy' t
+
+skwar :: Transformer
+skwar (Transform xy t) =
+  let x = _x xy
+      y = _y xy
+      xy' = V2 (x*x) (y*y)
+   in Transform xy' t
+
+legg :: IO Color
+legg = do
+  let t = transform skwar
+      s = scale 0.2 $ t $ pfGrid 1.3 1.3 $ scale 0.5 square
+  return $ smooth white black $ evalShape $ s
+  -- let t = transform skwar
+  --     sr = 1.0
+  -- return $ smooth white black $ evalShape $ t $ rotation (time * sr) $ scale 0.5 square
 
 primPick :: Commander Shape
 primPick = mapCvt $ M.fromList
