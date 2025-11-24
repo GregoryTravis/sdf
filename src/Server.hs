@@ -31,6 +31,7 @@ app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
   route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))
+  route "/cs" (htmlHandler (someCircles >>= singleHandler))
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
   route "/i" (htmlHandler (interpo1 >>= singleHandler))
   route "/ip" (htmlHandler (interpoPile >>= singleHandler))

@@ -12,6 +12,7 @@ module Random
 , interpoPile
 , anOutlineE
 , aCircle
+, someCircles
 , legg
 , randomCommander ) where
 
@@ -74,9 +75,9 @@ instance Show Shape where
 -- e.g. http://localhost:8000/sizes+circle+1.0+1.0+1.0
 randomCommander :: Commander (IO Color)
 randomCommander = nest $ M.fromList
-  [ ("sizes", sizes <$> via KF <*> via KF <*> via KF <*> primPick)
+  [ --("sizes", sizes <$> via KF <*> via KF <*> via KF <*> primPick)
   -- , ("filaoa", pure $ crecipe $ return $ evalShape filaoa)
-  , ("filaoa", pure $ return $ bandy black white $ evalShape filaoa)
+    ("filaoa", pure $ return $ bandy black white $ evalShape filaoa)
   , ("vlad", pure $ (evalRandIO rvlad) >>= (\s -> return $ siBandy black white $ evalShape s))
   , ("hrLimonTwaist", pure $ (evalRandIO hrLimonTwaist) >>= (\s -> return $ smooth black white $ evalShape s))
   , ("winky", pure $ return $ smooth black white $ evalShape $ scale 0.1 winky)
@@ -93,8 +94,8 @@ winky =
    in intersection csa csb
 
 -- a few circles actually
-sizes :: E Float -> E Float -> E Float -> Shape -> IO Color
-sizes rotvel xvel yvel s = return $ bandy white black $ evalShape $ trans shapes
+sizes :: E Float -> E Float -> E Float -> Shape -> Shape
+sizes rotvel xvel yvel s = trans shapes
    where shapes = union vvbig $ union vbig $ union tiny2 $ union tiny $ union smaller $ union medium $ union big small
          big = translation (V2 1.5 0.0) s
          vbig = translation (V2 (-0.58) 4.58) (scale 4 s)
@@ -106,7 +107,11 @@ sizes rotvel xvel yvel s = return $ bandy white black $ evalShape $ trans shapes
          small = translation (V2 (-1.5) 0.0) (scale 0.25 s)
          trans s = translation (V2 (xvel * time) (yvel * time)) $ rotation (rotvel * time) $ s
 
-aCircle = sizes 0.1 0.1 0.0 circle -- $ flower 4.0
+aCircle :: IO Color
+aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
+
+someCircles :: IO Color
+someCircles = (return . bandy white black . evalShape . sizes 0.1 0.1 0.0) circle -- $ flower 4.0
 
 recipe :: Rnd Shape
 recipe = uniformM
