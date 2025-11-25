@@ -133,6 +133,11 @@ bevelDistToHeight dist =
        (let sd = dist / KF bevelWidth
          in scos ((KF pi / 2.0) * (sd + 1.0)))
 
+colorGrad :: Color -> Color -> E Float -> E Float -> E Float -> Color
+colorGrad c0 c1 x0 x1 x =
+  let alpha = smoothstep x0 x1 x
+   in ((KF 1.0 - alpha) *^ c0) +^ (alpha *^ c1)
+
 -- const BEVEL_WIDTH: f32 = 0.075;
 -- fn bevel_dist_to_ht(d: f32) -> f32 {
 --   let pi = std::f32::consts::PI;

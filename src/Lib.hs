@@ -27,6 +27,21 @@ sdFdx = Fun1 "dFdx"
 sdFdy :: E Float -> E Float
 sdFdy = Fun1 "dFdy"
 
+norm2 :: E (V2 Float) -> E (V2 Float)
+norm2 v = v /^ (Length v)
+
+norm3 :: E (V3 Float) -> E (V3 Float)
+norm3 v = v /^ (Length v)
+
+dot2 :: E (V2 Float) -> E (V2 Float) -> E Float
+dot2 = Fun2 "dot"
+
+dot3 :: E (V3 Float) -> E (V3 Float) -> E Float
+dot3 = Fun2 "dot"
+
+-- vec3 :: E (V2 Float) -> E (V3 Float)
+-- vec3 = Fun1 "vec3"
+
 -- smoothstep edge0 edge1 x = sh $ Fun "smoothstep" [TF, TF, TF] TF [edge0, edge1, x]
 smoothstep :: E Float -> E Float -> E Float -> E Float
 smoothstep = Fun3 "smoothstep"

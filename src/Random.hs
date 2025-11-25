@@ -108,7 +108,53 @@ sizes rotvel xvel yvel s = trans shapes
          trans s = translation (V2 (xvel * time) (yvel * time)) $ rotation (rotvel * time) $ s
 
 aCircle :: IO Color
-aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
+--aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
+aCircle = (return . bubble . evalShape) circle -- $ flower 4.0
+
+bubble :: E Float -> Color
+bubble dist =
+  let -- bright = V3 1.0 0.5 0.5
+      -- dark = V3 0.5 0.0 0.5
+      bright = green
+      dark = red
+      -- TODO opt don't do these every time?
+      lightDir = norm3 $ V3 (-1.0) 1.0 1.0
+      radius = 0.3
+      duv = calcduv dist
+      -- TODO nice reduce the annotations or inline them
+      vertLen :: E Float
+      vertLen = ssqrt (KF 2.0 * dist * radius - (radius * radius))
+      up :: E (V3 Float)
+      up = (V3 0.0 0.0 1.0)
+      vert :: E (V3 Float)
+      vert = vertLen *^ up
+      norm0 :: E (V2 Float)
+      norm0 = ((dist + radius) *^ duv)
+      norm :: E (V3 Float)
+      norm = norm0 +^ vert
+      -- norm = ((dist + radius) *^ duv) + vert
+      brightnessDot = norm `dot3` lightDir
+   in colorGrad dark bright (-1.0) 1.0 brightnessDot
+
+-- Normalized gradient vector, accounting for scale.
+calcduv :: E Float -> E (V2 Float)
+calcduv dist =
+  let dDistX = sdFdx dist
+      dDistY = sdFdy dist
+      dDistXY = V2 dDistX dDistY
+      dDist = Length dDistXY
+   in dDistXY /^ dDist
+
+{-
+justX :: E Float -> Color
+justX dist =
+  let dDistX = sdFdx dist
+      dDistY = sdFdy dist
+      dDistXY = V2 dDistX dDistY
+      dDist = Length dDistXY
+      relX = dDistY / dDist
+   in colorGrad red green (KF (-1.0)) (KF 1.0) relX
+-}
 
 someCircles :: IO Color
 someCircles = (return . bandy white black . evalShape . sizes 0.1 0.1 0.0) circle -- $ flower 4.0
