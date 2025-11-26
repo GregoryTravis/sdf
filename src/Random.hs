@@ -111,8 +111,9 @@ aCircle :: IO Color
 --aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
 aCircle = (return . bubble . evalShape) circle -- $ flower 4.0
 
-bubble :: E Float -> Color
-bubble dist =
+-- TODO opt add shares
+bubbleInside :: E Float -> Color
+bubbleInside dist =
   let -- bright = V3 1.0 0.5 0.5
       -- dark = V3 0.5 0.0 0.5
       bright = green
@@ -128,13 +129,25 @@ bubble dist =
       up = (V3 0.0 0.0 1.0)
       vert :: E (V3 Float)
       vert = vertLen *^ up
-      norm0 :: E (V2 Float)
-      norm0 = ((dist + radius) *^ duv)
-      norm :: E (V3 Float)
-      norm = norm0 +^ vert
+      curveNorm0 :: E (V2 Float)
+      curveNorm0 = ((dist + radius) *^ duv)
+      curveNorm :: E (V3 Float)
+      curveNorm = vec3 curveNorm0 +^ vert
+      topNorm = up
       -- norm = ((dist + radius) *^ duv) + vert
+      -- TODO parens
+      isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
+      -- awkward
+      norm = Cond isInCurve curveNorm topNorm
       brightnessDot = norm `dot3` lightDir
-   in colorGrad dark bright (-1.0) 1.0 brightnessDot
+      curveColor = colorGrad dark bright (-1.0) 1.0 brightnessDot
+   in curveColor
+
+bubble :: E Float -> Color
+bubble dist =
+  -- TODO conditional to avoid bubble everywhere?
+  let outsideColor = black
+   in smooth (bubbleInside dist) outsideColor dist
 
 -- Normalized gradient vector, accounting for scale.
 calcduv :: E Float -> E (V2 Float)

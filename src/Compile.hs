@@ -42,6 +42,8 @@ compileSubE (Add a b) = op "+" (compileSubE a) (compileSubE b)
 compileSubE (Sub a b) = op "-" (compileSubE a) (compileSubE b)
 compileSubE (Mul a b) = op "*" (compileSubE a) (compileSubE b)
 compileSubE (Div a b) = op "/" (compileSubE a) (compileSubE b)
+compileSubE (And a b) = op "&&" (compileSubE a) (compileSubE b)
+compileSubE (Or a b) = op "||" (compileSubE a) (compileSubE b)
 compileSubE (V2 a b) = fun "vec2" [compileSubE a, compileSubE b]
 compileSubE (V3 a b c) = fun "vec3" [compileSubE a, compileSubE b, compileSubE c]
 compileSubE (V4 a b c d) = fun "vec4" [compileSubE a, compileSubE b, compileSubE c, compileSubE d]
@@ -222,6 +224,14 @@ share' (Div a b) = do
   a' <- share' a
   b' <- share' b
   return $ Div a' b'
+share' (And a b) = do
+  a' <- share' a
+  b' <- share' b
+  return $ And a' b'
+share' (Or a b) = do
+  a' <- share' a
+  b' <- share' b
+  return $ Or a' b'
 share' (Length e) = do
   e' <- share' e
   return $ Length e'

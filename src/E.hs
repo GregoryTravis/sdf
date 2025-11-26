@@ -27,6 +27,8 @@ module E
   , (-^)
   , (*^)
   , (/^)
+  , (&&.)
+  , (||.)
   , typeName
   , _x
   , _y
@@ -83,6 +85,8 @@ data E a where
   Sub :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
   Mul :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
   Div :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
+  And :: E Bul -> E Bul -> E Bul
+  Or :: E Bul -> E Bul -> E Bul
   Length :: (GlslType a, GlslType b, Lengthable a b) => E a -> E b
   Uniform :: GlslType a => String -> E a
   Swizzle :: (GlslType (vv n), GlslType (v n), SwizzlesTo (vv n) (v n)) => Swizzler (v n) -> E (vv n) -> E (v n)
@@ -145,6 +149,8 @@ instance Num (E Double) where
 
 infixl 6 +^, -^
 infixl 7 *^, /^
+infixr 3 &&.
+infixr 2 ||.
 
 (+^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (+^) = Add
@@ -157,6 +163,12 @@ infixl 7 *^, /^
 
 (/^) :: (GlslType a, GlslType b, GlslType c, Promotable a b c) => E a -> E b -> E c
 (/^) = Div
+
+(&&.) :: E Bul -> E Bul -> E Bul
+(&&.) = And
+
+(||.) :: E Bul -> E Bul -> E Bul
+(||.) = Or
 
 -- -- fromRational, (recip | (/))
 -- instance Fractional (E a) where

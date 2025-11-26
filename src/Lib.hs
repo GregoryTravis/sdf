@@ -39,6 +39,9 @@ dot2 = Fun2 "dot"
 dot3 :: E (V3 Float) -> E (V3 Float) -> E Float
 dot3 = Fun2 "dot"
 
+vec3 :: E (V2 Float) -> E (V3 Float)
+vec3 v = Fun2 "vec3" v (KF 0.0)
+
 -- vec3 :: E (V2 Float) -> E (V3 Float)
 -- vec3 = Fun1 "vec3"
 
