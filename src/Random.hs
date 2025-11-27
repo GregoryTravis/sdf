@@ -111,7 +111,7 @@ aCircle :: IO Color
 --aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
 aCircle = (return . bubble . evalShape) circle -- $ flower 4.0
 
--- TODO opt add shares
+-- TODO opt add sh
 bubbleInside :: E Float -> Color
 bubbleInside dist =
   let -- bright = V3 1.0 0.5 0.5
@@ -142,12 +142,40 @@ bubbleInside dist =
       brightnessDot = norm `dot3` lightDir
       curveColor = colorGrad dark bright (-1.0) 1.0 brightnessDot
    in curveColor
+   --in calibrator 1.0 (_x uv) (_y uv)
+
+ruler :: Color -> Color -> E Float -> E Float -> Color
+ruler c0 c1 unitSize x =
+  let lower = smod x (unitSize * KF 2.0) <. unitSize
+   in Cond lower c0 c1
+
+basicGrid :: Color -> Color -> E Float -> E Float -> E Float -> Color
+basicGrid c0 c1 unitSize x y =
+  let lowerX = smod x (unitSize * KF 2.0) <. unitSize
+      lowerY = smod y (unitSize * KF 2.0) <. unitSize
+   in Cond (lowerX /=. lowerY) c0 c1
+
+calibrator :: E Float -> E Float -> E Float -> Color
+calibrator unitSize x y =
+  let d = bw3 (KF 0.1)
+      l = bw3 (KF 0.9)
+      us10 = unitSize / 10.0
+      us100 = unitSize / 100.0
+      coarse = basicGrid d l us10 x y
+      fine = basicGrid d l us100 x y
+      gridd = colorGrad coarse fine 0.0 unitSize 0.5
+      xgrad = colorGrad red green 0.0 unitSize x
+      ygrad = colorGrad blue yellow 0.0 unitSize y
+      grad = colorGrad xgrad ygrad 0.0 unitSize 0.5
+   in gridd + grad
 
 bubble :: E Float -> Color
 bubble dist =
   -- TODO conditional to avoid bubble everywhere?
   let outsideColor = black
    in smooth (bubbleInside dist) outsideColor dist
+   --in colorGrad red green (KF (-1.0)) (KF 1.0) (sdFdx dist * 1000.0)
+   --in Cond (dist >. (-0.99)) green red
 
 -- Normalized gradient vector, accounting for scale.
 calcduv :: E Float -> E (V2 Float)

@@ -6,6 +6,7 @@ module E
   -- , Ty(..)
   , Uniform(..)
   , (==.)
+  , (/=.)
   , (<.)
   , (>.)
   , (<=.)
@@ -139,6 +140,16 @@ instance Num (E Float) where
   fromInteger i = KF (fromInteger i)
   negate = Neg
 
+instance Num (E (V4 Float)) where
+  (+) = Add
+  (*) = Mul
+  abs = sabs
+  signum = error "signum not implemented"
+  fromInteger i =
+    let n = KF (fromInteger i)
+     in V4 n n n 1.0
+  negate = Neg
+
 instance Num (E Double) where
   (+) = Add
   (*) = Mul
@@ -187,6 +198,9 @@ instance Fractional (E Double) where
 infix 4 ==.
 (==.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (==.) = Comparison "=="
+infix 4 /=.
+(/=.) :: (Show a, GlslType a) => E a -> E a -> E Bul
+(/=.) = Comparison "!="
 infix 4 <.
 (<.) :: (Show a, GlslType a) => E a -> E a -> E Bul
 (<.) = Comparison "<"
