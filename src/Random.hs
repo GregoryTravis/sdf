@@ -14,6 +14,7 @@ module Random
 , aCircle
 , bubbles
 , filaoaBub
+, graph
 , someCircles
 , legg
 , randomCommander ) where
@@ -123,6 +124,18 @@ bubbles =
 
 filaoaBub :: IO Color
 filaoaBub = (return . bubble . evalShape) filaoa
+
+graph :: IO Color
+graph = graphit (\x -> x * x)
+
+graphit :: (E Float -> E Float) -> IO Color
+graphit fn =
+  -- unit aquare is -1..1 in both axes
+  let x = _x uv
+      y = _y uv
+      above = red
+      below = green
+   in return $ Cond (fn x <. y) below above
 
 -- TODO opt add sh
 bubbleInside :: E Float -> Color

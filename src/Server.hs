@@ -33,6 +33,7 @@ app = do
   route "/c" (htmlHandler (aCircle >>= singleHandler))
   route "/bubbles" (htmlHandler (bubbles >>= singleHandler))
   route "/filaoa" (htmlHandler (filaoaBub >>= singleHandler))
+  route "/graph" (htmlHandler (graph >>= singleHandler))
   route "/cs" (htmlHandler (someCircles >>= singleHandler))
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
   route "/i" (htmlHandler (interpo1 >>= singleHandler))
