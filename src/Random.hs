@@ -12,6 +12,8 @@ module Random
 , interpoPile
 , anOutlineE
 , aCircle
+, bubbles
+, filaoaBub
 , someCircles
 , legg
 , randomCommander ) where
@@ -111,20 +113,31 @@ aCircle :: IO Color
 --aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
 aCircle = (return . bubble . evalShape) circle -- $ flower 4.0
 
+bubbles :: IO Color
+bubbles =
+  let d = 0.5 + (0.6 * (ssin (time / KF 2.0))) -- 0.8
+      l = translation (V2 (-d) 0.0) circle
+      r = translation (V2 d 0.0) circle
+      all = l `smoothUnion` r
+  in (return . bubble . evalShape) all
+
+filaoaBub :: IO Color
+filaoaBub = (return . bubble . evalShape) filaoa
+
 -- TODO opt add sh
 bubbleInside :: E Float -> Color
 bubbleInside dist =
   let -- bright = V3 1.0 0.5 0.5
       -- dark = V3 0.5 0.0 0.5
-      bright = green
-      dark = red
+      dark = bw3 (KF 0.0)
+      bright = bw3 (KF 1.0)
       -- TODO opt don't do these every time?
       lightDir = norm3 $ V3 (-1.0) 1.0 1.0
-      radius = 0.3
+      radius = 0.5
       duv = calcduv dist
       -- TODO nice reduce the annotations or inline them
       vertLen :: E Float
-      vertLen = ssqrt (KF 2.0 * dist * radius - (radius * radius))
+      vertLen = ssqrt (KF (-2.0) * dist * radius - (dist * dist))
       up :: E (V3 Float)
       up = (V3 0.0 0.0 1.0)
       vert :: E (V3 Float)
@@ -133,15 +146,19 @@ bubbleInside dist =
       curveNorm0 = ((dist + radius) *^ duv)
       curveNorm :: E (V3 Float)
       curveNorm = vec3 curveNorm0 +^ vert
-      topNorm = up
+      topNorm = up *^ radius
       -- norm = ((dist + radius) *^ duv) + vert
       -- TODO parens
       isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
       -- awkward
       norm = Cond isInCurve curveNorm topNorm
-      brightnessDot = norm `dot3` lightDir
+      --normnorm = norm /^ Length norm
+      nrm v = v /^ Length v
+      brightnessDot = nrm norm `dot3` nrm lightDir
       curveColor = colorGrad dark bright (-1.0) 1.0 brightnessDot
-   in curveColor
+   in Cond (_x uv <. 0) curveColor white
+   --in colorGrad dark bright 0.0 radius vertLen
+   --in ruler dark bright radius vertLen
    --in calibrator 1.0 (_x uv) (_y uv)
 
 ruler :: Color -> Color -> E Float -> E Float -> Color
@@ -172,7 +189,7 @@ calibrator unitSize x y =
 bubble :: E Float -> Color
 bubble dist =
   -- TODO conditional to avoid bubble everywhere?
-  let outsideColor = black
+  let outsideColor = green
    in smooth (bubbleInside dist) outsideColor dist
    --in colorGrad red green (KF (-1.0)) (KF 1.0) (sdFdx dist * 1000.0)
    --in Cond (dist >. (-0.99)) green red
