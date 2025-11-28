@@ -172,6 +172,27 @@ bubbleInside dist =
    --in ruler dark bright radius vertLen
    --in calibrator 1.0 (_x uv) (_y uv)
 
+bubble :: E Float -> Color
+bubble dist =
+  -- TODO conditional to avoid bubble everywhere?
+  let outsideColor = green
+   in smooth (bubbleInside dist) outsideColor dist
+   --in colorGrad red green (KF (-1.0)) (KF 1.0) (sdFdx dist * 1000.0)
+   --in Cond (dist >. (-0.99)) green red
+
+artifactBub :: IO Color
+artifactBub = (return . bubble . evalShape) artifact
+
+artifact :: Shape
+artifact =
+  let tm = KF 19.1
+   in scale (KF 0.1) $ smoothUnion (scale (tm /^ (KF 10.0)) filaoa') (rotation (tm /^ (KF 10.0)) filaoa')
+  where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
+
+filaoaBub :: IO Color
+--filaoaBub = (return . smooth white green . evalShape) filaoa
+filaoaBub = (return . bubble . evalShape) filaoa
+
 ruler :: Color -> Color -> E Float -> E Float -> Color
 ruler c0 c1 unitSize x =
   let lower = smod x (unitSize * KF 2.0) <. unitSize
@@ -196,14 +217,6 @@ calibrator unitSize x y =
       ygrad = colorGrad blue yellow 0.0 unitSize y
       grad = colorGrad xgrad ygrad 0.0 unitSize 0.5
    in gridd + grad
-
-bubble :: E Float -> Color
-bubble dist =
-  -- TODO conditional to avoid bubble everywhere?
-  let outsideColor = green
-   in smooth (bubbleInside dist) outsideColor dist
-   --in colorGrad red green (KF (-1.0)) (KF 1.0) (sdFdx dist * 1000.0)
-   --in Cond (dist >. (-0.99)) green red
 
 -- Normalized gradient vector, accounting for scale.
 calcduv :: E Float -> E (V2 Float)
@@ -565,22 +578,10 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
       p = interp (osc interpRate) rs0' rs1'
    in scale 0.1 p
 
-filaoaBub :: IO Color
-filaoaBub = (return . bubble . evalShape) filaoa
-
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
 filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) filaoa')
-  where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
-
-artifactBub :: IO Color
-artifactBub = (return . bubble . evalShape) artifact
-
-artifact :: Shape
-artifact =
-  let tm = KF 19.1
-   in scale (KF 0.1) $ smoothUnion (scale (tm /^ (KF 10.0)) filaoa') (rotation (tm /^ (KF 10.0)) filaoa')
   where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
 
 classicAnotherGreatOne :: Rnd Shape
