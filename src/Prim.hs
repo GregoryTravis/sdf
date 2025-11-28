@@ -22,7 +22,7 @@ circle (Transform xy _) =
 
 -- E should be integral
 flower :: E Float -> Shape
-flower numPetals (Transform xy t) =
+flower numPetals (Transform xy _) =
   let ang = sh $ satan (_y xy) (_x xy)
       raw_dist = sh $ ssqrt (Length xy)
       radius = sh $ liftedAmp

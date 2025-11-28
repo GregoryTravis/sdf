@@ -156,7 +156,7 @@ bubbleInside dist =
       nrm v = v /^ Length v
       brightnessDot = nrm norm `dot3` nrm lightDir
       curveColor = colorGrad dark bright (-1.0) 1.0 brightnessDot
-   in Cond (_x uv <. 0) curveColor white
+   in curveColor
    --in colorGrad dark bright 0.0 radius vertLen
    --in ruler dark bright radius vertLen
    --in calibrator 1.0 (_x uv) (_y uv)

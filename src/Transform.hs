@@ -45,6 +45,14 @@ rotation' ang (Transform xy t) =
 transform :: Transformer -> Shape -> Shape
 transform transformer p = p . transformer
 
+-- This time parameter is not used by any temporal functions, which just
+-- reference the uniform 'time' directly, so they have no effect. All prims
+-- ignore it.
+-- timeShift :: E Float -> UnOp
+-- timeShift dt = transform (timeShift' dt)
+-- timeShift' :: E Float -> Transformer
+-- timeShift' dt (Transform xy t) = Transform xy (t + dt)
+
 idTransform :: Transform
 idTransform = Transform uv time
 
