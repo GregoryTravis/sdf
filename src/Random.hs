@@ -14,6 +14,7 @@ module Random
 , aCircle
 , bubbles
 , filaoaBub
+, artifactBub
 , graph
 , someCircles
 , legg
@@ -121,9 +122,6 @@ bubbles =
       r = translation (V2 d 0.0) circle
       all = l `smoothUnion` r
   in (return . bubble . evalShape) all
-
-filaoaBub :: IO Color
-filaoaBub = (return . bubble . evalShape) filaoa
 
 graph :: IO Color
 graph = graphit (\x -> x * x)
@@ -567,10 +565,22 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
       p = interp (osc interpRate) rs0' rs1'
    in scale 0.1 p
 
+filaoaBub :: IO Color
+filaoaBub = (return . bubble . evalShape) filaoa
+
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
 filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) filaoa')
+  where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
+
+artifactBub :: IO Color
+artifactBub = (return . bubble . evalShape) artifact
+
+artifact :: Shape
+artifact =
+  let tm = KF 19.1
+   in scale (KF 0.1) $ smoothUnion (scale (tm /^ (KF 10.0)) filaoa') (rotation (tm /^ (KF 10.0)) filaoa')
   where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
 
 classicAnotherGreatOne :: Rnd Shape
