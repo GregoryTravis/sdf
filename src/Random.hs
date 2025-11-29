@@ -18,6 +18,7 @@ module Random
 , artifactBub
 , graph
 , bsp
+, lcd
 , someCircles
 , legg
 , randomCommander ) where
@@ -260,6 +261,35 @@ bsp =
       square = intersections [l, r, t, b]
       all = difference (rotation time square) (rotation (-(time / 2)) square)
   in (return . smooth white black . evalShape) all
+
+splitScreenHor :: (E Float -> Color) -> (E Float -> Color) -> (E Float -> Color)
+splitScreenHor colorer0 colorer1 dist =
+  Cond (_x uv >. 0) (colorer0 dist) (colorer1 dist)
+
+splitScreenVer :: (E Float -> Color) -> (E Float -> Color) -> (E Float -> Color)
+splitScreenVer colorer0 colorer1 dist =
+  Cond (_y uv >. 0) (colorer0 dist) (colorer1 dist)
+
+lcds = [
+  -- https://www.reddit.com/r/embedded/comments/1ikux0v/where_to_find_big_and_finer_resolution_monochrome/
+  (mkCol3_256 84 91 66, mkCol3_256 134 148 113),
+  -- https://forum.arduino.cc/t/large-backlight-monochrome-lcd/206007/3
+  (mkCol3_256 35 39 32, mkCol3_256 137 152 147),
+  -- https://huaxianjing.com/16x2-monochrome-character-lcd-module/
+  (mkCol3_256 65 88 22, mkCol3_256 219 231 75),
+  -- https://www.adafruit.com/product/772
+  (mkCol3_256 163 194 197, mkCol3_256 50 113 245)
+  ]
+
+lcd :: IO Color
+lcd =
+  let (fg, bg) = lcds !! 3
+      horc0 = splitScreenHor (smpr $ lcds !! 0) (smpr $ lcds !! 1)
+      horc1 = splitScreenHor (smpr $ lcds !! 2) (smpr $ lcds !! 3)
+      colorer = splitScreenVer horc0 horc1
+      all = filaoa
+  in (return . colorer . evalShape) all
+  where smpr (fg, bg) = smooth fg bg
 
 someCircles :: IO Color
 someCircles = (return . bandy white black . evalShape . sizes 0.1 0.1 0.0) circle -- $ flower 4.0

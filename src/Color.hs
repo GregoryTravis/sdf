@@ -23,6 +23,9 @@ nothing = mkCol 0.0 0.0 0.0 0.0
 mkCol3 :: Float -> Float -> Float -> Color
 mkCol3 r g b = mkCol r g b 1.0
 
+mkCol3_256 :: Float -> Float -> Float -> Color
+mkCol3_256 r g b = mkCol (r/256) (g/256) (b/256) 1.0
+
 -- TODO Distinguish cuz takes E
 bw3 :: E Float -> Color
 bw3 x = V4 x x x (KF 1.0)
