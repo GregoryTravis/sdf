@@ -36,6 +36,7 @@ app = do
   route "/filaoa" (htmlHandler (filaoaBub >>= singleHandler))
   route "/artifact" (htmlHandler (artifactBub >>= singleHandler))
   route "/graph" (htmlHandler (graph >>= singleHandler))
+  route "/bsp" (htmlHandler (bsp >>= singleHandler))
   route "/cs" (htmlHandler (someCircles >>= singleHandler))
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))
   route "/i" (htmlHandler (interpo1 >>= singleHandler))

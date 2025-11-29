@@ -1,6 +1,8 @@
 module BinOp
 ( union
 , intersection
+, unions
+, intersections
 , difference
 , smoothUnion
 , interp
@@ -24,6 +26,19 @@ difference :: BinOp
 difference = binopper difference'
 difference' :: E Float -> E Float -> E Float
 difference' a b = smax a (- b)
+
+listify :: BinOp -> ([Shape] -> Shape)
+-- TODO maybe default everything/nothing values for these?
+listify op [] = error $ "empty listify"
+listify op [x] = x
+listify op [x, y] = x `op` y
+listify op (x:ys) = x `op` (listify op ys)
+
+unions :: [Shape] ->  Shape
+unions = listify union
+
+intersections :: [Shape] ->  Shape
+intersections = listify intersection
 
 binopper :: (E Float -> E Float -> E Float) -> BinOp
 binopper distCombiner p0 p1 tr = distCombiner (sh $ p0 tr) (sh $ p1 tr)

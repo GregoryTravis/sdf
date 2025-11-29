@@ -4,6 +4,9 @@ module Lib where
 
 import E
 
+kpi :: E Float
+kpi = KF pi
+
 ssqrt :: E Float -> E Float
 ssqrt x = Fun1 "sqrt" x
 satan :: E Float -> E Float -> E Float

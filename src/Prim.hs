@@ -1,6 +1,9 @@
+{-# LANGUAGE GADTs #-}
+
 module Prim
 ( circle
 , square
+, halfSpace
 , flower
 , allPrims ) where
 
@@ -19,6 +22,10 @@ circle :: Shape
 circle (Transform xy _) =
   let dist = Length xy -^ KF 1.0
    in dist
+
+-- Default half space: interior is negative x axis
+halfSpace :: Shape
+halfSpace (Transform xy _) = _x xy
 
 -- E should be integral
 flower :: E Float -> Shape

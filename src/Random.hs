@@ -17,6 +17,7 @@ module Random
 , filaoaBub
 , artifactBub
 , graph
+, bsp
 , someCircles
 , legg
 , randomCommander ) where
@@ -248,16 +249,17 @@ calcduv dist =
       dDist = Length dDistXY
    in dDistXY /^ dDist
 
-{-
-justX :: E Float -> Color
-justX dist =
-  let dDistX = sdFdx dist
-      dDistY = sdFdy dist
-      dDistXY = V2 dDistX dDistY
-      dDist = Length dDistXY
-      relX = dDistY / dDist
-   in colorGrad red green (KF (-1.0)) (KF 1.0) relX
--}
+bsp :: IO Color
+bsp =
+  let px = halfSpace
+      rd = 0.2
+      l = translation (V2 (-rd) 0.0) $ rotation (KF pi) px
+      r = translation (V2 rd 0.0) px
+      t = translation (V2 0.0 (-rd)) $ rotation (KF (pi/2)) px
+      b = translation (V2 0.0 rd) $ rotation (KF (-(pi/2))) px
+      square = intersections [l, r, t, b]
+      all = difference (rotation time square) (rotation (-(time / 2)) square)
+  in (return . smooth white black . evalShape) all
 
 someCircles :: IO Color
 someCircles = (return . bandy white black . evalShape . sizes 0.1 0.1 0.0) circle -- $ flower 4.0
