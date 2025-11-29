@@ -12,6 +12,7 @@ module Random
 , interpoPile
 , anOutlineE
 , aCircle
+, chunky
 , bubbles
 , filaoaBub
 , artifactBub
@@ -110,6 +111,26 @@ sizes rotvel xvel yvel s = trans shapes
          tiny2 = translation (V2 (-0.6) 0.0) (scale (1.0 / 32.0) s)
          small = translation (V2 (-1.5) 0.0) (scale 0.25 s)
          trans s = translation (V2 (xvel * time) (yvel * time)) $ rotation (rotvel * time) $ s
+
+chunky :: IO Color
+chunky =
+  let d = 0.5 + (0.6 * (ssin (time / KF 2.0))) -- 0.8
+      l = translation (V2 (-d) 0.0) circle
+      r = translation (V2 d 0.0) circle
+      all = l `smoothUnion` r
+   in (return . bubble . evalShape) (transform chunkify all)
+
+chunkify :: Transformer
+chunkify (Transform uv t) =
+  let uvChunkSize = 0.05
+      u = _x uv
+      v = _y uv
+      u' = uvChunkSize * (sfloor (u / uvChunkSize))
+      v' = uvChunkSize * (sfloor (v / uvChunkSize))
+   in Transform (V2 u' v') t
+
+cone :: E Float -> Color
+cone = colorGrad white black (-1.0) 0.0
 
 aCircle :: IO Color
 --aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0

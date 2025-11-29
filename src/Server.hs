@@ -31,6 +31,7 @@ app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
   route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))
+  route "/chunky" (htmlHandler (chunky >>= singleHandler))
   route "/bubbles" (htmlHandler (bubbles >>= singleHandler))
   route "/filaoa" (htmlHandler (filaoaBub >>= singleHandler))
   route "/artifact" (htmlHandler (artifactBub >>= singleHandler))
