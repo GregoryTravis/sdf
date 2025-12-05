@@ -19,6 +19,7 @@ module Random
 , graph
 , bsp
 , lcd
+, potdC
 , someCircles
 , legg
 , randomCommander ) where
@@ -290,6 +291,49 @@ lcd =
       all = filaoa
   in (return . colorer . evalShape) all
   where smpr (fg, bg) = smooth fg bg
+
+potd :: Shape
+potd =
+  let wave = ssin time
+      disp = 0.7
+      base = circle
+      c0 :: Shape
+      vc0 = translation (V2 (-disp) wave) base
+      vc1 = translation (V2 disp (-wave)) base
+      hc0 = scale 0.3 $ translation (V2 ((-wave)*1.3) 0) base
+      hc1 = translation (V2 (wave*1.3) 0) base
+      -- (c0, c1) = (vc0, vc1)
+      (c0, c1) = (hc0, hc1)
+      pc :: Transform -> E Float
+      pc tr =
+        let c0d = c0 tr
+            c1d = c1 tr
+            insideBoth = c0d <. 0.1 &&. c1d <. 0
+            -- if inside both, push c1 back by returning a bit more than 0 for it
+         in Cond insideBoth (10) c1d
+      all = union c0 pc
+   in scale 0.5 $ all
+
+potdC :: IO Color
+potdC = (return . smooth white black . evalShape) potd
+
+bugLacyEdge :: Shape
+bugLacyEdge =
+  let wave = ssin time
+      disp = 0.7
+      base = circle
+      c0 :: Shape
+      c0 = translation (V2 (-disp) wave) base
+      c1 = translation (V2 disp (-wave)) base
+      pc :: Transform -> E Float
+      pc tr =
+        let c0d = c0 tr
+            c1d = c1 tr
+            insideBoth = c0d <. 0 &&. c1d <. 0
+            -- if inside both, push c1 back by returning a bit more than 0 for it
+         in Cond insideBoth (-1) c1d
+      all = union c0 pc
+   in scale 0.5 $ all
 
 someCircles :: IO Color
 someCircles = (return . bandy white black . evalShape . sizes 0.1 0.1 0.0) circle -- $ flower 4.0

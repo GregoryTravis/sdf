@@ -24,6 +24,8 @@ module E
   , V4
   , Bul
   , Mat2
+  , trueB
+  , falseB
   , (+^)
   , (-^)
   , (*^)
@@ -75,10 +77,18 @@ data Mat2 a
 data Bul
   deriving (Eq, Show)
 
+-- omg
+-- TODO add literals to compiler
+trueB :: E Bul
+trueB = (KF 0 ==. KF 0)
+falseB :: E Bul
+falseB = (KF 0 /=. KF 0)
+
 data E a where
   KF :: Float -> E Float
   KD :: Double -> E Double
   KI :: Int -> E Int
+  KB :: Bool -> E Bul
   V2 :: (Show a, GlslType a) => E a -> E a -> E (V2 a)
   V3 :: (Show a, GlslType a) => E a -> E a -> E a -> E (V3 a)
   V4 :: (Show a, GlslType a) => E a -> E a -> E a -> E a -> E (V4 a)
