@@ -56,6 +56,11 @@ smoothstep = Fun3 "smoothstep"
 -- mix x y a = sh $ Fun "mix" [TV3, TV3, TF] TV3 [x, y, a]
 mix :: (Show a, GlslType a, GlslType (V3 a)) => E (V3 a) -> E (V3 a) -> E a -> E (V3 a)
 mix = Fun3 "mix"
+-- just make these generic
+
+mix4 :: (Show a, GlslType a, GlslType (V4 a)) => E (V4 a) -> E (V4 a) -> E a -> E (V4 a)
+mix4 = Fun3 "mix"
+
 -- specific to (rgb, a)
 -- vec4 rgb a = sh $ Fun "vec4" [TV3, TF] TV4 [rgb, a]
 vec4 :: (Show a, GlslType a, GlslType (V3 a), GlslType (V4 a)) => E (V3 a) -> E a -> E (V4 a)

@@ -292,30 +292,52 @@ lcd =
   in (return . colorer . evalShape) all
   where smpr (fg, bg) = smooth fg bg
 
+-- -- r: pusher, e: pushee, s: smooshed pushee
+-- -- Adjusting e based on r; r is left alone
+-- -- r < 1.1 => s > 0
+-- -- 1.1 < r < 1.2 => 0 < s < e_e
+-- -- 1.2 < r => s = e
+-- -- where e_e is the distance where r is 1.2
+-- smoosh :: Shape -> Shape -> Shape
+-- smoosh pusher pushee t@(Transform uv _) =
+--   let r = transform pusher t
+--       e = transform pushee t
+--       e_e = e * 0.8
+--       d | r < 1.1 = 0.1
+
+smoosh :: Shape -> Shape -> Shape
+smoosh pusher pushee t@(Transform uv _) =
+  let r = evalShape pusher
+      e = evalShape pushee
+      rlo = 1.1
+      rhi = 8.7
+      alpha = smoothstep rlo rhi r
+      d = ((0.1) * (1 - alpha)) + (e * alpha)
+      -- d = e * alpha
+   in d
+
 potd :: Shape
 potd =
   let wave = ssin time
-      disp = 0.7
+      disp = 1.7
       base = circle
-      c0 :: Shape
-      vc0 = translation (V2 (-disp) wave) base
-      vc1 = translation (V2 disp (-wave)) base
-      hc0 = scale 0.3 $ translation (V2 ((-wave)*1.3) 0) base
-      hc1 = translation (V2 (wave*1.3) 0) base
-      -- (c0, c1) = (vc0, vc1)
-      (c0, c1) = (hc0, hc1)
-      pc :: Transform -> E Float
-      pc tr =
-        let c0d = c0 tr
-            c1d = c1 tr
-            insideBoth = c0d <. 0.1 &&. c1d <. 0
-            -- if inside both, push c1 back by returning a bit more than 0 for it
-         in Cond insideBoth (10) c1d
-      all = union c0 pc
-   in scale 0.5 $ all
+      moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
+      all = (smoosh moving base) `union` (distScale 0.9 moving)
+   in all
+
+distScale :: E Float -> Shape -> Shape
+distScale s shape transform = s * (shape transform)
 
 potdC :: IO Color
-potdC = (return . smooth white black . evalShape) potd
+-- potdC = (return . smooth white black . evalShape) potd
+-- potdC = (return . r2g . evalShape) potd
+potdC = (return . bandy red green . evalShape) potd
+
+r2g :: E Float -> Color
+r2g dist =
+  Cond (dist <=. KF 0.0)
+    (mix4 red green (dist + 1.0))
+    black
 
 bugLacyEdge :: Shape
 bugLacyEdge =
