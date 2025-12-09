@@ -20,6 +20,7 @@ module Random
 , bsp
 , lcd
 , potdC
+, newpotdC
 , someCircles
 , legg
 , randomCommander ) where
@@ -318,20 +319,54 @@ smoosh pusher pushee t@(Transform uv _) =
 
 potd :: Shape
 potd =
-  let wave = ssin time
-      disp = 1.7
-      base = circle
-      moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
-      all = (smoosh moving base) `union` (distScale 0.9 moving)
-   in all
+ let wave = ssin time
+     disp = 1.7
+     base = circle
+     moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
+     all = (smoosh moving base) `union` (distScale 0.9 moving)
+  in all
+
+potdC :: IO Color
+potdC = (return . bandy red green . evalShape) potd
 
 distScale :: E Float -> Shape -> Shape
 distScale s shape transform = s * (shape transform)
 
-potdC :: IO Color
+newsmoosh :: Shape -> Shape -> Shape
+newsmoosh pusher pushee t@(Transform uv _) =
+  let r = evalShape pusher
+      e = evalShape pushee
+      rlo = 0.3
+      rhi = 0.6
+      inBand = mix1 0.2 e (smoothstep rlo rhi r)
+      inside = 0.5
+      outside = e
+      dInsideE = Cond (r <. rlo)
+               inside
+               (Cond (r <. rhi)
+                     inBand
+                     outside)
+      d = Cond (e <=. 0) dInsideE 0.5
+   in d
+
+newpotd :: Shape
+newpotd =
+  let wave = ssin time
+      disp = 1.7
+      big = 0.5
+      small = 0.2
+      base = scale big circle
+      moving = translation (V2 (_x mouse) (-(_y mouse))) $ scale 1.0 (scale small circle) -- cir
+      --moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
+      -- all = (smoosh moving base) `union` (distScale 0.9 moving)
+      all = (newsmoosh moving base) `union` moving
+      --all = smoothUnion moving base
+   in all
+
+newpotdC :: IO Color
 -- potdC = (return . smooth white black . evalShape) potd
 -- potdC = (return . r2g . evalShape) potd
-potdC = (return . bandy red green . evalShape) potd
+newpotdC = (return . bandy red green . evalShape) newpotd
 
 r2g :: E Float -> Color
 r2g dist =
