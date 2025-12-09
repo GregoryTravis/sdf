@@ -327,7 +327,7 @@ potd =
   in all
 
 potdC :: IO Color
-potdC = (return . bandy red green . evalShape) potd
+potdC = (return . iqBandy . evalShape) potd
 
 distScale :: E Float -> Shape -> Shape
 distScale s shape transform = s * (shape transform)
@@ -366,7 +366,7 @@ newpotd =
 newpotdC :: IO Color
 -- potdC = (return . smooth white black . evalShape) potd
 -- potdC = (return . r2g . evalShape) potd
-newpotdC = (return . bandy red green . evalShape) newpotd
+newpotdC = (return . iqBandy . evalShape) newpotd
 
 r2g :: E Float -> Color
 r2g dist =

@@ -75,8 +75,8 @@ iqBandy :: E Float -> Color
 iqBandy dist =
   let a = red
       b = green
-      hiR = 0.2
-      loR = 0.4
+      hiR = 0.1
+      loR = 0.6
       loA = mix4 a black loR
       loB = mix4 b black loR
       hiA = mix4 a black hiR
