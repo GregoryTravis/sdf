@@ -138,7 +138,7 @@ cone = colorGrad white black (-1.0) 0.0
 
 aCircle :: IO Color
 --aCircle = (return . smooth white black . evalShape) circle -- $ flower 4.0
-aCircle = (return . bubble . evalShape) circle -- $ flower 4.0
+aCircle = (return . iqBandy . evalShape) circle -- $ flower 4.0
 
 bubbles :: IO Color
 bubbles =

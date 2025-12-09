@@ -71,6 +71,23 @@ smooth fg bg dist =
       color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
+iqBandy :: E Float -> Color
+iqBandy dist =
+  let a = red
+      b = green
+      hiR = 0.2
+      loR = 0.4
+      loA = mix4 a black loR
+      loB = mix4 b black loR
+      hiA = mix4 a black hiR
+      hiB = mix4 b black hiR
+      num = 20
+   in Cond (dist <. 0) (bands num hiA hiB) (bands num loA loB)
+  where
+    bands numPerUnit c0 c1 =
+      let recip = 1.0 / numPerUnit
+       in Cond ((smod dist (2 * recip)) <. recip) c0 c1
+
 bandy :: Color -> Color -> E Float -> Color
 bandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
