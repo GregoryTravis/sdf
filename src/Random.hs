@@ -326,19 +326,19 @@ smoosh :: Shape -> Shape -> Shape
 smoosh pusher pushee t@(Transform uv _) =
   let r = evalShape pusher
       e = evalShape pushee
-      rlo = 1.1
-      rhi = 8.7
+      rlo = 0.1
+      rhi = 2.7
       d = mix1 0.1 e (smoothstep rlo rhi r)
    in d
 
 potd :: Shape
 potd =
   let (base, moving) = mouseMovement
-      all = (smoosh moving base) -- `union` (distScale 0.9 moving)
+      all = (smoosh moving base) `union` moving
    in all
 
 potdC :: IO Color
-potdC = (return . iqBandy . evalShape) potd
+potdC = (return . smooth white black . evalShape) potd
 
 distScale :: E Float -> Shape -> Shape
 distScale s shape transform = s * (shape transform)
