@@ -347,12 +347,13 @@ potd4 =
       -- union before smooshing does less drippiness
       -- smooshes = smoosh movings base
       smooshes = smoosh moving4 (smoosh moving3 (smoosh moving2 (smoosh moving base)))
-      movings = unions [moving, moving2, moving3, moving4]
+      movings = smoothUnions [moving, moving2, moving3, moving4]
       all = smooshes `union` movings
-   in (return . smooth white black . evalShape) all
+   in (return . smooth (bubbleInside (evalShape all)) black . evalShape) all
 
+-- TODO sh potd
 potdC :: IO Color
-potdC = (return . smooth white black . evalShape) potd
+potdC = (return . smooth (bubbleInside (evalShape potd)) black . evalShape) potd
 
 distScale :: E Float -> Shape -> Shape
 distScale s shape transform = s * (shape transform)

@@ -1,10 +1,11 @@
 module BinOp
 ( union
-, intersection
 , unions
+, intersection
 , intersections
 , difference
 , smoothUnion
+, smoothUnions
 , interp
 , binopper
 , allBinOps ) where
@@ -36,6 +37,9 @@ listify op (x:ys) = x `op` (listify op ys)
 
 unions :: [Shape] ->  Shape
 unions = listify union
+
+smoothUnions :: [Shape] ->  Shape
+smoothUnions = listify smoothUnion
 
 intersections :: [Shape] ->  Shape
 intersections = listify intersection
