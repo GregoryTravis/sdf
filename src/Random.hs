@@ -329,12 +329,12 @@ smoosh pusher pushee t@(Transform uv _) =
       rlo = 1.1
       rhi = 8.7
       d = mix1 0.1 e (smoothstep rlo rhi r)
-   in Cond (r >=. rlo) d 1
+   in d
 
 potd :: Shape
 potd =
   let (base, moving) = mouseMovement
-      all = (smoosh moving base) `union` (distScale 0.9 moving)
+      all = (smoosh moving base) -- `union` (distScale 0.9 moving)
    in all
 
 potdC :: IO Color
