@@ -3,6 +3,8 @@ module Transform
 , translation
 , rotation
 , rotation'
+, flipX
+, flipY
 , transform
 , evalShape ) where
 
@@ -41,6 +43,12 @@ rotation' ang (Transform xy t) =
       s = sh $ ssin ang
       mat = sh $ Mat2 [c, s, -s, c]
    in Transform (mat *^ xy) t
+
+flipX :: UnOp
+flipX s = transform (\(Transform xy t) -> (Transform (V2 (-(_x xy)) (_y xy)) t)) s
+
+flipY :: UnOp
+flipY s = transform (\(Transform xy t) -> (Transform (V2 (_x xy) (-(_y xy))) t)) s
 
 transform :: Transformer -> Shape -> Shape
 transform transformer p = p . transformer

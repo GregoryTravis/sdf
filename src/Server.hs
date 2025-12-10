@@ -39,6 +39,7 @@ app = do
   route "/graph" (htmlHandler (graph >>= singleHandler))
   route "/bsp" (htmlHandler (bsp >>= singleHandler))
   route "/potd" (htmlHandler (potdC >>= singleHandler))
+  route "/potd4" (htmlHandler (potd4 >>= singleHandler))
   route "/newpotd" (htmlHandler (newpotdC >>= singleHandler))
   route "/cs" (htmlHandler (someCircles >>= singleHandler))
   route "/m" (htmlHandler (mouseCircleE >>= singleHandler))

@@ -20,6 +20,7 @@ module Random
 , bsp
 , lcd
 , potdC
+, potd4
 , newpotdC
 , someCircles
 , legg
@@ -336,6 +337,19 @@ potd =
   let (base, moving) = mouseMovement
       all = (smoosh moving base) `union` moving
    in all
+
+potd4 :: IO Color
+potd4 =
+  let (base, moving) = mouseMovement
+      moving2 = flipX moving
+      moving3 = flipY moving
+      moving4 = flipY moving2
+      -- union before smooshing does less drippiness
+      -- smooshes = smoosh movings base
+      smooshes = smoosh moving4 (smoosh moving3 (smoosh moving2 (smoosh moving base)))
+      movings = unions [moving, moving2, moving3, moving4]
+      all = smooshes `union` movings
+   in (return . smooth white black . evalShape) all
 
 potdC :: IO Color
 potdC = (return . smooth white black . evalShape) potd
