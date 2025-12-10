@@ -306,25 +306,36 @@ lcd =
 --       e_e = e * 0.8
 --       d | r < 1.1 = 0.1
 
+sineMovement =
+ let wave = ssin time
+     disp = 1.7
+     base = circle
+     moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
+  in (base, moving)
+
+mouseMovement =
+  let wave = ssin time
+      disp = 1.7
+      big = 1
+      small = 0.1
+      base = scale big circle
+      moving = translation (V2 (_x mouse) (-(_y mouse))) $ scale 1.0 (scale small circle) -- cir
+  in (base, moving)
+
 smoosh :: Shape -> Shape -> Shape
 smoosh pusher pushee t@(Transform uv _) =
   let r = evalShape pusher
       e = evalShape pushee
       rlo = 1.1
       rhi = 8.7
-      alpha = smoothstep rlo rhi r
-      d = ((0.1) * (1 - alpha)) + (e * alpha)
-      -- d = e * alpha
-   in d
+      d = mix1 0.1 e (smoothstep rlo rhi r)
+   in Cond (r >=. rlo) d 1
 
 potd :: Shape
 potd =
- let wave = ssin time
-     disp = 1.7
-     base = circle
-     moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
-     all = (smoosh moving base) `union` (distScale 0.9 moving)
-  in all
+  let (base, moving) = mouseMovement
+      all = (smoosh moving base) `union` (distScale 0.9 moving)
+   in all
 
 potdC :: IO Color
 potdC = (return . iqBandy . evalShape) potd
