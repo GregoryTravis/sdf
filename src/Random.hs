@@ -165,8 +165,8 @@ up = V3 0.0 0.0 1.0
 
 bubbleNorm :: E Float -> E Float -> E (V3 Float)
 bubbleNorm radius dist =
-  let duv = calcduv dist
-      vertLen = ssqrt (KF (-2.0) * dist * radius - (dist * dist))
+  let duv = sh $ calcduv dist
+      vertLen = sh $ ssqrt (KF (-2.0) * dist * radius - (dist * dist))
       vert = vertLen *^ up
       curveNorm = vec3 ((dist + radius) *^ duv) +^ vert
       isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
@@ -182,11 +182,11 @@ bubbleHeight radius dist =
 -- Bad edge
 bubbleNorm2 :: E Float -> E Float -> E (V3 Float)
 bubbleNorm2 radius dist =
-  let height = bubbleHeight radius dist
+  let height = sh $ bubbleHeight radius dist
       dHeightDx = sdFdx height
       dHeightDy = sdFdy height
-      du = sdFdx (_x uv)
-      dv = sdFdy (_y uv)
+      du = sh $ sdFdx (_x uv)
+      dv = sh $ sdFdy (_y uv)
    in norm3 $ V3 (-(dHeightDx * dv)) (-(dHeightDy * du)) (du * dv)
 
 lightNorm :: E (V3 Float) -> E Float
