@@ -172,6 +172,23 @@ bubbleNorm radius dist =
       isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
    in norm3 $ Cond isInCurve curveNorm up
 
+bubbleHeight :: E Float -> E Float -> E Float
+bubbleHeight radius dist =
+  -- TODO or faster: ssqrt (-(dist * (dist + (KF 2.0 * radius))))
+  let curveHeight = ssqrt (KF (-2.0) * dist * radius - (dist * dist))
+      topHeight = radius
+   in Cond (dist >=. (-radius)) curveHeight topHeight
+
+-- Bad edge
+bubbleNorm2 :: E Float -> E Float -> E (V3 Float)
+bubbleNorm2 radius dist =
+  let height = bubbleHeight radius dist
+      dHeightDx = sdFdx height
+      dHeightDy = sdFdy height
+      du = sdFdx (_x uv)
+      dv = sdFdy (_y uv)
+   in norm3 $ V3 (-(dHeightDx * dv)) (-(dHeightDy * du)) (du * dv)
+
 lightNorm :: E (V3 Float) -> E Float
 lightNorm norm =
   -- TODO opt don't do these every time?
@@ -183,7 +200,7 @@ bubbleInside :: E Float -> Color
 bubbleInside dist =
   let dark = bw3 (KF 0.0)
       bright = bw3 (KF 1.0)
-      norm = bubbleNorm 0.5 dist
+      norm = bubbleNorm2 0.5 dist
       curveColor = colorGrad dark bright (-1.0) 1.0 (lightNorm norm)
    in curveColor
 
