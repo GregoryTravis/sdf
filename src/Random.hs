@@ -161,17 +161,8 @@ graphit fn =
       below = green
    in return $ Cond (fn x <. y) below above
 
--- TODO opt add sh
-bubbleInside :: E Float -> Color
-bubbleInside dist =
-  let -- bright = V3 1.0 0.5 0.5
-      -- dark = V3 0.5 0.0 0.5
-      dark = bw3 (KF 0.0)
-      bright = bw3 (KF 1.0)
-      -- TODO opt don't do these every time?
-      lightDir = norm3 $ V3 (-1.0) 1.0 1.0
-      radius = 0.5
-      duv = calcduv dist
+bubbleNorm radius dist =
+  let duv = calcduv dist
       -- TODO nice reduce the annotations or inline them
       vertLen :: E Float
       vertLen = ssqrt (KF (-2.0) * dist * radius - (dist * dist))
@@ -183,15 +174,24 @@ bubbleInside dist =
       curveNorm0 = ((dist + radius) *^ duv)
       curveNorm :: E (V3 Float)
       curveNorm = vec3 curveNorm0 +^ vert
-      topNorm = up *^ radius
       -- norm = ((dist + radius) *^ duv) + vert
       -- TODO parens
       isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
       -- awkward
-      norm = Cond isInCurve curveNorm topNorm
       --normnorm = norm /^ Length norm
-      nrm v = v /^ Length v
-      brightnessDot = nrm norm `dot3` nrm lightDir
+   in norm3 $ Cond isInCurve curveNorm up
+
+-- TODO opt add sh
+bubbleInside :: E Float -> Color
+bubbleInside dist =
+  let -- bright = V3 1.0 0.5 0.5
+      -- dark = V3 0.5 0.0 0.5
+      dark = bw3 (KF 0.0)
+      bright = bw3 (KF 1.0)
+      -- TODO opt don't do these every time?
+      lightDir = norm3 $ V3 (-1.0) 1.0 1.0
+      norm = bubbleNorm 0.5 dist
+      brightnessDot = norm `dot3` norm3 lightDir
       curveColor = colorGrad dark bright (-1.0) 1.0 brightnessDot
    in curveColor
    --in colorGrad dark bright 0.0 radius vertLen
