@@ -161,23 +161,25 @@ graphit fn =
       below = green
    in return $ Cond (fn x <. y) below above
 
+up :: E (V3 Float)
 up = V3 0.0 0.0 1.0
 
-bubbleNorm :: E Float -> E Float -> E (V3 Float)
-bubbleNorm radius dist =
-  let duv = sh $ calcduv dist
-      vertLen = sh $ ssqrt (KF (-2.0) * dist * radius - (dist * dist))
-      vert = vertLen *^ up
-      curveNorm = vec3 ((dist + radius) *^ duv) +^ vert
-      isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
-   in norm3 $ Cond isInCurve curveNorm up
+-- bubbleNorm :: E Float -> E Float -> E (V3 Float)
+-- bubbleNorm radius dist =
+--   let duv = sh $ calcduv dist
+--       vertLen = sh $ ssqrt (KF (-2.0) * dist * radius - (dist * dist))
+--       vert = vertLen *^ up
+--       curveNorm = vec3 ((dist + radius) *^ duv) +^ vert
+--       isInCurve = (dist <=. KF 0.0) &&. (dist >. (-radius))
+--    in norm3 $ Cond isInCurve curveNorm up
 
 bubbleHeight :: E Float -> E Float -> E Float
 bubbleHeight radius dist =
   -- TODO or faster: ssqrt (-(dist * (dist + (KF 2.0 * radius))))
-  let curveHeight = ssqrt (KF (-2.0) * dist * radius - (dist * dist))
+  let d = dist - 0.0 -- change to e.g. 0.1 and jaggies go away
+      curveHeight = ssqrt (KF (-2.0) * d * radius - (d * d))
       topHeight = radius
-   in Cond (dist >=. (-radius)) curveHeight topHeight
+   in Cond (d >=. (-radius)) curveHeight topHeight
 
 -- Bad edge
 bubbleNorm2 :: E Float -> E Float -> E (V3 Float)

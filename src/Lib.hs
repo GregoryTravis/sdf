@@ -24,6 +24,8 @@ smin :: E Float -> E Float -> E Float
 smin = Fun2 "min"
 smax :: E Float -> E Float -> E Float
 smax = Fun2 "max"
+sclamp :: E Float -> E Float -> E Float -> E Float
+sclamp = Fun3 "clamp"
 
 sdFdx :: E Float -> E Float
 sdFdx = Fun1 "dFdx"
