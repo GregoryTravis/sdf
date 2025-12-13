@@ -177,7 +177,8 @@ bubbleHeight :: E Float -> E Float -> E Float
 bubbleHeight radius dist =
   -- TODO or faster: ssqrt (-(dist * (dist + (KF 2.0 * radius))))
   let d = dist - 0.0 -- change to e.g. 0.1 and jaggies go away
-      curveHeight = ssqrt (KF (-2.0) * d * radius - (d * d))
+      -- smax because might go subpixel above 0 resulting in imaginary height (nan)
+      curveHeight = ssqrt (smax 0 (KF (-2.0) * d * radius - (d * d)))
       topHeight = radius
    in Cond (d >=. (-radius)) curveHeight topHeight
 
