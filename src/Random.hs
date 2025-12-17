@@ -19,6 +19,7 @@ module Random
 , graph
 , bsp
 , lcd
+, dropshadow
 , potdC
 , potd4
 , newpotdC
@@ -39,6 +40,7 @@ import Alg
 import BinOp
 import Color
 import Commander
+import DropShadows
 import E
 import Funs
 import Grid
@@ -282,6 +284,7 @@ splitScreenVer :: (E Float -> Color) -> (E Float -> Color) -> (E Float -> Color)
 splitScreenVer colorer0 colorer1 dist =
   Cond (_y uv >. 0) (colorer0 dist) (colorer1 dist)
 
+lcds :: [(Color, Color)]
 lcds = [
   -- https://www.reddit.com/r/embedded/comments/1ikux0v/where_to_find_big_and_finer_resolution_monochrome/
   (mkCol3_256 84 91 66, mkCol3_256 134 148 113),
@@ -315,6 +318,17 @@ lcd =
 --       e = transform pushee t
 --       e_e = e * 0.8
 --       d | r < 1.1 = 0.1
+
+dropshadow :: IO Color
+dropshadow =
+  let s = scale 0.5 square
+      dist = 0.05
+      dir = V2 dist (-dist)
+      (fg, bg) = lcds !! 2
+      --bgShadow = V4 0.5 0.5 0.5 1.0
+      bgShadow = mix4 white fg 0.8
+      color = dropShadow dir fg bg bgShadow s idTransform
+   in return color
 
 sineMovement =
  let wave = ssin time

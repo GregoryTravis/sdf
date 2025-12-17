@@ -6,6 +6,7 @@ module Transform
 , flipX
 , flipY
 , transform
+, idTransform
 , evalShape ) where
 
 import E

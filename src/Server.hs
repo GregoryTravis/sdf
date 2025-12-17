@@ -32,6 +32,7 @@ app = do
   route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))
   route "/lcd" (htmlHandler (lcd >>= singleHandler))
+  route "/dropshadow" (htmlHandler (dropshadow >>= singleHandler))
   route "/chunky" (htmlHandler (chunky >>= singleHandler))
   route "/bubbles" (htmlHandler (bubbles >>= singleHandler))
   route "/filaoa" (htmlHandler (filaoaBub >>= singleHandler))
