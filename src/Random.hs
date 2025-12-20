@@ -21,6 +21,7 @@ module Random
 , lcd
 , dropshadow
 , potdC
+, modgriddy
 , potd4
 , newpotdC
 , someCircles
@@ -329,6 +330,16 @@ dropshadow =
       bgShadow = mix4 white fg 0.8
       color = dropShadow dir fg bg bgShadow s idTransform
    in return color
+
+modgriddy :: IO Color
+modgriddy =
+  let shp i j =
+        let ai = i / 10
+            aj = j / 10
+         in scale 0.4 $ translation (V2 1 1) $ interp aj (interp ai circle square) (flower 3)
+      all = scale 0.1 $ modgrid 1 1 shp
+      -- all = scale 0.1 $ grid 1 1 circle
+  in (return . smooth white black . evalShape) all
 
 sineMovement =
  let wave = ssin time

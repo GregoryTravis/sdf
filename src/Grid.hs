@@ -1,6 +1,7 @@
 module Grid
 ( grid
-, pfGrid ) where
+, pfGrid
+, modgrid ) where
 
 import E
 import Lib
@@ -18,6 +19,18 @@ grid' w h (Transform xy t) =
       xi = sh $ sfloor x
       yi = sh $ sfloor y
    in Transform (V2 xx yy) t
+
+-- TODO xi, yi should be E Int
+modgrid :: E Float -> E Float -> (E Float -> E Float -> Shape) -> Shape
+modgrid w h modShaper (Transform xy t) =
+  let x = sh $ _x xy
+      y = sh $ _y xy
+      xx = sh $ smod x w
+      yy = sh $ smod y h
+      xi = sh $ sfloor x
+      yi = sh $ sfloor y
+      newt = Transform (V2 xx yy) t
+   in (modShaper xi yi) newt
 
 bugPfGrid :: E Float -> E Float -> UnOp
 bugPfGrid w h = transform (bugPfGrid' w h)
