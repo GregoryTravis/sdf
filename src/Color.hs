@@ -60,7 +60,7 @@ scaleAwareAA dist =
       dDistY = sdFdy dist
       dDistXY = V2 dDistX dDistY
       dDist = Length dDistXY
-   in dDist
+   in sh dDist
 
 -- scale-aware anti-aliased edge
 -- slow
@@ -105,20 +105,17 @@ iqBandy dist =
 -- Assumes input is -1..0; >0 gives bg
 bands :: E [V4 Float] -> Color -> E Float -> Color
 bands colors bg dist =
-  let numColors = mlength colors
+  let numColors = sh $ mlength colors
       fNumColors = sh $ sfloat numColors
       fracIndex = (dist + 1) * sfloat numColors
-      intIndex = sfloor (fracIndex + 0.5)
-      localDist = fracIndex - intIndex
+      intIndex = sh $ sfloor (fracIndex + 0.5)
       -- TODO opt
       rightIndex = intIndex
-      leftIndex = intIndex - 1
+      leftIndex = sh $ intIndex - 1
       leftColor = clipColor leftIndex
       rightColor = clipColor rightIndex
       clipColor x =
-        Cond (x <. 0) (colors !!. KI 0) (Cond (x >=. sfloat numColors) bg (colors !!. sint x))
-   --in Cond (localDist <. 0) leftColor rightColor
-   --in smooth leftColor rightColor localDist
+        Cond (x <. 0) (sh $ colors !!. KI 0) (Cond (x >=. sfloat numColors) bg (colors !!. sint x))
    in smoothAround intIndex leftColor rightColor fracIndex
 
 bandy :: Color -> Color -> E Float -> Color
