@@ -22,6 +22,7 @@ module Random
 , dropshadow
 , potdC
 , modgriddy
+, rainbowy
 , potd4
 , newpotdC
 , someCircles
@@ -330,6 +331,18 @@ dropshadow =
       bgShadow = mix4 white fg 0.8
       color = dropShadow dir fg bg bgShadow s idTransform
    in return color
+
+rainbowShape :: Shape
+rainbowShape tr@(Transform xy _) =
+  let circ = circle tr
+      legs = (sabs $ _x xy) - 1
+      both = Cond (_y xy >=. 0) circ legs
+   in both
+
+rainbowy :: IO Color
+rainbowy =
+  let all = rainbowShape
+  in (return . iqBandy . evalShape) all
 
 modgriddy :: IO Color
 modgriddy =
