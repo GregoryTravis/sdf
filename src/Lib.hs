@@ -66,6 +66,16 @@ mix4 = Fun3 "mix"
 mix1 :: E Float -> E Float -> E Float -> E Float
 mix1 = Fun3 "mix"
 
+sint :: (Show a, GlslType a) => E a -> E Int
+sint = Fun1 "int"
+
+sfloat :: (Show a, GlslType a) => E a -> E Float
+sfloat = Fun1 "float"
+
+-- TODO need 'GlslType a'?
+mlength :: (Show a, GlslType a, GlslType [a]) => E [a] -> E Int
+mlength = Method0 "length"
+
 -- specific to (rgb, a)
 -- vec4 rgb a = sh $ Fun "vec4" [TV3, TF] TV4 [rgb, a]
 vec4 :: (Show a, GlslType a, GlslType (V3 a), GlslType (V4 a)) => E (V3 a) -> E a -> E (V4 a)

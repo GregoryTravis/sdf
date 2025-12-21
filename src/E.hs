@@ -107,6 +107,7 @@ data E a where
   Fun1 :: (GlslType a, GlslType b, Show a) => String -> E a -> E b
   Fun2 :: (Show a, Show b, GlslType a, GlslType b) => String -> E a -> E b -> E c
   Fun3 :: (Show a, Show b, Show c, GlslType a, GlslType b, GlslType c) => String -> E a -> E b -> E c -> E d
+  Method0 :: (GlslType a, GlslType b, Show a) => String -> E a -> E b
   Neg :: GlslType a => E a -> E a
   Mat2 :: (Show a, GlslType a) => [E a] -> E (Mat2 a)
   Arr :: (Show a, GlslType a, GlslType [a]) => [E a] -> E [a]
@@ -297,6 +298,7 @@ instance Promotable (V2 Float) (V3 Float) (V3 Float)
 instance Promotable (V2 Double) (V2 Double) (V2 Double)
 instance Promotable (V2 Double) Double (V2 Double)
 instance Promotable (Mat2 Float) (V2 Float) (V2 Float)
+--instance Promotable Float Int Float
 instance Promotable Float (V2 Float) (V2 Float)
 instance Promotable Float (V3 Float) (V3 Float)
 instance Promotable Float (V4 Float) (V4 Float)

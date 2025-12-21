@@ -29,6 +29,11 @@ fun :: String -> [String] -> String
 fun f args = parens $ concat [f, parens arglist]
   where arglist = intercalate ", " args
 
+method :: String -> [String] -> String
+method f [] = error $ "Method must have at least a 'this' arg: " ++ f
+method f (this:args) = parens $ concat [parens this, ".", f, parens arglist]
+  where arglist = intercalate ", " args
+
 dot :: String -> String -> String
 dot e field = parens $ concat [e, ".", field]
 
@@ -55,6 +60,7 @@ compileSubE (Field (Fielder field) v) = dot (compileSubE v) field
 compileSubE (Fun1 name arg1) = fun name [compileSubE arg1]
 compileSubE (Fun2 name arg1 arg2) = fun name [compileSubE arg1, compileSubE arg2]
 compileSubE (Fun3 name arg1 arg2 arg3) = fun name [compileSubE arg1, compileSubE arg2, compileSubE arg3]
+compileSubE (Method0 name this) = method name [compileSubE this]
 compileSubE (Neg a) = parens $ concat ["-", compileSubE a]
 compileSubE (Mat2 xs) = fun "mat2" (map compileSubE xs)
 compileSubE e@(Arr xs) = fun (typeName e) (map compileSubE xs)
@@ -260,6 +266,9 @@ share' (Fun3 name a b c) = do
   b' <- share' b
   c' <- share' c
   return $ Fun3 name a' b' c'
+share' (Method0 name a) = do
+  a' <- share' a
+  return $ Method0 name a'
 share' (Neg e) = do
   e' <- share' e
   return $ Neg e'

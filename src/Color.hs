@@ -88,6 +88,12 @@ iqBandy dist =
       let recip = 1.0 / numPerUnit
        in Cond ((smod dist (2 * recip)) <. recip) c0 c1
 
+-- Assumes input is -1..0; >0 gives bg
+bands :: E [V4 Float] -> Color -> E Float -> Color
+bands colors bg dist =
+  let fracIndex = (dist + 1) * sfloat (mlength colors)
+   in Cond (dist >. 0) bg (colors !!. sint fracIndex)
+
 bandy :: Color -> Color -> E Float -> Color
 bandy fg bg dist =
   let smoothRadius = scaleAwareAA dist
