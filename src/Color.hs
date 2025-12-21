@@ -68,7 +68,21 @@ smooth :: Color -> Color -> E Float -> Color
 smooth fg bg dist =
   let smoothRadius = scaleAwareAA dist
       bwBlend = smoothstep (-smoothRadius) smoothRadius dist
+      -- TODO use mix
       color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
+      -- scolor = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
+      -- color = Cond (dist >=. (-smoothRadius) &&. dist <=. smoothRadius) green scolor
+   in sh color
+
+-- Like smooth, but you pass in the edge position instead of assuming it 0.
+smoothAround :: E Float -> Color -> Color -> E Float -> Color
+smoothAround edge fg bg dist =
+  let smoothRadius = scaleAwareAA dist
+      bwBlend = smoothstep (edge-smoothRadius) (edge+smoothRadius) dist
+      -- TODO use mix
+      color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
+      -- scolor = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
+      -- color = Cond (dist >=. (-smoothRadius) &&. dist <=. smoothRadius) green scolor
    in sh color
 
 iqBandy :: E Float -> Color
@@ -91,8 +105,21 @@ iqBandy dist =
 -- Assumes input is -1..0; >0 gives bg
 bands :: E [V4 Float] -> Color -> E Float -> Color
 bands colors bg dist =
-  let fracIndex = (dist + 1) * sfloat (mlength colors)
-   in Cond (dist >. 0) bg (colors !!. sint fracIndex)
+  let numColors = mlength colors
+      fNumColors = sh $ sfloat numColors
+      fracIndex = (dist + 1) * sfloat numColors
+      intIndex = sfloor (fracIndex + 0.5)
+      localDist = fracIndex - intIndex
+      -- TODO opt
+      rightIndex = intIndex
+      leftIndex = intIndex - 1
+      leftColor = clipColor leftIndex
+      rightColor = clipColor rightIndex
+      clipColor x =
+        Cond (x <. 0) (colors !!. KI 0) (Cond (x >=. sfloat numColors) bg (colors !!. sint x))
+   --in Cond (localDist <. 0) leftColor rightColor
+   --in smooth leftColor rightColor localDist
+   in smoothAround intIndex leftColor rightColor fracIndex
 
 bandy :: Color -> Color -> E Float -> Color
 bandy fg bg dist =
