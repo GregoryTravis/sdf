@@ -37,6 +37,7 @@ cond b t e = parens $ concat [parens b, "?", parens t , ":", parens e]
 
 -- It's assume the top level of any call to compileE is a call to parens
 compileSubE :: Show a => E a -> String
+compileSubE (KI i) = parens $ show i
 compileSubE (KF n) = parens $ show n
 compileSubE (Add a b) = op "+" (compileSubE a) (compileSubE b)
 compileSubE (Sub a b) = op "-" (compileSubE a) (compileSubE b)
@@ -56,6 +57,11 @@ compileSubE (Fun2 name arg1 arg2) = fun name [compileSubE arg1, compileSubE arg2
 compileSubE (Fun3 name arg1 arg2 arg3) = fun name [compileSubE arg1, compileSubE arg2, compileSubE arg3]
 compileSubE (Neg a) = parens $ concat ["-", compileSubE a]
 compileSubE (Mat2 xs) = fun "mat2" (map compileSubE xs)
+compileSubE e@(Arr xs) = fun (typeName e) (map compileSubE xs)
+compileSubE (ArrLookup arr index) =
+  let arrC = parens (compileSubE arr)
+      indexC = parens (compileSubE index)
+   in parens $ arrC ++ "[" ++ indexC ++ "]"
 compileSubE (Comparison name a b) = op name (compileSubE a) (compileSubE b)
 compileSubE (Cond b t e) = cond (compileSubE b) (compileSubE t) (compileSubE e)
 compileSubE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
@@ -260,6 +266,13 @@ share' (Neg e) = do
 share' (Mat2 es) = do
   es' <- mapM share' es
   return $ Mat2 es'
+share' (Arr es) = do
+  es' <- mapM share' es
+  return $ Arr es'
+share' (ArrLookup arr index) = do
+  arr' <- share' arr
+  index' <- share' index
+  return $ ArrLookup arr' index'
 share' (Comparison op a b) = do
   a' <- share' a
   b' <- share' b

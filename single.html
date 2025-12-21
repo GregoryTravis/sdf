@@ -84,6 +84,12 @@ vec2 toUV(float x, float y) {
   return uv;
 }
 
+vec4 foo[] = vec4[](vec4(0, 0, 0, 0));
+vec4[] foo2 = vec4[](vec4(0, 0, 0, 0));
+vec4 foo1 = (vec4[](vec4(0, 0, 0, 0)))[0];
+float a[5] = float[](3.4, 4.2, 5.0, 5.2, 1.1);  // same thing
+float[5] a2 = float[](3.4, 4.2, 5.0, 5.2, 1.1);  // same thing
+
 void main() {
   vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
   vec2 mouse = toUV(mx, my);

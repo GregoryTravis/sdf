@@ -24,6 +24,7 @@ module E
   , V4
   , Bul
   , Mat2
+  , arr
   , trueB
   , falseB
   , (+^)
@@ -32,6 +33,7 @@ module E
   , (/^)
   , (&&.)
   , (||.)
+  , (!!.)
   , typeName
   , _x
   , _y
@@ -107,6 +109,8 @@ data E a where
   Fun3 :: (Show a, Show b, Show c, GlslType a, GlslType b, GlslType c) => String -> E a -> E b -> E c -> E d
   Neg :: GlslType a => E a -> E a
   Mat2 :: (Show a, GlslType a) => [E a] -> E (Mat2 a)
+  Arr :: (Show a, GlslType a, GlslType [a]) => [E a] -> E [a]
+  ArrLookup :: (Show a, GlslType a, GlslType [a]) => E [a] -> E Int -> E a
   Comparison :: (Show a, GlslType a) => String -> E a -> E a -> E Bul
   Cond :: GlslType a => E Bul -> E a -> E a -> E a
   -- These require a dummy Show instance for E (a -> b) and IncoherentInstances
@@ -129,6 +133,9 @@ instance Show (StableName a) where
 sh :: GlslType a => E a -> E a
 sh e = Share sn e
   where sn = unsafePerformIO $ makeStableName e
+
+arr :: (Show a, GlslType a, GlslType [a]) => [E a] -> E [a]
+arr = sh . Arr
 
 -- -- DSL for GLSL programs
 -- data GLSL = GLSL [UniformDecl] [Func]
@@ -168,6 +175,7 @@ instance Num (E Double) where
   fromInteger i = KD (fromInteger i)
   negate = Neg
 
+infixl 9 !!.
 infixl 6 +^, -^
 infixl 7 *^, /^
 infixr 3 &&.
@@ -190,6 +198,9 @@ infixr 2 ||.
 
 (||.) :: E Bul -> E Bul -> E Bul
 (||.) = Or
+
+(!!.) :: (Show a, GlslType a, GlslType [a]) => E [a] -> E Int -> E a
+(!!.) = ArrLookup
 
 -- -- fromRational, (recip | (/))
 -- instance Fractional (E a) where
@@ -325,6 +336,8 @@ instance GlslType (Mat2 float) where
   typeName _ = "mat2"
 instance GlslType Bul where
   typeName _ = "bool"
+instance GlslType [V4 Float] where
+  typeName _ = "vec4[]"
 
 -- Not sure why I thought I needed this
 -- instance Floating E

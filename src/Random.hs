@@ -342,7 +342,8 @@ rainbowShape tr@(Transform xy _) =
 rainbowy :: IO Color
 rainbowy =
   let all = rainbowShape
-  in (return . iqBandy . evalShape) all
+      colors = arr [red, white, blue]
+  in (return . smooth (colors !!. KI 0) (colors !!. KI 2) . evalShape) all
 
 modgriddy :: IO Color
 modgriddy =
