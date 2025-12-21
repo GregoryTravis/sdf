@@ -342,7 +342,8 @@ rainbowShape tr@(Transform xy _) =
 rainbowy :: IO Color
 rainbowy =
   let all = rainbowShape
-      colors = arr [red, white, blue, green, yellow]
+      --colors = arr [red, white, blue, green, yellow]
+      colors = randBands (0.2, 0.4, 0.75) 5
   in (return . bands colors black . evalShape) all
 
 modgriddy :: IO Color

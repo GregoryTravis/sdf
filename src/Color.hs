@@ -23,6 +23,9 @@ nothing = mkCol 0.0 0.0 0.0 0.0
 mkCol3 :: Float -> Float -> Float -> Color
 mkCol3 r g b = mkCol r g b 1.0
 
+mkCol3t :: (Float, Float, Float) -> Color
+mkCol3t (r, g, b) = mkCol r g b 1.0
+
 mkCol3_256 :: Float -> Float -> Float -> Color
 mkCol3_256 r g b = mkCol (r/256) (g/256) (b/256) 1.0
 
@@ -117,6 +120,16 @@ bands colors bg dist =
       clipColor x =
         Cond (x <. 0) (sh $ colors !!. KI 0) (Cond (x >=. sfloat numColors) bg (colors !!. sint x))
    in smoothAround intIndex leftColor rightColor fracIndex
+
+-- Scale a mod rgb components
+randBands :: (Float, Float, Float) -> Int -> E [V4 Float]
+randBands rgb count = arr [mkCol3t $ scaleCrop rgb x | x <- (take count [1..])]
+  where scaleCrop :: (Float, Float, Float) -> Int -> (Float, Float, Float)
+        scaleCrop (r, g, b) n = (sc r n, sc g n, sc b n)
+        sc :: Float -> Int -> Float
+        sc x n =
+          let xn = x * fromIntegral n
+           in xn - (fromIntegral $ floor xn)
 
 bandy :: Color -> Color -> E Float -> Color
 bandy fg bg dist =
