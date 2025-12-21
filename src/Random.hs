@@ -336,8 +336,15 @@ modgriddy =
   let shp i j =
         let ai = i / 10
             aj = j / 10
-         in scale 0.4 $ translation (V2 1 1) $ interp aj (interp ai circle square) (flower 3)
-      all = scale 0.1 $ modgrid 1 1 shp
+            -- zany
+            -- ai' = i / 10
+            -- aj' = j / 10
+            -- mx = _x mouse
+            -- my = _y mouse
+            -- ai = mix1 mx ai' aj'
+            -- aj = mix1 my ai' aj'
+         in scale 0.3 $ translation (V2 1 1) $ interp aj (interp ai circle square) (flower 3)
+      all = scale 0.2 $ modgrid 1 1 shp
       -- all = scale 0.1 $ grid 1 1 circle
   in (return . smooth white black . evalShape) all
 
