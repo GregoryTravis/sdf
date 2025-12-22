@@ -1,5 +1,6 @@
 module Transform
 ( scale
+, scale''
 , translation
 , rotation
 , rotation'
@@ -23,11 +24,16 @@ import Lib
 --       mat = Mat2 [c, s, -s, c]
 --    in mat
 
+-- :: E Float -> (Transform -> Dist) -> (Transform -> Dist)
 scale :: E Float -> UnOp
 scale s = transform (scale' s)
 
 scale' :: E Float -> Transformer
 scale' s (Transform xy t) = Transform (xy /^ s) t
+
+-- Generic scaler, not shape-specific, for modgrid rainbow
+scale'' :: E Float -> (Transform -> a) -> (Transform -> a)
+scale'' s = transform' (scale' s)
 
 translation :: E (V2 Float) -> UnOp
 translation dxy = transform (translation' dxy)
@@ -53,6 +59,10 @@ flipY s = transform (\(Transform xy t) -> (Transform (V2 (_x xy) (-(_y xy))) t))
 
 transform :: Transformer -> Shape -> Shape
 transform transformer p = p . transformer
+
+-- Generic scaler, not shape-specific, for modgrid rainbow
+transform' :: Transformer -> (Transform -> a) -> (Transform -> a)
+transform' transformer p = p . transformer
 
 -- This time parameter is not used by any temporal functions, which just
 -- reference the uniform 'time' directly, so they have no effect. All prims
