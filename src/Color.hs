@@ -122,13 +122,13 @@ bands colors bg dist =
    in smoothAround intIndex leftColor rightColor fracIndex
 
 -- Scale a mod rgb components
-randBands :: (Float, Float, Float) -> Int -> E [V4 Float]
-randBands rgb count = arr [mkCol3t $ scaleCrop rgb x | x <- (take count [1..])]
+randBands :: (Float, Float, Float) -> Float -> Int -> E [V4 Float]
+randBands rgb scale count = arr [mkCol3t $ scaleCrop rgb x | x <- (take count [1..])]
   where scaleCrop :: (Float, Float, Float) -> Int -> (Float, Float, Float)
         scaleCrop (r, g, b) n = (sc r n, sc g n, sc b n)
         sc :: Float -> Int -> Float
         sc x n =
-          let xn = x * fromIntegral n
+          let xn = x + (scale * fromIntegral n)
            in xn - (fromIntegral $ floor xn)
 
 bandy :: Color -> Color -> E Float -> Color

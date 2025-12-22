@@ -343,7 +343,7 @@ rainbowy :: IO Color
 rainbowy =
   let all = rainbowShape
       --colors = arr [red, white, blue, green, yellow]
-      colors = randBands (0.2, 0.4, 0.75) 5
+      colors = randBands (0.2, 0.4, 0.75) 0.3 5
   in (return . bands colors black . evalShape) all
 
 modgriddy :: IO Color
@@ -358,10 +358,29 @@ modgriddy =
             -- my = _y mouse
             -- ai = mix1 mx ai' aj'
             -- aj = mix1 my ai' aj'
-         in scale 0.3 $ translation (V2 1 1) $ interp aj (interp ai circle square) (flower 3)
+         in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+      colors = randBands (0.2, 0.4, 0.75) 0.3 5
       all = scale 0.2 $ modgrid 1 1 shp
       -- all = scale 0.1 $ grid 1 1 circle
-  in (return . smooth white black . evalShape) all
+  in (return . bands colors black . evalShape) all
+
+cool20251221 :: IO Color
+cool20251221 =
+  let shp i j =
+        let ai = i / 10
+            aj = j / 10
+            -- zany
+            -- ai' = i / 10
+            -- aj' = j / 10
+            -- mx = _x mouse
+            -- my = _y mouse
+            -- ai = mix1 mx ai' aj'
+            -- aj = mix1 my ai' aj'
+         in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+      colors = randBands (0.2, 0.4, 0.75) 0.3 5
+      all = scale 0.2 $ modgrid 1 1 shp
+      -- all = scale 0.1 $ grid 1 1 circle
+  in (return . bands colors black . evalShape) all
 
 sineMovement =
  let wave = ssin time
