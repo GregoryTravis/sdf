@@ -1,14 +1,13 @@
 module Grid
 ( grid
 , pfGrid
-, modgrid
-, modgrid' ) where
+, modgrid ) where
 
 import E
 import Lib
 import Transform
 
-grid :: E Float -> E Float -> UnOp
+grid :: E Float -> E Float -> UnOp a
 grid w h = transform (grid' w h)
 
 grid' :: E Float -> E Float -> Transformer
@@ -22,7 +21,7 @@ grid' w h (Transform xy t) =
    in Transform (V2 xx yy) t
 
 -- TODO xi, yi should be E Int
-modgrid :: E Float -> E Float -> (E Float -> E Float -> Shape) -> Shape
+modgrid :: E Float -> E Float -> (E Float -> E Float -> Transformable a) -> Transformable a
 modgrid w h modShaper (Transform xy t) =
   let x = sh $ _x xy
       y = sh $ _y xy
@@ -33,20 +32,7 @@ modgrid w h modShaper (Transform xy t) =
       newt = Transform (V2 xx yy) t
    in (modShaper xi yi) newt
 
--- Generic scaler, not shape-specific, for modgrid rainbow
--- TODO xi, yi should be E Int
-modgrid' :: E Float -> E Float -> (E Float -> E Float -> (Transform -> a)) -> (Transform -> a)
-modgrid' w h modShaper (Transform xy t) =
-  let x = sh $ _x xy
-      y = sh $ _y xy
-      xx = sh $ smod x w
-      yy = sh $ smod y h
-      xi = sh $ sfloor x
-      yi = sh $ sfloor y
-      newt = Transform (V2 xx yy) t
-   in (modShaper xi yi) newt
-
-bugPfGrid :: E Float -> E Float -> UnOp
+bugPfGrid :: E Float -> E Float -> UnOp a
 bugPfGrid w h = transform (bugPfGrid' w h)
 
 bugPfGrid' :: E Float -> E Float -> Transformer
@@ -61,7 +47,7 @@ bugPfGrid' w h (Transform xy t) =
       yy2 = Cond (smod (sabs yi) 2 ==. 1) (h - yy) yy
    in Transform (V2 xx2 yy2) t
 
-bugPfGrid2 :: E Float -> E Float -> UnOp
+bugPfGrid2 :: E Float -> E Float -> UnOp a
 bugPfGrid2 w h = transform (bugPfGrid2' w h)
 
 bugPfGrid2' :: E Float -> E Float -> Transformer
@@ -76,7 +62,7 @@ bugPfGrid2' w h (Transform xy t) =
       yy2 = Cond (smod yi 2 ==. 1) (h - yy) yy
    in Transform (V2 xx2 yy2) t
 
-pfGrid :: E Float -> E Float -> UnOp
+pfGrid :: E Float -> E Float -> UnOp a
 pfGrid w h = transform (pfGrid' w h)
 
 -- I tried using mod to calculate xx, yy, xi, yi, but it was wrong, so I just inlined the original rust grid_fmod2()

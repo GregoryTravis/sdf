@@ -13,6 +13,7 @@ module E
   , (>=.)
   , Transform(..)
   , Transformer
+  , Transformable
   , Shape
   , UnOp
   , BinOp
@@ -368,13 +369,16 @@ instance SRS.Uniform (E Double)
     -- uniformM g = KF <$> uniformRM (0.0, 1.0) g
     uniformM g = uniformRM (0.0, 1.0) g
 
-type Shape = Transform -> E Float
-type UnOp = Shape -> Shape
-type BinOp = Shape -> Shape -> Shape
+type Shape = Transformable (E Float)
+type UnOp a = Transformable a -> Transformable a
+type BinOp a = Transformable a -> Transformable a -> Transformable a
 
 -- (Transform xy t)
 data Transform = Transform (E (V2 Float)) (E Float)
+-- TODO Transformable Transform?
 type Transformer = Transform -> Transform
+
+type Transformable a = Transform -> a
 
 -- time :: E
 -- time = (U (UF "time"))

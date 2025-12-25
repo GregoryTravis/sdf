@@ -13,22 +13,22 @@ module BinOp
 import E
 import Lib
 
-union :: BinOp
+union :: BinOp Dist
 union = binopper union'
 union' :: E Float -> E Float -> E Float
 union' a b = smin a b
 
-intersection :: BinOp
+intersection :: BinOp Dist
 intersection = binopper intersection'
 intersection' :: E Float -> E Float -> E Float
 intersection' a b = smax a b
 
-difference :: BinOp
+difference :: BinOp Dist
 difference = binopper difference'
 difference' :: E Float -> E Float -> E Float
 difference' a b = smax a (- b)
 
-listify :: BinOp -> ([Shape] -> Shape)
+listify :: BinOp Dist -> ([Shape] -> Shape)
 -- TODO maybe default everything/nothing values for these?
 listify op [] = error $ "empty listify"
 listify op [x] = x
@@ -44,10 +44,10 @@ smoothUnions = listify smoothUnion
 intersections :: [Shape] ->  Shape
 intersections = listify intersection
 
-binopper :: (E Float -> E Float -> E Float) -> BinOp
+binopper :: (E Float -> E Float -> E Float) -> BinOp Dist
 binopper distCombiner p0 p1 tr = distCombiner (sh $ p0 tr) (sh $ p1 tr)
 
-smoothUnion :: BinOp
+smoothUnion :: BinOp Dist
 smoothUnion = binopper smoothUnion'
 
 smoothUnion' :: E Float -> E Float -> E Float
@@ -63,12 +63,12 @@ smoothUnion' usd0 usd1 =
       dist = sh $ inside_distance + outside_distance
    in dist
 
-interp :: E Float -> BinOp
+interp :: E Float -> BinOp Dist
 interp alpha = binopper (interp' alpha)
 interp' :: E Float -> E Float -> E Float -> E Float
 interp' alpha a b = (1.0 - alpha) * a + alpha * b
 
-allBinOps :: [BinOp]
+allBinOps :: [BinOp Dist]
 allBinOps = [
     union
   , intersection

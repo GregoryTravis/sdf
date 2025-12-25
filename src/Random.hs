@@ -362,16 +362,16 @@ modgriddy =
             -- aj = mix1 my ai' aj'
          in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
       colorzer :: E Float -> E Float -> Transform -> (E Float -> Color)
-      colorzer gi gj (Transform xy _) dist =
+      colorzer gi gj _ dist =
         let colorz = arr [V4 (smod (gi * 0.1 * KF n) 1.0) (smod (gj * 0.2 * KF n) 1.0) (smod ((gi + gj) * 0.3 * KF n) 1.0) 1.0 | n <- take 5 [0..]]
          in bands colorz black dist
       mgcolorzer :: Transform -> (E Float -> Color)
-      mgcolorzer = scale'' 0.5 $ modgrid' 1 1 colorzer
+      mgcolorzer = scale 0.5 $ modgrid 1 1 colorzer
 
       bothie :: E Float -> E Float -> (Transform -> (E Float, E Float -> Color))
       bothie i j transform = (shp i j transform, colorzer i j transform)
       bothieT :: (Transform -> (E Float, E Float -> Color))
-      bothieT = scale'' 0.5 $ modgrid' 1 1 bothie
+      bothieT = scale 0.5 $ modgrid 1 1 bothie
 
       -- all' :: Shape
       -- evaled_mgcolorzer' :: E Float -> Color
@@ -407,7 +407,7 @@ nutsoRainbow scail =
         let colorz = arr [V4 (smod (gi * 0.1 * KF n) 1.0) (smod (gj * 0.2 * KF n) 1.0) (smod ((gi + gj) * 0.3 * KF n) 1.0) 1.0 | n <- take 5 [0..]]
          in bands colorz black dist
       mgcolorzer :: Transform -> (E Float -> Color)
-      mgcolorzer = scale'' scail $ modgrid' 1 1 colorzer
+      mgcolorzer = scale scail $ modgrid 1 1 colorzer
       evaled_mgcolorzer :: E Float -> Color
       evaled_mgcolorzer = mgcolorzer idTransform
       all = scale scail $ modgrid 1 1 shp
@@ -854,7 +854,7 @@ randomShape = uniformM
   , randomBinOp <*> randomPrim <*> randomPrim
   ]
 
-randomUnOp :: Rnd UnOp
+randomUnOp :: Rnd (UnOp Dist)
 randomUnOp = uniformM
   [ scale <$> scalers
   , translation <$> translators
@@ -863,7 +863,7 @@ randomUnOp = uniformM
   , pfGridder
   ]
 
-randomBinOp :: Rnd BinOp
+randomBinOp :: Rnd (BinOp Dist)
 randomBinOp = uniformM bos
   where bos = (map pure allBinOps) ++ [randInterp]
         randInterp = interp <$> (0.0...1.0)
@@ -887,11 +887,11 @@ rotators = uniformM
   [ (0.0...KF pi)
   ]
 
-gridder :: Rnd UnOp
+gridder :: Rnd (UnOp Dist)
 gridder = grid <$> dim <*> dim
   where dim = 1.5...3.0
 
-pfGridder :: Rnd UnOp
+pfGridder :: Rnd (UnOp Dist)
 pfGridder = pfGrid <$> dim <*> dim
   where dim = 1.5...3.0
 

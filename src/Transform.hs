@@ -1,6 +1,5 @@
 module Transform
 ( scale
-, scale''
 , translation
 , rotation
 , rotation'
@@ -25,23 +24,19 @@ import Lib
 --    in mat
 
 -- :: E Float -> (Transform -> Dist) -> (Transform -> Dist)
-scale :: E Float -> UnOp
+scale :: E Float -> UnOp a
 scale s = transform (scale' s)
 
 scale' :: E Float -> Transformer
 scale' s (Transform xy t) = Transform (xy /^ s) t
 
--- Generic scaler, not shape-specific, for modgrid rainbow
-scale'' :: E Float -> (Transform -> a) -> (Transform -> a)
-scale'' s = transform' (scale' s)
-
-translation :: E (V2 Float) -> UnOp
+translation :: E (V2 Float) -> UnOp a
 translation dxy = transform (translation' dxy)
 
 translation' :: E (V2 Float) -> Transformer
 translation' dxy (Transform xy t) = Transform (xy -^ dxy) t
 
-rotation :: E Float -> UnOp
+rotation :: E Float -> UnOp a
 rotation ang = transform (rotation' ang)
 
 rotation' :: E Float -> Transformer
@@ -51,17 +46,17 @@ rotation' ang (Transform xy t) =
       mat = sh $ Mat2 [c, s, -s, c]
    in Transform (mat *^ xy) t
 
-flipX :: UnOp
+flipX :: UnOp a
 flipX s = transform (\(Transform xy t) -> (Transform (V2 (-(_x xy)) (_y xy)) t)) s
 
-flipY :: UnOp
+flipY :: UnOp a
 flipY s = transform (\(Transform xy t) -> (Transform (V2 (_x xy) (-(_y xy))) t)) s
 
-transform :: Transformer -> Shape -> Shape
+transform :: Transformer -> Transformable a -> Transformable a
 transform transformer p = p . transformer
 
 -- Generic scaler, not shape-specific, for modgrid rainbow
-transform' :: Transformer -> (Transform -> a) -> (Transform -> a)
+transform' :: Transformer -> Transformable a -> Transformable a
 transform' transformer p = p . transformer
 
 -- This time parameter is not used by any temporal functions, which just
@@ -75,5 +70,5 @@ transform' transformer p = p . transformer
 idTransform :: Transform
 idTransform = Transform uv time
 
-evalShape :: Shape -> Dist
+evalShape :: Transformable a -> a
 evalShape p = p idTransform
