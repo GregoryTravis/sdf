@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+
 module Transform
 ( scale
 , translation
@@ -11,6 +13,12 @@ module Transform
 
 import E
 import Lib
+
+--instance Applicative ((->) Transform) where
+--  pure = undefined
+--  (<*>) = undefined
+--  --pure x _transform = x
+--  --(f <*> x) transform = (f transform) (x transform)
 
 -- speed :: E -> UnOp
 -- speed r = transform (speed' r)

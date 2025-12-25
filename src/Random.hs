@@ -373,12 +373,22 @@ modgriddy =
       bothieT :: (Transform -> (E Float, E Float -> Color))
       bothieT = scale 0.5 $ modgrid 1 1 bothie
 
+      bothieTD :: Transform -> E Float
+      bothieTD = \t -> fst (bothieT t)
+      bothieTC :: Transform -> (E Float -> Color)
+      bothieTC = \t -> snd (bothieT t)
+      nloo :: Transform -> Color
+      nloo = bothieTC <*> bothieTD
+      nlooC :: Color
+      nlooC = evalShape nloo
+
       -- all' :: Shape
       -- evaled_mgcolorzer' :: E Float -> Color
       -- (evaled_mgcolorzer', all') = pmap (\x -> x idTransform) bothieT
       --   where pmap f (a, b) = (f a, f b)
       (all', evaled_mgcolorzer') = bothieT idTransform
-  in return $ evaled_mgcolorzer' all' 
+  -- in return $ evaled_mgcolorzer' all' 
+  in return $ nlooC
 
       -- evaled_mgcolorzer :: E Float -> Color
       -- evaled_mgcolorzer = mgcolorzer idTransform
