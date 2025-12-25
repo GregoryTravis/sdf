@@ -349,7 +349,8 @@ rainbowy =
 
 modgriddy :: IO Color
 modgriddy =
-  let shp i j =
+  let shp :: E Float -> E Float -> Shape
+      shp i j =
         let ai = i / 10
             aj = j / 10
             -- zany
@@ -360,21 +361,30 @@ modgriddy =
             -- ai = mix1 mx ai' aj'
             -- aj = mix1 my ai' aj'
          in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
-      colors = randBands (0.2, 0.4, 0.75) 0.3 5
-      beej = arr [V4 (_x uv) (_y uv) 0.0 1.0]
-      -- colorz = arr [V4 (smod (_x uv * 1.0 * KF n) 1.0) (smod (_y uv * 1.0 * KF n) 1.0) 0.2 1.0 | n <- take 5 [0..]]
       colorzer :: E Float -> E Float -> Transform -> (E Float -> Color)
       colorzer gi gj (Transform xy _) dist =
         let colorz = arr [V4 (smod (gi * 0.1 * KF n) 1.0) (smod (gj * 0.2 * KF n) 1.0) (smod ((gi + gj) * 0.3 * KF n) 1.0) 1.0 | n <- take 5 [0..]]
          in bands colorz black dist
       mgcolorzer :: Transform -> (E Float -> Color)
       mgcolorzer = scale'' 0.5 $ modgrid' 1 1 colorzer
-      evaled_mgcolorzer :: E Float -> Color
-      evaled_mgcolorzer = mgcolorzer idTransform
-      all = scale 0.5 $ modgrid 1 1 shp
-      -- all = scale 0.1 $ grid 1 1 circle
-  -- in (return . bands colorz (beej !!. KI 0) . evalShape) all
-  in (return . evaled_mgcolorzer . evalShape) all
+
+      bothie :: E Float -> E Float -> (Transform -> (E Float, E Float -> Color))
+      bothie i j transform = (shp i j transform, colorzer i j transform)
+      bothieT :: (Transform -> (E Float, E Float -> Color))
+      bothieT = scale'' 0.5 $ modgrid' 1 1 bothie
+
+      -- all' :: Shape
+      -- evaled_mgcolorzer' :: E Float -> Color
+      -- (evaled_mgcolorzer', all') = pmap (\x -> x idTransform) bothieT
+      --   where pmap f (a, b) = (f a, f b)
+      (all', evaled_mgcolorzer') = bothieT idTransform
+  in return $ evaled_mgcolorzer' all' 
+
+      -- evaled_mgcolorzer :: E Float -> Color
+      -- evaled_mgcolorzer = mgcolorzer idTransform
+      -- all :: Shape
+      -- all = scale 0.5 $ modgrid 1 1 shp
+  -- in (return . evaled_mgcolorzer . evalShape) all
 
 nutsoRainbow :: E Float -> IO Color
 nutsoRainbow scail =
