@@ -124,6 +124,9 @@ data E a where
   ShareRef :: GlslType a => Int -> E a
 
 type Dist = E Float
+type Color = E (V4 Float)
+type Picture = Transformable Color
+type Colorer = Dist -> Color
 
 -- deriving instance Generic a => Generic (E a)
 
