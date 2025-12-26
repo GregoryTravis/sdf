@@ -391,9 +391,13 @@ gradgriddy =
               let (base, moving) = mouseMovement
                   all = (smoosh moving base) `union` moving
                in all
-            potdC :: Color
-            potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
-       in \_ -> potdC
+            bubbleShade :: Shape -> Picture
+            bubbleShade s tr =
+              (smooth (bubbleInside (s tr)) nothing) (s tr)
+            -- potdC :: Color
+            -- potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
+       -- in \_ -> potdC
+       in modgrid 1 1 (\_ _ -> bubbleShade potd)
 
       scl = 1
       pica :: Picture
