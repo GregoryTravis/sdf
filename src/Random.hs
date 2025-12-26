@@ -411,7 +411,7 @@ gradgriddy =
       fg =
         let potd :: Shape
             potd =
-              let (base, moving) = mouseMovement
+              let (base, moving) = potdMovement
                   all = (smoosh moving base) `union` moving
                in translation (V2 0.5 0.5) $ scale 0.25 all
             -- potdC :: Color
@@ -520,6 +520,16 @@ sineMovement =
      disp = 1.7
      base = circle
      moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
+  in (base, moving)
+
+potdMovement :: (Shape, Shape)
+potdMovement =
+  let wave = ssin time
+      disp = 1.7
+      big = 1
+      small = 0.1
+      base = scale big circle
+      moving = translation (V2 wave wave) $ scale 1.0 (scale small circle) -- cir
   in (base, moving)
 
 mouseMovement :: (Shape, Shape)
