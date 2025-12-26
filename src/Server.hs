@@ -43,6 +43,7 @@ app = do
   route "/potd4" (htmlHandler (potd4 >>= singleHandler))
   route "/newpotd" (htmlHandler (newpotdC >>= singleHandler))
   route "/modgriddy" (htmlHandler (modgriddy >>= singleHandler))
+  route "/gradgriddy" (htmlHandler (gradgriddy >>= singleHandler))
   route "/nutsoRainbow" (htmlHandler ((nutsoRainbow 0.2) >>= singleHandler))
   route "/rainbowy" (htmlHandler (rainbowy >>= singleHandler))
   route "/cs" (htmlHandler (someCircles >>= singleHandler))

@@ -22,6 +22,7 @@ module Random
 , dropshadow
 , potdC
 , modgriddy
+, gradgriddy
 , rainbowy
 , nutsoRainbow
 , potd4
@@ -346,6 +347,30 @@ rainbowy =
       --colors = arr [red, white, blue, green, yellow]
       colors = randBands (0.2, 0.4, 0.75) 0.3 5
   in (return . bands colors black . evalShape) all
+
+gradgriddy :: IO Color
+gradgriddy =
+  let shp :: E Float -> E Float -> Shape
+      shp i j =
+         translation (V2 0.5 0.5) $ scale 0.3 $ rotation (i * j * time) $ rainbowShape
+      colorzer :: E Float -> E Float -> Transform -> (E Float -> Color)
+      colorzer gi gj (Transform xy _) dist =
+        let colorz = arr colorzz
+            colorzz = [V4 (aBand 0.1 n gi) (aBand 0.2 n gj) (aBand 0.3 n (gi+gj)) 1.0 | n <- take 5 [0..]]
+            colorzz2 = [V4 (aBand 0.4 n gj) (aBand 0.5 n gi) (aBand 0.6 n (gi+gj)) 1.0 | n <- take 5 [0..]]
+            bg =
+              let  x = _x xy
+                   y = _y xy
+                   c0 = mix4 (colorzz2 !! 0) white 0.5
+                   c1 = mix4 (colorzz2 !! 1) white 0.5
+                   c2 = mix4 (colorzz2 !! 2) white 0.5
+                   c3 = mix4 (colorzz2 !! 3) white 0.5
+               in mix4 (mix4 c0 c1 x) (mix4 c2 c3 x) y
+         in bands colorz bg dist
+        where aBand r n x = smod (x * r * KF n) 1.0
+      pic :: Picture
+      pic = scale 1 (modgrid 1 1 colorzer <*> modgrid 1 1 shp)
+   in return $ evalShape $ pic
 
 modgriddy :: IO Color
 modgriddy =
