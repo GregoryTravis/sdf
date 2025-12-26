@@ -351,60 +351,15 @@ modgriddy :: IO Color
 modgriddy =
   let shp :: E Float -> E Float -> Shape
       shp i j =
-        let ai = i / 10
-            aj = j / 10
-            -- zany
-            -- ai' = i / 10
-            -- aj' = j / 10
-            -- mx = _x mouse
-            -- my = _y mouse
-            -- ai = mix1 mx ai' aj'
-            -- aj = mix1 my ai' aj'
-         in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+         scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
       colorzer :: E Float -> E Float -> Transform -> (E Float -> Color)
       colorzer gi gj _ dist =
-        let colorz = arr [V4 (smod (gi * 0.1 * KF n) 1.0) (smod (gj * 0.2 * KF n) 1.0) (smod ((gi + gj) * 0.3 * KF n) 1.0) 1.0 | n <- take 5 [0..]]
+        let colorz = arr [V4 (aBand 0.1 n gi) (aBand 0.2 n gj) (aBand 0.3 n (gi+gj)) 1.0 | n <- take 5 [0..]]
          in bands colorz black dist
-      mgcolorzer :: Transform -> (E Float -> Color)
-      mgcolorzer = scale 0.5 $ modgrid 1 1 colorzer
-
-      bothie :: E Float -> E Float -> (Transform -> (E Float, E Float -> Color))
-      bothie i j transform = (shp i j transform, colorzer i j transform)
-      bothieT :: (Transform -> (E Float, E Float -> Color))
-      bothieT = scale 0.5 $ modgrid 1 1 bothie
-
-      bothieTD :: Transform -> E Float
-      -- bothieTD = \t -> fst (bothieT t)
-      bothieTD = fst <$> bothieT
-      bothieTC :: Transform -> (E Float -> Color)
-      -- bothieTC = \t -> snd (bothieT t)
-      bothieTC = snd <$> bothieT
-      nloo :: Transform -> Color
-      nloo = bothieTC <*> bothieTD
-      nlooC :: Color
-      nlooC = evalShape nloo
-
-      ghs :: Transformable Dist
-      ghs = scale 0.5 $ modgrid 1 1 shp
-      ghc :: Transformable (Dist -> Color)
-      ghc = scale 0.5 $ modgrid 1 1 colorzer
-      gha :: Transformable Color
-      gha = ghc <*> ghs
-
-      -- all' :: Shape
-      -- evaled_mgcolorzer' :: E Float -> Color
-      -- (evaled_mgcolorzer', all') = pmap (\x -> x idTransform) bothieT
-      --   where pmap f (a, b) = (f a, f b)
-      (all', evaled_mgcolorzer') = bothieT idTransform
-  -- in return $ evaled_mgcolorzer' all' 
-  -- in return $ nlooC
-   in return $ evalShape gha
-
-      -- evaled_mgcolorzer :: E Float -> Color
-      -- evaled_mgcolorzer = mgcolorzer idTransform
-      -- all :: Shape
-      -- all = scale 0.5 $ modgrid 1 1 shp
-  -- in (return . evaled_mgcolorzer . evalShape) all
+        where aBand r n x = smod (x * r * KF n) 1.0
+      pic :: Picture
+      pic = scale 0.2 (modgrid 1 1 colorzer <*> modgrid 1 1 shp)
+   in return $ evalShape pic
 
 nutsoRainbow :: E Float -> IO Color
 nutsoRainbow scail =

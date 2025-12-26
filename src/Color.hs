@@ -6,8 +6,6 @@ import E
 import Lib
 import Util
 
-type Color = E (V4 Float)
-
 mkCol :: Float -> Float -> Float -> Float -> Color
 mkCol r g b a = V4 (KF r) (KF g) (KF b) (KF a)
 

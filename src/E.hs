@@ -15,6 +15,9 @@ module E
   , Transformer
   , Transformable
   , Shape
+  , Color
+  , Picture
+  , Colorer
   , UnOp
   , BinOp
   -- , time
