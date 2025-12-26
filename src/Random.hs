@@ -350,15 +350,17 @@ rainbowy =
 
 gradgriddy :: IO Color
 gradgriddy =
-  let shp :: E Float -> E Float -> Shape
-      shp i j =
-         translation (V2 0.5 0.5) $ scale 0.3 $ rotation (i * j * time) $ rainbowShape
-      colorzer :: E Float -> E Float -> Transform -> (E Float -> Color)
-      colorzer gi gj (Transform xy _) dist =
+  let shp :: E Float -> E Float -> E Float -> Shape
+      shp var i j =
+        let vary x = translation (V2 var var) $ scale (1/(1+var)) x
+         in vary $ translation (V2 0.5 0.5) $ scale 0.3 $ rotation ((i+0.7+var) * (j+1.5+var)) $ rainbowShape
+      colorzer :: E Float -> E Float -> E Float -> Transform -> (E Float -> Color)
+      colorzer var gi gj (Transform xy _) dist =
         let colorz = arr colorzz
-            colorzz = [V4 (aBand 0.1 n gi) (aBand 0.2 n gj) (aBand 0.3 n (gi+gj)) 1.0 | n <- take 5 [0..]]
-            colorzz2 = [V4 (aBand 0.4 n gj) (aBand 0.5 n gi) (aBand 0.6 n (gi+gj)) 1.0 | n <- take 5 [0..]]
-            bg =
+            colorzz = [V4 (aBand 0.1 n gi) (aBand 0.2 n gj) (aBand 0.3 n (gi+gj)) 1.0 | n <- take 5 [1..]]
+            colorzz2 = [V4 (aBand 0.4 n gj) (aBand 0.5 n gi) (aBand 0.6 n (gi+gj)) 1.0 | n <- take 5 [1..]]
+            bg = nothing
+            abg =
               let  x = _x xy
                    y = _y xy
                    c0 = mix4 (colorzz2 !! 0) white 0.25
@@ -367,9 +369,29 @@ gradgriddy =
                    c3 = mix4 (colorzz2 !! 3) white 0.25
                in mix4 (mix4 c0 c1 x) (mix4 c2 c3 x) y
          in bands colorz bg dist
+        where aBand r n x = smod ((x+1+var) * r * KF n) 1.0
+      grad :: E Float -> E Float -> Picture
+      grad gi gj (Transform xy _) = 
+        let colorzz2 = [V4 (aBand 0.4 n gj) (aBand 0.5 n gi) (aBand 0.6 n (gi+gj)) 1.0 | n <- take 5 [0..]]
+            bg =
+              let  x = _x xy
+                   y = _y xy
+                   c0 = mix4 (colorzz2 !! 0) white 0.25
+                   c1 = mix4 (colorzz2 !! 1) white 0.25
+                   c2 = mix4 (colorzz2 !! 2) white 0.25
+                   c3 = mix4 (colorzz2 !! 3) white 0.25
+               in mix4 (mix4 c0 c1 x) (mix4 c2 c3 x) y
+         in bg
         where aBand r n x = smod ((x+1) * r * KF n) 1.0
-      pic :: Picture
-      pic = scale 1 (modgrid 1 1 colorzer <*> modgrid 1 1 shp)
+      scl = 1
+      pica :: Picture
+      pica = scale scl (modgrid 1 1 (colorzer 0.0) <*> modgrid 1 1 (shp 0.0))
+      picb :: Picture
+      picb = scale scl (modgrid 1 1 (colorzer 17.3) <*> modgrid 1 1 (shp 0.3))
+      picg :: Picture
+      picg = scale scl (modgrid 1 1 grad)
+      -- pic = alphaBlend <$> picg <*> pica
+      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> picb)
    in return $ evalShape $ pic
 
 modgriddy :: IO Color

@@ -180,8 +180,9 @@ oldsmooth fg bg dist =
       color = bwBlend *^ bg +^ (KF 1.0 -^ bwBlend) *^ fg;
    in sh color
 
+-- TODO the alpha channel is wrong here
 alphaBlend :: Color -> Color -> Color
-alphaBlend bg fg = sh $ vec4 (mix (rgb $ sh bg) (rgb $ sh fg) (_a fg)) 1.0
+alphaBlend bg fg = sh $ vec4 (mix (rgb $ sh bg) (rgb $ sh fg) (_a fg)) (_a fg `smax` _a bg)
 
 -- This is a fold
 alphaBlends :: [Color] -> Color
