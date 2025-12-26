@@ -361,13 +361,13 @@ gradgriddy =
             bg =
               let  x = _x xy
                    y = _y xy
-                   c0 = mix4 (colorzz2 !! 0) white 0.5
-                   c1 = mix4 (colorzz2 !! 1) white 0.5
-                   c2 = mix4 (colorzz2 !! 2) white 0.5
-                   c3 = mix4 (colorzz2 !! 3) white 0.5
+                   c0 = mix4 (colorzz2 !! 0) white 0.25
+                   c1 = mix4 (colorzz2 !! 1) white 0.25
+                   c2 = mix4 (colorzz2 !! 2) white 0.25
+                   c3 = mix4 (colorzz2 !! 3) white 0.25
                in mix4 (mix4 c0 c1 x) (mix4 c2 c3 x) y
          in bands colorz bg dist
-        where aBand r n x = smod (x * r * KF n) 1.0
+        where aBand r n x = smod ((x+1) * r * KF n) 1.0
       pic :: Picture
       pic = scale 1 (modgrid 1 1 colorzer <*> modgrid 1 1 shp)
    in return $ evalShape $ pic
