@@ -188,6 +188,35 @@ bubbleHeight radius dist =
       topHeight = radius
    in Cond (d >=. (-radius)) curveHeight topHeight
 
+lightNorm :: E (V3 Float) -> E Float
+lightNorm norm =
+  -- TODO opt don't do these every time?
+  let  lightDir = norm3 $ V3 (-1.0) 1.0 1.0
+   in norm `dot3` lightDir
+
+bubbleShade :: Shape -> Picture
+bubbleShade s tr =
+  (smooth ((tbubbleInside tr) (s tr)) nothing) (s tr)
+
+-- Bad edge
+tbubbleNorm2 :: E Float -> E Float -> Transform -> E (V3 Float)
+tbubbleNorm2 radius dist (Transform xy _) =
+  let height = sh $ bubbleHeight radius dist
+      dHeightDx = sdFdx height
+      dHeightDy = sdFdy height
+      du = sh $ sdFdx (_x xy)
+      dv = sh $ sdFdy (_y xy)
+   in norm3 $ V3 (-(dHeightDx * dv)) (-(dHeightDy * du)) (du * dv)
+
+-- TODO opt add sh
+tbubbleInside :: Transform -> E Float -> Color
+tbubbleInside tr dist =
+  let dark = bw3 (KF 0.0)
+      bright = bw3 (KF 1.0)
+      norm = tbubbleNorm2 0.5 dist tr
+      curveColor = colorGrad dark bright (-1.0) 1.0 (lightNorm norm)
+   in curveColor
+
 -- Bad edge
 bubbleNorm2 :: E Float -> E Float -> E (V3 Float)
 bubbleNorm2 radius dist =
@@ -197,12 +226,6 @@ bubbleNorm2 radius dist =
       du = sh $ sdFdx (_x uv)
       dv = sh $ sdFdy (_y uv)
    in norm3 $ V3 (-(dHeightDx * dv)) (-(dHeightDy * du)) (du * dv)
-
-lightNorm :: E (V3 Float) -> E Float
-lightNorm norm =
-  -- TODO opt don't do these every time?
-  let  lightDir = norm3 $ V3 (-1.0) 1.0 1.0
-   in norm `dot3` lightDir
 
 -- TODO opt add sh
 bubbleInside :: E Float -> Color
@@ -391,9 +414,6 @@ gradgriddy =
               let (base, moving) = mouseMovement
                   all = (smoosh moving base) `union` moving
                in all
-            bubbleShade :: Shape -> Picture
-            bubbleShade s tr =
-              (smooth (bubbleInside (s tr)) nothing) (s tr)
             -- potdC :: Color
             -- potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
        -- in \_ -> potdC
@@ -499,6 +519,7 @@ sineMovement =
      moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
   in (base, moving)
 
+mouseMovement :: (Shape, Shape)
 mouseMovement =
   let wave = ssin time
       disp = 1.7
