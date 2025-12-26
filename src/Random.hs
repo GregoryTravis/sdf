@@ -383,6 +383,18 @@ gradgriddy =
                in mix4 (mix4 c0 c1 x) (mix4 c2 c3 x) y
          in bg
         where aBand r n x = smod ((x+1) * r * KF n) 1.0
+
+      fg :: Picture
+      fg =
+        let potd :: Shape
+            potd =
+              let (base, moving) = mouseMovement
+                  all = (smoosh moving base) `union` moving
+               in all
+            potdC :: Color
+            potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
+       in \_ -> potdC
+
       scl = 1
       pica :: Picture
       pica = scale scl (modgrid 1 1 (colorzer 0.0) <*> modgrid 1 1 (shp 0.0))
@@ -390,8 +402,9 @@ gradgriddy =
       picb = scale scl (modgrid 1 1 (colorzer 17.3) <*> modgrid 1 1 (shp 0.3))
       picg :: Picture
       picg = scale scl (modgrid 1 1 grad)
-      -- pic = alphaBlend <$> picg <*> pica
-      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> picb)
+      -- pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> picb)
+      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> fg))
+      -- pic = alphaBlend <$> picg <*> fg
    in return $ evalShape $ pic
 
 modgriddy :: IO Color
