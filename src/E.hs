@@ -46,6 +46,9 @@ module E
   , xyz
   , yxz
   , rgb
+  , _r
+  , _g
+  , _b
   , _a
   , Fielder(..)
   , swizzleFields
@@ -264,6 +267,12 @@ xyz e = Swizzle (SW3 "xyz") e
 yxz e = Swizzle (SW3 "yxz") e
 
 rgb e = Swizzle (SW3 "rgb") e
+_r :: (GlslType (v n), FieldsTo (v n) n) => E (v n) -> E n
+_r e = Field (Fielder "r") e
+_g :: (GlslType (v n), FieldsTo (v n) n) => E (v n) -> E n
+_g e = Field (Fielder "g") e
+_b :: (GlslType (v n), FieldsTo (v n) n) => E (v n) -> E n
+_b e = Field (Fielder "b") e
 _a :: (GlslType (v n), FieldsTo (v n) n) => E (v n) -> E n
 _a e = Field (Fielder "a") e
 

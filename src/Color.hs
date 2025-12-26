@@ -191,6 +191,10 @@ alphaBlends es = sh $ alphaBlends' (black : es)
         alphaBlends' [e] = e
         alphaBlends' (bg : fg : es) = alphaBlends' (alphaBlend bg fg : es)
 
+-- TODO Surely I already have a better way to do this
+setAlpha :: E Float -> Color -> Color
+setAlpha alpha c = V4 (_r c) (_g c) (_b c) alpha
+
 ---- half-completed bevel edge, needs entire shader to be in E
 
 bevelWidth :: Float

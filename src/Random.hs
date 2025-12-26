@@ -413,11 +413,14 @@ gradgriddy =
             potd =
               let (base, moving) = mouseMovement
                   all = (smoosh moving base) `union` moving
-               in translation (V2 0.5 0.5) $ scale 0.5 all
+               in translation (V2 0.5 0.5) $ scale 0.25 all
             -- potdC :: Color
             -- potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
        -- in \_ -> potdC
        in modgrid 1 1 (\_ _ -> bubbleShade (modgrid 1 1 (\_ _ -> potd)))
+
+      tfg :: Picture
+      tfg = fg -- setAlpha 0.8 <$> fg
 
       scl = 1
       pica :: Picture
@@ -427,7 +430,7 @@ gradgriddy =
       picg :: Picture
       picg = scale scl (modgrid 1 1 grad)
       -- pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> picb)
-      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> fg))
+      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> tfg))
       -- pic = alphaBlend <$> picg <*> fg
    in return $ evalShape $ pic
 
