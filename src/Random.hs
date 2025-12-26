@@ -419,9 +419,6 @@ gradgriddy =
        -- in \_ -> potdC
        in modgrid 1 1 (\_ _ -> bubbleShade (modgrid 1 1 (\_ _ -> potd)))
 
-      tfg :: Picture
-      tfg = fg -- setAlpha 0.8 <$> fg
-
       scl = 1
       pica :: Picture
       pica = scale scl (modgrid 1 1 (colorzer 0.0) <*> modgrid 1 1 (shp 0.0))
@@ -429,8 +426,10 @@ gradgriddy =
       picb = scale scl (modgrid 1 1 (colorzer 17.3) <*> modgrid 1 1 (shp 0.3))
       picg :: Picture
       picg = scale scl (modgrid 1 1 grad)
+      picfg :: Picture
+      picfg = scale scl fg
       -- pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> picb)
-      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> tfg))
+      pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> picfg))
       -- pic = alphaBlend <$> picg <*> fg
    in return $ evalShape $ pic
 
