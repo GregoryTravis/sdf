@@ -413,11 +413,11 @@ gradgriddy =
             potd =
               let (base, moving) = mouseMovement
                   all = (smoosh moving base) `union` moving
-               in all
+               in translation (V2 0.5 0.5) $ scale 0.5 all
             -- potdC :: Color
             -- potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
        -- in \_ -> potdC
-       in modgrid 1 1 (\_ _ -> bubbleShade potd)
+       in modgrid 1 1 (\_ _ -> bubbleShade (modgrid 1 1 (\_ _ -> potd)))
 
       scl = 1
       pica :: Picture
@@ -531,8 +531,8 @@ mouseMovement =
 
 smoosh :: Shape -> Shape -> Shape
 smoosh pusher pushee t@(Transform uv _) =
-  let r = evalShape pusher
-      e = evalShape pushee
+  let r = pusher t
+      e = pushee t
       rlo = 0.1
       rhi = 2.7
       d = mix1 0.1 e (smoothstep rlo rhi r)
