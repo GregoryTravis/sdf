@@ -196,7 +196,7 @@ lightNorm norm =
 
 bubbleShade :: Shape -> Picture
 bubbleShade s tr =
-  (smooth ((tbubbleInside tr) (s tr)) nothing) (s tr)
+  (smooth ((tbubbleInside True tr) (s tr)) nothing) (s tr)
 
 -- Bad edge
 tbubbleNorm2 :: E Float -> E Float -> Transform -> E (V3 Float)
@@ -209,9 +209,9 @@ tbubbleNorm2 radius dist (Transform xy _) =
    in norm3 $ V3 (-(dHeightDx * dv)) (-(dHeightDy * du)) (du * dv)
 
 -- TODO opt add sh
-tbubbleInside :: Transform -> E Float -> Color
-tbubbleInside tr dist =
-  let dark = bw3 (KF 0.0)
+tbubbleInside :: Bool -> Transform -> E Float -> Color
+tbubbleInside translucent tr dist =
+  let dark = if translucent then nothing else bw3 (KF 0.0)
       bright = bw3 (KF 1.0)
       norm = tbubbleNorm2 0.5 dist tr
       curveColor = colorGrad dark bright (-1.0) 1.0 (lightNorm norm)
