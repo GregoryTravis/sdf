@@ -412,7 +412,8 @@ gradgriddy =
         let potd :: E Float -> E Float -> Shape
             potd i j =
               let (base, moving) = potdMovement i j
-                  all = (smoosh moving base) `union` moving
+                  (base2, moving2) = potdMovement j i
+                  all = (smoosh moving2 (smoosh moving base)) `union` moving `union` moving2
                in translation (V2 0.5 0.5) $ scale 0.25 all
             -- potdC :: Color
             -- potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
