@@ -409,15 +409,15 @@ gradgriddy =
 
       fg :: Picture
       fg =
-        let potd :: Shape
-            potd =
-              let (base, moving) = potdMovement
+        let potd :: E Float -> E Float -> Shape
+            potd i j =
+              let (base, moving) = potdMovement i j
                   all = (smoosh moving base) `union` moving
                in translation (V2 0.5 0.5) $ scale 0.25 all
             -- potdC :: Color
             -- potdC = (smooth (bubbleInside (evalShape potd)) nothing . evalShape) potd
        -- in \_ -> potdC
-       in modgrid 1 1 (\_ _ -> bubbleShade (modgrid 1 1 (\_ _ -> potd)))
+         in modgrid 1 1 (\i j -> bubbleShade (potd i j))
 
       scl = 1
       pica :: Picture
@@ -432,6 +432,17 @@ gradgriddy =
       pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> picfg))
       -- pic = alphaBlend <$> picg <*> fg
    in return $ evalShape $ pic
+
+potdMovement :: E Float -> E Float -> (Shape, Shape)
+potdMovement i j =
+  let xwave = ssin (time * (i+2))
+      ywave = ssin (time * (j+2))
+      disp = 1.7
+      big = 1
+      small = 0.1
+      base = scale big circle
+      moving = translation (V2 xwave ywave) $ scale 1.0 (scale small circle) -- cir
+  in (base, moving)
 
 modgriddy :: IO Color
 modgriddy =
@@ -519,16 +530,6 @@ sineMovement =
      disp = 1.7
      base = circle
      moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
-  in (base, moving)
-
-potdMovement :: (Shape, Shape)
-potdMovement =
-  let wave = ssin time
-      disp = 1.7
-      big = 1
-      small = 0.1
-      base = scale big circle
-      moving = translation (V2 wave wave) $ scale 1.0 (scale small circle) -- cir
   in (base, moving)
 
 mouseMovement :: (Shape, Shape)
