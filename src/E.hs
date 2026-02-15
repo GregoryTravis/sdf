@@ -384,7 +384,7 @@ instance SRS.Uniform (E Double)
     -- uniformM g = KF <$> uniformRM (0.0, 1.0) g
     uniformM g = uniformRM (0.0, 1.0) g
 
-type Shape = Transformable (E Float)
+type Shape = Transformable Dist
 type UnOp a = Transformable a -> Transformable a
 type BinOp a = Transformable a -> Transformable a -> Transformable a
 

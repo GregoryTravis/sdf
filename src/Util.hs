@@ -59,6 +59,8 @@ module Util
 , upd
 , transfer
 , readFile'
+, headF
+, tailF
 ) where
 
 import Control.Exception
@@ -291,7 +293,7 @@ hist :: (Ord a) => [a] -> [(Int, a)]
 hist xs = zip lens reps
   where grouped = group $ sort xs
         lens = map length grouped
-        reps = map head grouped
+        reps = map headF grouped
 
 -- What on earth is wrong with me
 replaceInList :: [a] -> Int -> a -> [a]
@@ -383,3 +385,13 @@ readFile' filePath = do
     contents <- hGetContents handle
     return $!! contents
     -- return $ length contents `seq` contents
+
+-- Throw an overt error
+headF :: [a] -> a
+headF [] = error $ "head of empty list!"
+headF (x:xs) = x
+
+-- Throw an overt error
+tailF :: [a] -> [a]
+tailF [] = error $ "tail of empty list!"
+tailF (x:xs) = xs
