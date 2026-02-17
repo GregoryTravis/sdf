@@ -67,7 +67,7 @@ commanderRoutes = randomCommander
 commanderHandler :: Handler W.Response
 commanderHandler = do
   p <- getPath
-  let command = splitOn "+" (tail (T.unpack p))
+  let command = splitOn "+" (tailF (T.unpack p))
       render ioe = liftIO (ioe >>= singleHandler)
       renderWithLog ioe s = do liftIO $ msp ("Commander log: " ++ s)
                                render ioe

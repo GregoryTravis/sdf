@@ -371,6 +371,12 @@ instance (Show a) => UniformRange (E a) where
   uniformRM (Neg (KF lo), Neg (KF hi)) g = KF <$> uniformRM (-lo, -hi) g
   uniformRM pr _ = error $ "UniformRange not implemented for: " ++ show pr
 
+  isInRange (KF lo, KF hi) (KF x) = isInRange (lo, hi) x
+  isInRange (Neg (KF lo), KF hi) (KF x) = isInRange (-lo, hi) x
+  isInRange (KF lo, Neg (KF hi)) (KF x) = isInRange (lo, -hi) x
+  isInRange (Neg (KF lo), Neg (KF hi)) (KF x) = isInRange (-lo, -hi) x
+  isInRange pr _ = error $ "UniformRange not implemented for: " ++ show pr
+
 -- instance (Show a) => SRS.Uniform (E a)
 instance SRS.Uniform (E Float)
   where
