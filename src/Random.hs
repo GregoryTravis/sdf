@@ -23,6 +23,7 @@ module Random
 , potdC
 , modgriddy
 , gradgriddy
+, comp0
 , rainbowy
 , nutsoRainbow
 , potd4
@@ -44,6 +45,7 @@ import Alg
 import BinOp
 import Color
 import Commander
+import Composition
 import DropShadows
 import E
 import Funs
@@ -433,6 +435,13 @@ gradgriddy =
       pic = alphaBlend <$> picg <*> (alphaBlend <$> pica <*> (alphaBlend <$> picb <*> picfg))
       -- pic = alphaBlend <$> picg <*> fg
    in return $ evalShape $ pic
+
+comp0 :: IO Color
+comp0 = do
+  let s0 = flower 3
+      s1 = flower 4
+      all = composeCircular s0 s1
+  return $ smooth white black $ evalShape $ all
 
 potdMovement :: E Float -> E Float -> (Shape, Shape)
 potdMovement i j =
