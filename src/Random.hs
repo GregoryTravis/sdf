@@ -24,6 +24,7 @@ module Random
 , modgriddy
 , gradgriddy
 , comp0
+, compMesmer
 , rainbowy
 , nutsoRainbow
 , potd4
@@ -436,11 +437,33 @@ gradgriddy =
       -- pic = alphaBlend <$> picg <*> fg
    in return $ evalShape $ pic
 
+compMesmer :: IO Color
+compMesmer = do
+  -- let s0 = flower 3
+  --     s1 = flower 4
+  --     all = composeCircular s0 s1
+  let left = translation (V2 (-disp) 0) $ scale 0.5 circle
+      right = translation (V2 disp 0) $ scale 0.5 circle
+      disp = 0.5 + (ssin time) * 0.3
+      doubs = smoothUnion left right
+      --the = doubs
+      the = filaoa
+      with = filaoa -- flower 4
+      all = composeCircular the with
+  return $ smooth white black $ evalShape $ all
+
 comp0 :: IO Color
 comp0 = do
-  let s0 = flower 3
-      s1 = flower 4
-      all = composeCircular s0 s1
+  -- let s0 = flower 3
+  --     s1 = flower 4
+  --     all = composeCircular s0 s1
+  let left = translation (V2 (-disp) 0) $ scale 0.5 circle
+      right = translation (V2 disp 0) $ scale 0.5 circle
+      disp = 0.5 + (ssin time) * 0.3
+      doubs = smoothUnion left right
+      the = doubs
+      with = filaoa -- flower 4
+      all = composeCircular the with
   return $ smooth white black $ evalShape $ all
 
 potdMovement :: E Float -> E Float -> (Shape, Shape)
