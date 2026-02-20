@@ -1,58 +1,24 @@
-<!DOCTYPE html>
 <!-- saved from url=(0037)https://twgljs.org/examples/tiny.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
     <!--
-
     @license twgl.js Copyright (c) 2015, Gregg Tavares All Rights Reserved.
     Available via the MIT license.
     see: http://github.com/greggman/twgl.js for details
-
     -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta property="og:title" content="TWGL.js - tiny">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="http://twgljs.org/examples/screenshots/tiny.png">
-    <meta property="og:description" content="TWGL.js - tiny">
-    <meta property="og:url" content="http://twgljs.org">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@greggman">
-    <meta name="twitter:creator" content="@greggman">
-    <meta name="twitter:domain" content="twgljs.org">
-    <meta name="twitter:title" content="TWGL.js - tiny">
-    <meta name="twitter:url" content="http://twgljs.org/examples/tiny.html">
-    <meta name="twitter:description" content="TWGL.js - tiny">
-    <meta name="twitter:image:src" content="http://twgljs.org/examples/screenshots/tiny.png">
-
-    <link href="https://twgljs.org/resources/images/twgljs-icon.png" rel="shortcut icon" type="image/png">
-
     <title>twgl.js - tiny</title>
     <style>
-      body {
-          margin: 0;
-          font-family: monospace;
-      }
       canvas {
           position: absolute;
           top: 0;
           left: 0;
-          width: 50vw;
-          height: 50vh;
-      }
-      #b {
-        position: absolute;
-        top: 10px;
-        width: 100%;
-        text-align: center;
-        z-index: 2;
+          width: 100vw;
+          height: 100vh;
       }
     </style>
   </head>
   <body>
     <canvas id="c" width="1680" height="855"></canvas>
-    <div id="b"><a href="https://twgljs.org/">twgl.js</a> - tiny</div>
-
   <script id="vs" type="notjs">
 #version 300 es
 
