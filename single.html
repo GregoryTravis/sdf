@@ -34,9 +34,11 @@
           font-family: monospace;
       }
       canvas {
-          display: block;
-          width: 100vw;
-          height: 100vh;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 50vw;
+          height: 50vh;
       }
       #b {
         position: absolute;
@@ -105,8 +107,8 @@ void main() {
     let my = 0;
     let canvas = document.getElementById('c');
     export function myFunction(e) {
-      mx = e.clientX;
-      my = e.clientY;
+      mx = e.offsetX;
+      my = e.offsetY;
       // console.log(mx + " " + my);
     }
     canvas.addEventListener("mousemove", myFunction, false);
