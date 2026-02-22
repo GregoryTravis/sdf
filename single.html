@@ -1,5 +1,7 @@
 <!-- saved from url=(0037)https://twgljs.org/examples/tiny.html -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html>
+
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <!--
     @license twgl.js Copyright (c) 2015, Gregg Tavares All Rights Reserved.
     Available via the MIT license.
@@ -7,13 +9,9 @@
     -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>twgl.js - tiny</title>
-  </head>
-  <body>
-    <canvas id="c" width="1680" height="855"
-      style="position: absolute; top: 0vh; left: 0vw; width: 50vw; height: 50vh"></canvas>
-    <canvas id="c2" width="1680" height="855"
-      style="position: absolute; top: 0vh; right: 0vw; width: 50vw; height: 50vh"></canvas>
-  <script id="vs" type="notjs">
+</head>
+
+<script id="vs" type="notjs">
 #version 300 es
 
 // attribute vec4 position;
@@ -22,74 +20,9 @@ layout(location = 0) in vec4 position;
 void main() {
   gl_Position = position;
 }
-  </script>
-  <script id="fs" type="notjs">
-#version 300 es
-precision mediump float;
+</script>
 
-uniform vec2 resolution;
-uniform float time;
-uniform float mx;
-uniform float my;
-out vec4 fragColor;
-
-// TODO slow
-float linmap(float a, float b, float c, float d, float x) {
-  return ((x - a) * ((d - c) / (b - a))) + c;
-}
-
-vec2 toUV(float x, float y) {
-  // Assumes horizontal?
-  float m = (resolution.x - resolution.y) / 2.0;
-  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, x),
-                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, y));
-  return uv;
-}
-
-void main() {
-  vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
-  vec2 mouse = toUV(mx, my);
-
-  SHAPE_ASDF
-  // Works
-  // float x = dFdx(topColor.r);
-  fragColor = topColor;
-}
-  </script>
-  <script id="fs2" type="notjs">
-#version 300 es
-precision mediump float;
-
-uniform vec2 resolution;
-uniform float time;
-uniform float mx;
-uniform float my;
-out vec4 fragColor;
-
-// TODO slow
-float linmap(float a, float b, float c, float d, float x) {
-  return ((x - a) * ((d - c) / (b - a))) + c;
-}
-
-vec2 toUV(float x, float y) {
-  // Assumes horizontal?
-  float m = (resolution.x - resolution.y) / 2.0;
-  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, x),
-                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, y));
-  return uv;
-}
-
-void main() {
-  vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
-  vec2 mouse = toUV(mx, my);
-
-  SHAPE_ASDF
-  // Works
-  // float x = dFdx(topColor.r);
-  fragColor = topColor;
-}
-  </script>
-  <script type="module">
+<script type="module">
     import * as twgl from './twgl-full.module.js';
 
     function yeah(canvasId, fragmentShader) {
@@ -132,5 +65,86 @@ void main() {
     }
     yeah("c", "fs");
     yeah("c2", "fs2");
-  </script>
-</body></html>
+</script>
+
+<script id="fs" type="notjs">
+#version 300 es
+precision mediump float;
+
+uniform vec2 resolution;
+uniform float time;
+uniform float mx;
+uniform float my;
+out vec4 fragColor;
+
+// TODO slow
+float linmap(float a, float b, float c, float d, float x) {
+  return ((x - a) * ((d - c) / (b - a))) + c;
+}
+
+vec2 toUV(float x, float y) {
+  // Assumes horizontal?
+  float m = (resolution.x - resolution.y) / 2.0;
+  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, x),
+                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, y));
+  return uv;
+}
+
+void main() {
+  vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
+  vec2 mouse = toUV(mx, my);
+
+  SHAPE_ASDF
+  // Works
+  // float x = dFdx(topColor.r);
+  fragColor = topColor;
+}
+</script>
+
+<script id="fs2" type="notjs">
+#version 300 es
+precision mediump float;
+
+uniform vec2 resolution;
+uniform float time;
+uniform float mx;
+uniform float my;
+out vec4 fragColor;
+
+// TODO slow
+float linmap(float a, float b, float c, float d, float x) {
+  return ((x - a) * ((d - c) / (b - a))) + c;
+}
+
+vec2 toUV(float x, float y) {
+  // Assumes horizontal?
+  float m = (resolution.x - resolution.y) / 2.0;
+  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, x),
+                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, y));
+  return uv;
+}
+
+void main() {
+  vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
+  vec2 mouse = toUV(mx, my);
+
+  SHAPE_ASDF
+  // Works
+  // float x = dFdx(topColor.r);
+  fragColor = topColor;
+}
+</script>
+
+<body>
+    <canvas id="c" width="1680" height="855"
+      style="position: absolute; top: 0vh; left: 0vw; width: 50vw; height: 50vh"></canvas>
+    <canvas id="c2" width="1680" height="855"
+      style="position: absolute; top: 0vh; right: 0vw; width: 50vw; height: 50vh"></canvas>
+</body>
+
+<script type="module">
+    yeah("c", "fs");
+    yeah("c2", "fs2");
+</script>
+
+</html>
