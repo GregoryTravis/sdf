@@ -63,45 +63,10 @@ void main() {
       }
       requestAnimationFrame(render);
     }
-    yeah("c", "fs");
-    yeah("c2", "fs2");
+    yeah("CANVAS_ID_ASDF", "FS_ID_ASDF");
 </script>
 
-<script id="fs" type="notjs">
-#version 300 es
-precision mediump float;
-
-uniform vec2 resolution;
-uniform float time;
-uniform float mx;
-uniform float my;
-out vec4 fragColor;
-
-// TODO slow
-float linmap(float a, float b, float c, float d, float x) {
-  return ((x - a) * ((d - c) / (b - a))) + c;
-}
-
-vec2 toUV(float x, float y) {
-  // Assumes horizontal?
-  float m = (resolution.x - resolution.y) / 2.0;
-  vec2 uv = vec2(linmap(resolution.x/2.0, resolution.x - m, 0.0, 1.0, x),
-                 linmap(resolution.y/2.0, resolution.y    , 0.0, 1.0, y));
-  return uv;
-}
-
-void main() {
-  vec2 uv = toUV(gl_FragCoord.x, gl_FragCoord.y);
-  vec2 mouse = toUV(mx, my);
-
-  SHAPE_ASDF
-  // Works
-  // float x = dFdx(topColor.r);
-  fragColor = topColor;
-}
-</script>
-
-<script id="fs2" type="notjs">
+<script id="FS_ID_ASDF" type="notjs">
 #version 300 es
 precision mediump float;
 
@@ -136,15 +101,8 @@ void main() {
 </script>
 
 <body>
-    <canvas id="c" width="1680" height="855"
-      style="position: absolute; top: 0vh; left: 0vw; width: 50vw; height: 50vh"></canvas>
-    <canvas id="c2" width="1680" height="855"
-      style="position: absolute; top: 0vh; right: 0vw; width: 50vw; height: 50vh"></canvas>
+    <canvas id="CANVAS_ID_ASDF" width="1680" height="855"
+      style="position: absolute; top: TOP_ASDFvh; left: LEFT_ASDFvw; width: WIDTH_ASDFvw; height: HEIGHT_ASDFvh"></canvas>
 </body>
-
-<script type="module">
-    yeah("c", "fs");
-    yeah("c2", "fs2");
-</script>
 
 </html>
