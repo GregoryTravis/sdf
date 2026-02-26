@@ -15,6 +15,7 @@ module Random
 , chunky
 , bubbles
 , filaoaBub
+, tapTest
 , artifactBub
 , graph
 , bsp
@@ -53,6 +54,7 @@ import Funs
 import Grid
 import Lib
 import Prim
+import Tap
 import Transform
 import Util hiding (die, time)
 
@@ -256,6 +258,11 @@ artifact =
    in scale (KF 0.1) $ smoothUnion (scale (tm /^ (KF 10.0)) filaoa') (rotation (tm /^ (KF 10.0)) filaoa')
   where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
 
+tapTest :: IO Color
+tapTest =
+  let all = circle
+   in (return . smooth white black . evalShape) all
+
 filaoaBub :: IO Color
 --filaoaBub = (return . smooth white green . evalShape) filaoa
 filaoaBub = (return . bubble . evalShape) filaoa
@@ -304,7 +311,7 @@ bsp =
       b = translation (V2 0.0 rd) $ rotation (KF (-(pi/2))) px
       square = intersections [l, r, t, b]
       all = difference (rotation time square) (rotation (-(time / 2)) square)
-  in (return . smooth white black . evalShape) all
+   in (return . smooth white black . evalShape) all
 
 splitScreenHor :: (E Float -> Color) -> (E Float -> Color) -> (E Float -> Color)
 splitScreenHor colorer0 colorer1 dist =
@@ -1013,8 +1020,9 @@ sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
-filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) filaoa')
+filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) (tap filaoa'))
   where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
+        filaoa' :: Shape
 
 classicAnotherGreatOne :: Rnd Shape
 classicAnotherGreatOne = anotherGreatOne <$> pure 0.4 <*> pure 2.5 <*> pure (-0.3) <*> pure 2.5 <*> pure 0.5 <*> pure 2

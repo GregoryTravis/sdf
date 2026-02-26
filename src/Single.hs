@@ -10,10 +10,9 @@ import Template
 import Transform
 import Util
 
-buildVarses :: [Color] -> [M.Map String String]
-buildVarses cs =
-  let num = length cs
-      compiled = map compileSingle cs
+buildVarses :: [String] -> [M.Map String String]
+buildVarses compiled =
+  let num = length compiled
       squareSide = ceiling (sqrt $ fromIntegral num)
       is = [0..]
       layouts = take num $ map (makeLayout squareSide) is
@@ -46,7 +45,8 @@ makeLayout side i =
 singleHandler :: Color -> IO String
 singleHandler pc = do
   let cs = [pc, pc, pc, pc]
-      varses = buildVarses cs
+      compiled = map compileSingle cs
+      varses = buildVarses compiled
   --mapM msp cs -- slow
   htmls <- (mapM (generateExe "single.html") varses) :: IO [String]
   let html = concat htmls

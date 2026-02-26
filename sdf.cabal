@@ -17,7 +17,7 @@ executable sdf
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       Util, Template, E, Compile, Lib, Transform, BinOp, Grid, Prim, Random, Funs, Server, Color,
-                       Infinity, Single, Alg, Interactive, Commander, Test, DropShadows, Composition
+                       Infinity, Single, Alg, Interactive, Commander, Test, DropShadows, Composition, Tap
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , base16-bytestring

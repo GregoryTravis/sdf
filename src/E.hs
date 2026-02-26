@@ -128,6 +128,7 @@ data E a where
   -- RGB, A etc aliases for XYZ, W etc
   Share :: GlslType a => StableName (E a) -> E a -> E a
   ShareRef :: GlslType a => Int -> E a
+  Tap :: GlslType a => E a -> Color -> E a
 
 type Dist = E Float
 type Color = E (V4 Float)

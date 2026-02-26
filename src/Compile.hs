@@ -73,6 +73,7 @@ compileSubE (Cond b t e) = cond (compileSubE b) (compileSubE t) (compileSubE e)
 compileSubE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
 -- compileSubE (Share _ e) = compileSubE e
 compileSubE (ShareRef n) = parens $ subexp n
+compileSubE (Tap e _) = compileSubE e
 compileSubE e = error $ "compileSubE: " ++ show e
 
 -- Compile an expression to a list of bindings, with the specified name for the
@@ -291,4 +292,8 @@ share' (Cond b t e) = do
   t' <- share' t
   e' <- share' e
   return $ Cond b' t' e'
+share' (Tap e t) = do
+  e' <- share' e
+  t' <- share' t
+  return $ Tap e' t'
 share' x = error $ "share': " ++ show x
