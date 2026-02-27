@@ -16,6 +16,7 @@ module Random
 , bubbles
 , filaoaBub
 , tapTest
+, debug
 , artifactBub
 , graph
 , bsp
@@ -262,6 +263,9 @@ tapTest :: IO Color
 tapTest =
   let all = circle
    in (return . smooth white black . evalShape) all
+
+debug :: IO Color
+debug = return $ sh $ red
 
 filaoaBub :: IO Color
 --filaoaBub = (return . smooth white green . evalShape) filaoa

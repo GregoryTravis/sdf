@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs, RankNTypes, StandaloneDeriving  #-}
 
 module Compile
 (   compileBinding
@@ -6,6 +6,7 @@ module Compile
   , compileSingle
 ) where
 
+import Control.Monad (unless)
 import Control.Monad.State
 import qualified Data.HashMap.Strict as HM
 import Data.Hashable
@@ -15,6 +16,7 @@ import System.Mem.StableName
 
 import E
 import Transform
+import Util
 
 subexp :: Int -> String
 subexp n = "x" ++ show n
@@ -70,7 +72,7 @@ compileSubE (ArrLookup arr index) =
    in parens $ arrC ++ "[" ++ indexC ++ "]"
 compileSubE (Comparison name a b) = op name (compileSubE a) (compileSubE b)
 compileSubE (Cond b t e) = cond (compileSubE b) (compileSubE t) (compileSubE e)
-compileSubE e@(Share _ _) = error $ "Can't compile Sh nodes: " ++ show e
+compileSubE e@(Share _ _) = error $ "Can't compile Share nodes: " ++ show e
 -- compileSubE (Share _ e) = compileSubE e
 compileSubE (ShareRef n) = parens $ subexp n
 compileSubE (Tap e _) = compileSubE e
@@ -138,6 +140,7 @@ compileFunction = compileBinding "toppppp"
 
 data DSN where
   DSN :: StableName (E a) -> DSN
+deriving instance Show DSN
 
 instance Hashable DSN where
   -- hashWithSalt :: Int -> a -> Int
@@ -177,8 +180,8 @@ getRef sn = do
 -- Extract Sh nodes from e and store them in the map.
 share :: (Show a, GlslType a) => E a -> (E a, SEMap)
 share e =
-  let (e', (_, semap)) = runState (share' e) initState
-   in (e', semap)
+  let (e', (_, semap)) = runState (share2' e) initState
+   in esp (e', semap)
 
 -- -- Assign a unique small integer to each sn. Maybe I could use hashStableName
 -- -- but it's not clear how unlikely that is to have a collision
@@ -188,6 +191,144 @@ share e =
 --       refs = Prelude.map (\sn -> refMap HM.! sn) sns
 --       caps = Prelude.map (\sn -> capMap HM.! sn) sns
 --    in M.fromList (zip refs caps)
+
+xform :: forall a. (Show a, GlslType a) =>
+  (forall a. (Show a, GlslType a) => E a -> State ShareState (E a)) ->
+  (forall a. (Show a, GlslType a) => E a -> State ShareState (E a)) ->
+  (E a -> State ShareState (E a))
+xform before after e = do
+  -- TODO some >>= thing here
+  -- e' <- before $ eeesp "0" e
+  -- e'' <- rec $ eeesp "1" e'
+  -- e''' <- after $ eeesp "2" e''
+  e' <- before e
+  e'' <- descend e'
+  e''' <- after e''
+  return $ eeesp "3" e'''
+  where
+    rec :: forall a. (Show a, GlslType a) => (E a -> State ShareState (E a))
+    rec = xform before after
+    descend :: (Show a, GlslType a) => E a -> State ShareState (E a)
+    descend (Share sn e) = do
+      e' <- rec e
+      return $ Share sn e'
+    descend e@(ShareRef n) = return e
+    descend e@(KF _) = return e
+    descend e@(KD _) = return e
+    descend e@(KI _) = return e
+    descend (V2 a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ V2 a' b'
+    descend (V3 a b c) = do
+      a' <- rec a
+      b' <- rec b
+      c' <- rec c
+      return $ V3 a' b' c'
+    descend (V4 a b c d) = do
+      a' <- rec a
+      b' <- rec b
+      c' <- rec c
+      d' <- rec d
+      return $ V4 a' b' c' d'
+    descend (Add a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Add a' b'
+    descend (Sub a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Sub a' b'
+    descend (Mul a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Mul a' b'
+    descend (Div a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Div a' b'
+    descend (And a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ And a' b'
+    descend (Or a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Or a' b'
+    descend (Length e) = do
+      e' <- rec e
+      return $ Length e'
+    descend e@(Uniform _) = return e
+    descend (Swizzle swizzler e) = do
+      e' <- rec e
+      return $ Swizzle swizzler e'
+    descend (Field fielder e) = do
+      e' <- rec e
+      return $ Field fielder e'
+    descend (Fun1 name a) = do
+      a' <- rec a
+      return $ Fun1 name a'
+    descend (Fun2 name a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Fun2 name a' b'
+    descend (Fun3 name a b c) = do
+      a' <- rec a
+      b' <- rec b
+      c' <- rec c
+      return $ Fun3 name a' b' c'
+    descend (Method0 name a) = do
+      a' <- rec a
+      return $ Method0 name a'
+    descend (Neg e) = do
+      e' <- rec e
+      return $ Neg e'
+    descend (Mat2 es) = do
+      es' <- mapM rec es
+      return $ Mat2 es'
+    descend (Arr es) = do
+      es' <- mapM rec es
+      return $ Arr es'
+    descend (ArrLookup arr index) = do
+      arr' <- rec arr
+      index' <- rec index
+      return $ ArrLookup arr' index'
+    descend (Comparison op a b) = do
+      a' <- rec a
+      b' <- rec b
+      return $ Comparison op a' b'
+    descend (Cond b t e) = do
+      b' <- rec b
+      t' <- rec t
+      e' <- rec e
+      return $ Cond b' t' e'
+    descend (Tap e t) = do
+      e' <- rec e
+      t' <- rec t
+      return $ Tap e' t'
+    descend x = error $ "rec: " ++ show x
+
+share2Before :: (Show a, GlslType a) => E a -> State ShareState (E a)
+share2Before x@(Share sn e) = do
+  -- In this case we only recurse into `e` if we haven't already seen this node.
+  hc <- hasSE sn
+  if hc
+    then do n <- getRef sn
+            return $ ShareRef n
+    else return x
+share2Before e = return e
+
+share2After :: (Show a, GlslType a) => E a -> State ShareState (E a)
+share2After (Share sn e) = do
+  hc <- hasSE sn
+  unless hc $ do
+    addSE sn e
+  n <- getRef sn
+  return $ ShareRef n
+share2After e = return e
+
+share2' :: (Show a, GlslType a) => (E a -> State ShareState (E a))
+share2' = xform share2Before share2After
 
 -- Allocate a fresh tag n for expression e, add (n -> e') to the map state,
 -- where e' is the result of the recursive call to share' on e.

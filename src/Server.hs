@@ -37,6 +37,7 @@ app = do
   route "/bubbles" (htmlHandler (bubbles >>= singleHandler))
   route "/filaoa" (htmlHandler (filaoaBub >>= singleHandler))
   route "/tapTest" (htmlHandler (tapTest >>= singleHandler))
+  route "/debug" (htmlHandler (debug >>= singleHandler))
   route "/artifact" (htmlHandler (artifactBub >>= singleHandler))
   route "/graph" (htmlHandler (graph >>= singleHandler))
   route "/bsp" (htmlHandler (bsp >>= singleHandler))
