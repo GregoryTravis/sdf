@@ -180,8 +180,8 @@ getRef sn = do
 -- Extract Sh nodes from e and store them in the map.
 share :: (Show a, GlslType a) => E a -> (E a, SEMap)
 share e =
-  let (e', (_, semap)) = runState (share2' e) initState
-   in esp (e', semap)
+  let (e', (_, semap)) = runState (share'' e) initState
+   in (e', semap)
 
 -- -- Assign a unique small integer to each sn. Maybe I could use hashStableName
 -- -- but it's not clear how unlikely that is to have a collision
@@ -198,13 +198,10 @@ xform :: forall a. (Show a, GlslType a) =>
   (E a -> State ShareState (E a))
 xform before after e = do
   -- TODO some >>= thing here
-  -- e' <- before $ eeesp "0" e
-  -- e'' <- rec $ eeesp "1" e'
-  -- e''' <- after $ eeesp "2" e''
   e' <- before e
   e'' <- descend e'
   e''' <- after e''
-  return $ eeesp "3" e'''
+  return e'''
   where
     rec :: forall a. (Show a, GlslType a) => (E a -> State ShareState (E a))
     rec = xform before after
@@ -308,134 +305,27 @@ xform before after e = do
       return $ Tap e' t'
     descend x = error $ "rec: " ++ show x
 
-share2Before :: (Show a, GlslType a) => E a -> State ShareState (E a)
-share2Before x@(Share sn e) = do
+-- Allocate a fresh tag n for expression e, add (n -> e') to the map state,
+-- where e' is the result of the recursive call to share' on e.
+-- Return (ShRef n).
+share'' :: (Show a, GlslType a) => (E a -> State ShareState (E a))
+share'' = xform share'Before share'After
+
+share'Before :: (Show a, GlslType a) => E a -> State ShareState (E a)
+share'Before x@(Share sn e) = do
   -- In this case we only recurse into `e` if we haven't already seen this node.
   hc <- hasSE sn
   if hc
     then do n <- getRef sn
             return $ ShareRef n
     else return x
-share2Before e = return e
+share'Before e = return e
 
-share2After :: (Show a, GlslType a) => E a -> State ShareState (E a)
-share2After (Share sn e) = do
+share'After :: (Show a, GlslType a) => E a -> State ShareState (E a)
+share'After (Share sn e) = do
   hc <- hasSE sn
   unless hc $ do
     addSE sn e
   n <- getRef sn
   return $ ShareRef n
-share2After e = return e
-
-share2' :: (Show a, GlslType a) => (E a -> State ShareState (E a))
-share2' = xform share2Before share2After
-
--- Allocate a fresh tag n for expression e, add (n -> e') to the map state,
--- where e' is the result of the recursive call to share' on e.
--- Return (ShRef n).
-share' :: (Show a, GlslType a) => E a -> State ShareState (E a)
-share' (Share sn e) = do
-  -- In this case we only recurse into `e` if we haven't already seen this node.
-  hc <- hasSE sn
-  if hc
-    -- TODO factor out here
-    then do n <- getRef sn
-            return $ ShareRef n
-    else do e' <- share' e
-            addSE sn e'
-            n <- getRef sn
-            return $ ShareRef n
-share' e@(KF _) = return e
-share' e@(KD _) = return e
-share' e@(KI _) = return e
-share' (V2 a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ V2 a' b'
-share' (V3 a b c) = do
-  a' <- share' a
-  b' <- share' b
-  c' <- share' c
-  return $ V3 a' b' c'
-share' (V4 a b c d) = do
-  a' <- share' a
-  b' <- share' b
-  c' <- share' c
-  d' <- share' d
-  return $ V4 a' b' c' d'
-share' (Add a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Add a' b'
-share' (Sub a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Sub a' b'
-share' (Mul a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Mul a' b'
-share' (Div a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Div a' b'
-share' (And a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ And a' b'
-share' (Or a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Or a' b'
-share' (Length e) = do
-  e' <- share' e
-  return $ Length e'
-share' e@(Uniform _) = return e
-share' (Swizzle swizzler e) = do
-  e' <- share' e
-  return $ Swizzle swizzler e'
-share' (Field fielder e) = do
-  e' <- share' e
-  return $ Field fielder e'
-share' (Fun1 name a) = do
-  a' <- share' a
-  return $ Fun1 name a'
-share' (Fun2 name a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Fun2 name a' b'
-share' (Fun3 name a b c) = do
-  a' <- share' a
-  b' <- share' b
-  c' <- share' c
-  return $ Fun3 name a' b' c'
-share' (Method0 name a) = do
-  a' <- share' a
-  return $ Method0 name a'
-share' (Neg e) = do
-  e' <- share' e
-  return $ Neg e'
-share' (Mat2 es) = do
-  es' <- mapM share' es
-  return $ Mat2 es'
-share' (Arr es) = do
-  es' <- mapM share' es
-  return $ Arr es'
-share' (ArrLookup arr index) = do
-  arr' <- share' arr
-  index' <- share' index
-  return $ ArrLookup arr' index'
-share' (Comparison op a b) = do
-  a' <- share' a
-  b' <- share' b
-  return $ Comparison op a' b'
-share' (Cond b t e) = do
-  b' <- share' b
-  t' <- share' t
-  e' <- share' e
-  return $ Cond b' t' e'
-share' (Tap e t) = do
-  e' <- share' e
-  t' <- share' t
-  return $ Tap e' t'
-share' x = error $ "share': " ++ show x
+share'After e = return e
