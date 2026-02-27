@@ -192,6 +192,7 @@ share e =
 --       caps = Prelude.map (\sn -> capMap HM.! sn) sns
 --    in M.fromList (zip refs caps)
 
+-- TODO possibly this is a tad slower than the non-generic one?
 xform :: forall a. (Show a, GlslType a) =>
   (forall a. (Show a, GlslType a) => E a -> State ShareState (E a)) ->
   (forall a. (Show a, GlslType a) => E a -> State ShareState (E a)) ->
