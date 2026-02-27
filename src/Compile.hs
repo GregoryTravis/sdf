@@ -194,6 +194,7 @@ share e =
 -- Return (ShRef n).
 share' :: (Show a, GlslType a) => E a -> State ShareState (E a)
 share' (Share sn e) = do
+  -- In this case we only recurse into `e` if we haven't already seen this node.
   hc <- hasSE sn
   if hc
     -- TODO factor out here
