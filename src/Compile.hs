@@ -183,20 +183,26 @@ share e =
   let (e', (_, semap)) = runState (share' e) initState
    in (e', semap)
 
--- gather :: (Show a, GlslType a) => E a -> (E a -> Maybe b) -> [b]
--- gather e getter = do
---   let (_, bs) = runState (xform before after e) []
---    in bs
---   where before e = do
---           case getter e of
---             Just b -> modify (b:)
---             Nothing -> return ()
---         after _ = return ()
+-- Returns the gathered items in reverse order of discovery
+gather :: forall a b. (Show a, GlslType a) => E a -> (forall a2. (Show a2, GlslType a2) => E a2 -> Maybe b) -> [b]
+gather e getter = do
+  let (_, bs) = runState (xform before after e) []
+   in bs
+  where before :: (forall a1. (Show a1, GlslType a1) => E a1 -> State [b] (E a1))
+        before e = do
+          case getter e of
+            Just b -> do
+              modify (b:)
+              return e
+            Nothing -> return e
+        after :: (forall a1. (Show a1, GlslType a1) => E a1 -> State [b] (E a1))
+        after e = return e
 
--- getTaps :: (Show a, GlslType a) => E a -> Maybe Color
--- getTaps e = gather e get
---   where get (Tap _ color) = Just color
---         get _ = Nothing
+getTaps :: (Show a, GlslType a) => E a -> [Color]
+getTaps e = gather e get
+  where get :: (forall a. (Show a, GlslType a) => E a -> Maybe Color)
+        get (Tap _ color) = Just color
+        get _ = Nothing
 
 -- TODO possibly this is a tad slower than the non-generic one?
 -- TODO might not need the first forall?
