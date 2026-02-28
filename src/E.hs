@@ -332,6 +332,7 @@ instance Lengthable (V3 a) a
 -- instance Swizzleable (V2 a)
 -- instance Swizzleable (V3 a)
 
+-- GlslType implies Show?
 class GlslType a where
   typeName :: E a -> String
 

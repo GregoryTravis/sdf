@@ -180,17 +180,23 @@ getRef sn = do
 -- Extract Sh nodes from e and store them in the map.
 share :: (Show a, GlslType a) => E a -> (E a, SEMap)
 share e =
-  let (e', (_, semap)) = runState (share'' e) initState
+  let (e', (_, semap)) = runState (share' e) initState
    in (e', semap)
 
--- -- Assign a unique small integer to each sn. Maybe I could use hashStableName
--- -- but it's not clear how unlikely that is to have a collision
--- toRefs :: CapMap -> RefMap -> Refs
--- toRefs capMap refMap =
---   let sns = HM.keys capMap
---       refs = Prelude.map (\sn -> refMap HM.! sn) sns
---       caps = Prelude.map (\sn -> capMap HM.! sn) sns
---    in M.fromList (zip refs caps)
+-- gather :: (Show a, GlslType a) => E a -> (E a -> Maybe b) -> [b]
+-- gather e getter = do
+--   let (_, bs) = runState (xform before after e) []
+--    in bs
+--   where before e = do
+--           case getter e of
+--             Just b -> modify (b:)
+--             Nothing -> return ()
+--         after _ = return ()
+
+-- getTaps :: (Show a, GlslType a) => E a -> Maybe Color
+-- getTaps e = gather e get
+--   where get (Tap _ color) = Just color
+--         get _ = Nothing
 
 -- TODO possibly this is a tad slower than the non-generic one?
 xform :: forall a. (Show a, GlslType a) =>
@@ -309,8 +315,8 @@ xform before after e = do
 -- Allocate a fresh tag n for expression e, add (n -> e') to the map state,
 -- where e' is the result of the recursive call to share' on e.
 -- Return (ShRef n).
-share'' :: (Show a, GlslType a) => (E a -> State ShareState (E a))
-share'' = xform share'Before share'After
+share' :: (Show a, GlslType a) => (E a -> State ShareState (E a))
+share' = xform share'Before share'After
 
 share'Before :: (Show a, GlslType a) => E a -> State ShareState (E a)
 share'Before x@(Share sn e) = do
