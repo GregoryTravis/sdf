@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, RankNTypes, StandaloneDeriving  #-}
+{-# LANGUAGE GADTs, RankNTypes, ScopedTypeVariables, StandaloneDeriving  #-}
 
 module Compile
 (   compileBinding
@@ -199,10 +199,11 @@ share e =
 --         get _ = Nothing
 
 -- TODO possibly this is a tad slower than the non-generic one?
-xform :: forall a. (Show a, GlslType a) =>
-  (forall a. (Show a, GlslType a) => E a -> State ShareState (E a)) ->
-  (forall a. (Show a, GlslType a) => E a -> State ShareState (E a)) ->
-  (E a -> State ShareState (E a))
+-- TODO might not need the first forall?
+xform :: forall a s. (Show a, GlslType a) =>
+  (forall a. (Show a, GlslType a) => E a -> State s (E a)) ->
+  (forall a. (Show a, GlslType a) => E a -> State s (E a)) ->
+  (E a -> State s (E a))
 xform before after e = do
   -- TODO some >>= thing here
   e' <- before e
@@ -210,9 +211,9 @@ xform before after e = do
   e''' <- after e''
   return e'''
   where
-    rec :: forall a. (Show a, GlslType a) => (E a -> State ShareState (E a))
+    rec :: forall a. (Show a, GlslType a) => (E a -> State s (E a))
     rec = xform before after
-    descend :: (Show a, GlslType a) => E a -> State ShareState (E a)
+    descend :: (Show a, GlslType a) => E a -> State s (E a)
     descend (Share sn e) = do
       e' <- rec e
       return $ Share sn e'
