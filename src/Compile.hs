@@ -2,8 +2,9 @@
 
 module Compile
 (   compileBinding
-  , compileFunction
-  , compileSingle
+, compileFunction
+, compileSingle
+, getTaps
 ) where
 
 import Control.Monad (unless)

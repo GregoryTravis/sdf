@@ -44,9 +44,12 @@ makeLayout side i =
 
 singleHandler :: Color -> IO String
 singleHandler pc = do
-  let cs = [pc, pc, pc, pc]
+  let -- taps = getTaps pc
+      cs = [pc, pc, pc, pc]
       compiled = map compileSingle cs
       varses = buildVarses compiled
+  --msp pc
+  -- msp $ "taps " ++ (show $ length taps )
   --mapM msp cs -- slow
   htmls <- (mapM (generateExe "single.html") varses) :: IO [String]
   let html = concat htmls
