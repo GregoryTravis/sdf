@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs, RankNTypes, ScopedTypeVariables, StandaloneDeriving  #-}
 
 module Compile
-(   compileBinding
+( compileBinding
 , compileFunction
 , compileSingle
 , getTaps
