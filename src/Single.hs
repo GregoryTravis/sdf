@@ -45,7 +45,7 @@ makeLayout side i =
 singleHandler :: Color -> IO String
 singleHandler pc = do
   let -- taps = getTaps pc
-      cs = [pc, pc, pc, pc]
+      cs = [pc]
       compiled = map compileSingle cs
       varses = buildVarses compiled
   --msp pc
