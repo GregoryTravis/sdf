@@ -333,7 +333,7 @@ bspColorTest =
       b = (bubble . circle)
       c = (bubble . (grid 1 1 circle))
       d = (bubble . square)
-      all = bspColor sp0 (bspColor sp1 (bspColor sp2 a b) c) d
+      all = bsp sp0 (bsp sp1 (bsp sp2 a b) c) d
       -- TODO evalShape should be evalTransformable
    in return (evalShape all)
 
