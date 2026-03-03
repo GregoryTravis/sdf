@@ -19,7 +19,8 @@ module Random
 , debug
 , artifactBub
 , graph
-, bsp
+, bspTest
+, bspColorTest
 , lcd
 , dropshadow
 , potdC
@@ -46,6 +47,7 @@ import Text.Read (readMaybe)
 
 import Alg
 import BinOp
+import Bsp
 import Color
 import Commander
 import Composition
@@ -305,8 +307,38 @@ calcduv dist =
       dDist = Length dDistXY
    in dDistXY /^ dDist
 
-bsp :: IO Color
-bsp =
+bspTest :: IO Color
+bspTest =
+  let px = halfSpace
+      rd = 0.2
+      sp0 = translation (V2 (-rd) 0.0) $ rotation (KF 0.8) px
+      sp1 = translation (V2 0.0 (-rd)) $ rotation (KF 0.18) px
+      sp2 = translation (V2 (-rd) (-rd)) $ rotation (KF 0.38) px
+      a = filaoa
+      b = circle
+      c = grid 1 1 circle
+      d = square
+      all = bsp sp0 (bsp sp1 (bsp sp2 a b) c) d
+   in (return . smooth white black . evalShape) all
+
+bspColorTest :: IO Color
+bspColorTest =
+  let px = halfSpace
+      rd = 0.2
+      rot = ssin time
+      sp0 = translation (V2 (-rd) 0.0) $ rotation (rot + (KF 0.8)) px
+      sp1 = translation (V2 0.0 (-rd)) $ rotation (rot + (KF 0.18)) px
+      sp2 = translation (V2 (-rd) (-rd)) $ rotation (rot + (KF 0.38)) px
+      a = (bubble . filaoa)
+      b = (bubble . circle)
+      c = (bubble . (grid 1 1 circle))
+      d = (bubble . square)
+      all = bspColor sp0 (bspColor sp1 (bspColor sp2 a b) c) d
+      -- TODO evalShape should be evalTransformable
+   in return (evalShape all)
+
+twoSquares :: IO Color
+twoSquares =
   let px = halfSpace
       rd = 0.2
       l = translation (V2 (-rd) 0.0) $ rotation (KF pi) px
