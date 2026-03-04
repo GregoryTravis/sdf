@@ -48,7 +48,7 @@ singleHandler pc = do
       cs = [pc]
       compiled = map compileSingle cs
       varses = buildVarses compiled
-  --msp pc
+  mapM msp compiled
   -- msp $ "taps " ++ (show $ length taps )
   --mapM msp cs -- slow
   htmls <- (mapM (generateExe "single.html") varses) :: IO [String]

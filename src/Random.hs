@@ -314,26 +314,40 @@ bspTest =
       sp0 = translation (V2 (-rd) 0.0) $ rotation (KF 0.8) px
       sp1 = translation (V2 0.0 (-rd)) $ rotation (KF 0.18) px
       sp2 = translation (V2 (-rd) (-rd)) $ rotation (KF 0.38) px
-      a = filaoa
-      b = circle
-      c = grid 1 1 circle
-      d = square
-      all = bsp sp0 (bsp sp1 (bsp sp2 a b) c) d
+      -- a = filaoa
+      -- b = circle
+      -- c = grid 1 1 circle
+      -- d = square
+      a = square
+      b = scale 0.7 square
+      c = scale 1.3 square
+      d = scale 2.3 square
+      --all = bsp sp0 (bsp sp1 (bsp sp2 a b) c) d
+      -- hor = rotation (KF pi / 2) halfSpace
+      all = bsp sp0 a b
    in (return . smooth white black . evalShape) all
 
 bspColorTest :: IO Color
 bspColorTest =
   let px = halfSpace
       rd = 0.2
-      rot = ssin time
+      rot = 0.0 -- ssin time
       sp0 = translation (V2 (-rd) 0.0) $ rotation (rot + (KF 0.8)) px
       sp1 = translation (V2 0.0 (-rd)) $ rotation (rot + (KF 0.18)) px
       sp2 = translation (V2 (-rd) (-rd)) $ rotation (rot + (KF 0.38)) px
-      a = (bubble . filaoa)
-      b = (bubble . circle)
-      c = (bubble . (grid 1 1 circle))
-      d = (bubble . square)
-      all = bsp sp0 (bsp sp1 (bsp sp2 a b) c) d
+      -- a = (bubble . filaoa)
+      -- b = (bubble . circle)
+      -- c = (bubble . (grid 1 1 circle))
+      -- d = (bubble . square)
+      aa = square
+      bb = scale 0.7 square
+      cc = scale 1.3 square
+      dd = scale 2.3 square
+      a = (bubble . aa)
+      b = (bubble . bb)
+      c = (bubble . cc)
+      d = (bubble . dd)
+      all = bspColor sp0 (bspColor sp1 (bspColor sp2 a b) c) d
       -- TODO evalShape should be evalTransformable
    in return (evalShape all)
 

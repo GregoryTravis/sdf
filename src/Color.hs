@@ -75,6 +75,10 @@ smooth fg bg dist =
       -- color = Cond (dist >=. (-smoothRadius) &&. dist <=. smoothRadius) green scolor
    in sh color
 
+hard :: Color -> Color -> E Float -> Color
+hard fg bg dist =
+  Cond (dist <. 0) fg bg
+
 -- Like smooth, but you pass in the edge position instead of assuming it 0.
 smoothAround :: E Float -> Color -> Color -> E Float -> Color
 smoothAround edge fg bg dist =
