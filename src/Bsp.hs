@@ -19,7 +19,7 @@ bsp splitter neg pos tr =
 bspColor :: (Transformable Dist) -> (Transformable Color) -> (Transformable Color) -> (Transformable Color)
 bspColor splitter neg pos tr =
   let splitDist = splitter tr
-   in (Cond (splitDist <. 0) (neg tr) (pos tr))
+   in smooth (pos tr) (neg tr) splitDist
 
 smoothDist :: Dist -> Dist -> Dist -> Dist
 smoothDist fg bg dist =

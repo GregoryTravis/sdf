@@ -343,11 +343,14 @@ bspColorTest =
       bb = scale 0.7 square
       cc = scale 1.3 square
       dd = scale 2.3 square
-      a = (bubble . aa)
-      b = (bubble . bb)
+      -- a = (bubble . aa)
+      -- b = (bubble . bb)
+      a = smooth red black . aa
+      b = smooth green black . filaoa
       c = (bubble . cc)
       d = (bubble . dd)
-      all = bspColor sp0 (bspColor sp1 (bspColor sp2 a b) c) d
+      -- all = bspColor sp0 (bspColor sp1 (bspColor sp2 a b) c) d
+      all = bspColor sp0 a b
       -- TODO evalShape should be evalTransformable
    in return (evalShape all)
 
