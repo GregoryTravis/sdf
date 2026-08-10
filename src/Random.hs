@@ -19,6 +19,7 @@ module Random
 , debug
 , artifactBub
 , graph
+, flowerBand
 , bspTest
 , bspColorTest
 , lcd
@@ -306,6 +307,22 @@ calcduv dist =
       dDistXY = V2 dDistX dDistY
       dDist = Length dDistXY
    in dDistXY /^ dDist
+
+flowerBand :: IO Color
+flowerBand =
+  let all = filaoa -- flower 4 -- ((_x mouse) * 10)
+      oneBand d =
+        let width = 0.05
+            -- du = sh $ sdFdx (_x uv)
+            -- dv = sh $ sdFdy (_y uv)
+            pgrad = sh (Length (sh (V2 (sh (sdFdx (_x uv))) (sh (sdFdy (_y uv))))))
+            du = sh $ sdFdx d
+            dv = sh $ sdFdy d
+            grad = V2 du dv
+            gradLen = sh $ ((Length grad) / pgrad)
+            fixedWidth = width * gradLen
+         in Cond (d <=. 0) white (Cond (d >=. fixedWidth) red green)
+   in (return . oneBand . evalShape) all
 
 bspTest :: IO Color
 bspTest =

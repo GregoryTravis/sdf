@@ -40,6 +40,7 @@ app = do
   route "/debug" (htmlHandler (debug >>= singleHandler))
   route "/artifact" (htmlHandler (artifactBub >>= singleHandler))
   route "/graph" (htmlHandler (graph >>= singleHandler))
+  route "/flowerBand" (htmlHandler (flowerBand >>= singleHandler))
   route "/bspTest" (htmlHandler (bspTest >>= singleHandler))
   route "/bspColorTest" (htmlHandler (bspColorTest >>= singleHandler))
   route "/potd" (htmlHandler (potdC >>= singleHandler))

@@ -16,11 +16,12 @@ cabal-version:       >=1.10
 executable sdf
   hs-source-dirs:      src
   main-is:             Main.hs
+  ghc-options:        -threaded
   other-modules:       Util, Template, E, Compile, Lib, Transform, BinOp, Grid, Prim, Random, Funs, Server, Color,
                        Infinity, Single, Alg, Interactive, Commander, Test, DropShadows, Composition, Tap, Bsp
   default-language:    Haskell2010
-  ghc-options:         -threaded
   build-depends:       base >= 4.7 && < 5
+                     , async
                      , base16-bytestring
                      , bytestring
                      , containers
