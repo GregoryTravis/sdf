@@ -18,7 +18,7 @@ executable sdf
   main-is:             Main.hs
   ghc-options:        -threaded
   other-modules:       Util, Template, E, Compile, Lib, Transform, BinOp, Grid, Prim, Random, Funs, Server, Color,
-                       Infinity, Single, Alg, Interactive, Commander, Test, DropShadows, Composition, Tap, Bsp
+                       Infinity, Single, Alg, Interactive, Commander, Test, DropShadows, Composition, Tap, Bsp, Seq
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , async

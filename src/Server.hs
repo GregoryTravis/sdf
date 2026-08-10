@@ -20,15 +20,21 @@ import Commander
 import Infinity
 import Interactive
 import Random
+import Seq
 import Single
+import Transform
 import Util
 
 runServer :: IO ()
 runServer = run 8000 app
 
+stdColorer :: Shape -> IO Color
+stdColorer s = (return . smooth white black . evalShape) s
+
 app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
+  route "/seq-twoCycles" (htmlHandler ((stdColorer twoCycles) >>= singleHandler))
   route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))
   route "/lcd" (htmlHandler (lcd >>= singleHandler))
