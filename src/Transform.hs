@@ -3,6 +3,7 @@
 module Transform
 ( scale
 , translation
+, translation'
 , rotation
 , rotation'
 , flipX

@@ -36,10 +36,14 @@ circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
 spiral :: (Transform -> a) -> (Transform -> a)
-spiral shape tr@(Transform xy tt) =
-  let t = tt
-      c = scale 0.05 shape
-   in (rotation t (translation (V2 (t / 7.0) 0) c)) tr
+spiral shape tr@(Transform xy t) =
+  let c = scale 0.05 shape
+      tpart = (translation' (V2 (t / 7.0) 0))
+      rpart = (rotation' t)
+   --in (c . (tpart . rpart)) tr
+   in c (tpart (rpart tr))
+
+-- transform transformer p = p . transformer
 
 ----translation :: E (V2 Float) -> UnOp a
 --translation :: E (V2 Float) -> ((Transform -> a) -> (Transform ->a))
