@@ -37,11 +37,23 @@ squareOutline = square `difference` (scale 0.9) square
 
 spiral :: (Transform -> a) -> (Transform -> a)
 spiral shape tr@(Transform xy t) =
-  let c = scale 0.05 shape
-      tpart = (translation' (V2 (t / 7.0) 0))
+  let tpart = (translation' (V2 (t / 7.0) 0))
       rpart = (rotation' t)
-   --in (c . (tpart . rpart)) tr
-   in c (tpart (rpart tr))
+   -- in (c . (tpart . rpart)) tr
+   -- in shape ((tpart . rpart) tr)
+   in shape ((spiraler tr) tr)
+
+spiral2 :: (Transform -> Dist) -> (Transform -> Dist)
+spiral2 shape tr = something shape spiraler tr
+
+something :: Shape -> (Transform -> Transform -> Transform) -> Shape
+something shape ttt tr = shape ((ttt tr) tr)
+
+spiraler :: Transform -> Transform -> Transform
+spiraler (Transform xy t) =
+  let tpart = (translation' (V2 (t / 7.0) 0))
+      rpart = (rotation' t)
+   in tpart . rpart
 
 -- transform transformer p = p . transformer
 
@@ -54,9 +66,9 @@ timeDelay dt shape (Transform xy t) = shape (Transform xy (t + dt))
 
 seqSpiral :: Shape
 seqSpiral =
-  let c = circleOutline
-      s = squareOutline
-      orig = spiral c
-      later = timeDelay (-1.0) $ spiral s
+  let c = scale 0.05 circleOutline
+      s = scale 0.05 squareOutline
+      orig = spiral2 c
+      later = timeDelay (-1.0) $ spiral2 s
       both = union orig later
    in union (scale 0.05 circle) both
