@@ -38,10 +38,12 @@ scale s = transform (scale' s)
 scale' :: E Float -> Transformer
 scale' s (Transform xy t) = Transform (xy /^ s) t
 
-translation :: E (V2 Float) -> UnOp a
+--translation :: E (V2 Float) -> UnOp a
+translation :: E (V2 Float) -> ((Transform -> a) -> (Transform ->a))
 translation dxy = transform (translation' dxy)
 
-translation' :: E (V2 Float) -> Transformer
+--translation' :: E (V2 Float) -> Transformer
+translation' :: E (V2 Float) -> (Transform -> Transform)
 translation' dxy (Transform xy t) = Transform (xy -^ dxy) t
 
 rotation :: E Float -> UnOp a
@@ -60,7 +62,9 @@ flipX s = transform (\(Transform xy t) -> (Transform (V2 (-(_x xy)) (_y xy)) t))
 flipY :: UnOp a
 flipY s = transform (\(Transform xy t) -> (Transform (V2 (_x xy) (-(_y xy))) t)) s
 
-transform :: Transformer -> Transformable a -> Transformable a
+-- Prepends the given Transformer to the Shape
+--transform :: Transformer -> Transformable a -> Transformable a
+transform :: (Transform -> Transform) -> (Transform -> a) -> (Transform -> a)
 transform transformer p = p . transformer
 
 -- Generic scaler, not shape-specific, for modgrid rainbow
