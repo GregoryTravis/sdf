@@ -35,29 +35,24 @@ twoCycles =
 circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
-spiral :: Shape -> E Float -> Shape
-spiral shape timeDelta =
-  let t = time + timeDelta
+spiral :: (Transform -> a) -> (Transform -> a)
+spiral shape tr@(Transform xy tt) =
+  let t = tt
       c = scale 0.05 shape
-      yep = rotation t (translation (V2 (t / 7.0) 0) c)
-   in yep
+   in (rotation t (translation (V2 (t / 7.0) 0) c)) tr
 
-nspiral :: Shape -> E Float -> Shape
-nspiral shape timeDelta tr@(Transform xy tt) =
-  let t = tt + timeDelta
-      c = scale 0.05 shape
-      yep = rotation t (translation (V2 (t / 7.0) 0) c)
-   in yep tr
+----translation :: E (V2 Float) -> UnOp a
+--translation :: E (V2 Float) -> ((Transform -> a) -> (Transform ->a))
 
-timeDelay :: E Float -> (Transform -> a) -> (Transform -> a)
+--timeDelay :: E Float -> (Transform -> a) -> (Transform -> a)
+timeDelay :: E Float -> UnOp a
 timeDelay dt shape (Transform xy t) = shape (Transform xy (t + dt))
 
 seqSpiral :: Shape
 seqSpiral =
   let c = circleOutline
       s = squareOutline
-      orig = nspiral c (KF 0.0)
-      later = nspiral s (KF (-1.0))
-      later2 = timeDelay (-1.0) $ nspiral s (KF 0.0)
-      both = union orig later2
+      orig = spiral c
+      later = timeDelay (-1.0) $ spiral s
+      both = union orig later
    in union (scale 0.05 circle) both

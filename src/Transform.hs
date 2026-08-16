@@ -68,6 +68,7 @@ transform :: (Transform -> Transform) -> (Transform -> a) -> (Transform -> a)
 transform transformer p = p . transformer
 
 -- Generic scaler, not shape-specific, for modgrid rainbow
+-- TODO this is identical to `transform`
 transform' :: Transformer -> Transformable a -> Transformable a
 transform' transformer p = p . transformer
 
