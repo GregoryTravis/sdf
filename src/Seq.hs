@@ -43,17 +43,28 @@ spiral shape tr@(Transform xy t) =
    -- in shape ((tpart . rpart) tr)
    in shape ((spiraler tr) tr)
 
-spiral2 :: (Transform -> Dist) -> (Transform -> Dist)
-spiral2 shape tr = something shape spiraler tr
-
-something :: Shape -> (Transform -> Transform -> Transform) -> Shape
-something shape ttt tr = shape ((ttt tr) tr)
-
 spiraler :: Transform -> Transform -> Transform
 spiraler (Transform xy t) =
   let tpart = (translation' (V2 (t / 7.0) 0))
       rpart = (rotation' t)
    in tpart . rpart
+
+spiraler2 :: Transform -> Transform -> Transform
+spiraler2 =
+  let tpart = \(Transform xy t) -> (translation' (V2 (t / 7.0) 0))
+      rpart = \(Transform xy t) -> (rotation' t)
+   in com2 tpart rpart
+
+com2 :: (Transform -> Transform -> Transform) ->
+        (Transform -> Transform -> Transform) ->
+        (Transform -> Transform -> Transform)
+com2 trtr trtr' tr = (trtr tr) . (trtr' tr)
+
+spiral2 :: (Transform -> Dist) -> (Transform -> Dist)
+spiral2 shape tr = something shape spiraler2 tr
+
+something :: Shape -> (Transform -> Transform -> Transform) -> Shape
+something shape ttt tr = shape ((ttt tr) tr)
 
 -- transform transformer p = p . transformer
 
