@@ -76,7 +76,7 @@ transform' transformer p = p . transformer
 -- timeShift' dt (Transform xy t) = Transform xy (t + dt)
 
 idTransform :: Transform
-idTransform = Transform uv time
+idTransform = Transform uv gtime
 
 evalShape :: Transformable a -> a
 evalShape p = p idTransform

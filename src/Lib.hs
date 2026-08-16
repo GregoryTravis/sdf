@@ -83,6 +83,8 @@ vec4 = Fun2 "vec4"
 
 time :: E Float
 time = Uniform "time"
+gtime :: E Float
+gtime = Uniform "time"
 uv :: E (V2 Float)
 uv = Uniform "uv"
 mouse :: E (V2 Float)

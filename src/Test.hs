@@ -87,7 +87,7 @@ tests = do
   tstType (V2 (Add (KF 1.0) (KF 2.0)) (KF 3.0)) "vec2"
   tstType (Length v2) "float"
   tstType (Length v3) "float"
-  tstType (time) "float"
+  tstType (gtime) "float"
   tstType (xy v2) "vec2"
   tstType (xy v3) "vec2"
   tstType (yx v2) "vec2"
