@@ -31,3 +31,16 @@ twoCycles =
       b = rotation (kpi / (-4.0)) (translation (V2 0.0 (-0.5)) (rotation (time / KF 2.0) (translation (V2 0.0 0.5) (scale 0.5 circle))))
       oneCycleDuration = 2 * pi
    in sequ a oneCycleDuration b
+
+spiral :: Shape -> E Float -> Shape
+spiral shape timeDelta =
+  let t = time + timeDelta
+      c = scale 0.1 shape
+      yep = rotation t (translation (V2 (t / 7.0) 0) c)
+   in yep
+
+seqSpiral :: Shape
+seqSpiral =
+  let orig = spiral circle (KF 0.0)
+      later = spiral square (KF (-1.0))
+   in union orig later
