@@ -35,6 +35,7 @@ twoCycles =
 circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
+-- spiral3 :: (Transform -> a) -> (Transform -> a)
 spiral3 :: UnOp a
 spiral3 =
       -- Transform -> ((Transform -> a) -> (Transform -> a))
