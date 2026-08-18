@@ -39,6 +39,7 @@ squareOutline = square `difference` (scale 0.9) square
 spiral3 :: UnOp a
 spiral3 =
       -- Transform -> ((Transform -> a) -> (Transform -> a))
+      -- Transform -> UnOp a
   let tpart = \(Transform xy t) -> (translation (V2 (t / 7.0) 0))
       rpart = \(Transform xy t) -> (rotation t)
       both = rpart `com3` tpart
