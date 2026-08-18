@@ -35,7 +35,7 @@ twoCycles =
 circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
-spiral3 :: (Transform -> a) -> (Transform -> a)
+spiral3 :: UnOp a
 spiral3 =
       -- Transform -> ((Transform -> a) -> (Transform -> a))
   let tpart = \(Transform xy t) -> (translation (V2 (t / 7.0) 0))
@@ -43,13 +43,15 @@ spiral3 =
       both = rpart `com3` tpart
    in ptransform both
 
-com3 :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
-        (Transform -> ((Transform -> a) -> (Transform -> a))) ->
-        (Transform -> ((Transform -> a) -> (Transform -> a)))
+-- com3 :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
+--         (Transform -> ((Transform -> a) -> (Transform -> a))) ->
+--         (Transform -> ((Transform -> a) -> (Transform -> a)))
+com3 :: Transformable (UnOp a) -> Transformable (UnOp a) -> Transformable (UnOp a)
 com3 a b tr = (a tr) . (b tr)
 
-ptransform :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
-              ((Transform -> a) -> (Transform -> a))
+-- ptransform :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
+--               ((Transform -> a) -> (Transform -> a))
+ptransform :: Transformable (UnOp a) -> UnOp a
 ptransform ptr shape tr =
   let tr' = ptr tr
    in (tr' shape) tr
