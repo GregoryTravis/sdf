@@ -35,13 +35,34 @@ twoCycles =
 circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
+spiral3 :: (Transform -> a) -> (Transform -> a)
+spiral3 =
+      -- Transform -> ((Transform -> a) -> (Transform -> a))
+  let tpart = \(Transform xy t) -> (translation (V2 (t / 7.0) 0))
+      rpart = \(Transform xy t) -> (rotation t)
+      both = rpart `com3` tpart
+   in ptransform both
+
+com3 :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
+        (Transform -> ((Transform -> a) -> (Transform -> a))) ->
+        (Transform -> ((Transform -> a) -> (Transform -> a)))
+com3 a b tr = (a tr) . (b tr)
+
+ptransform :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
+              ((Transform -> a) -> (Transform -> a))
+ptransform ptr shape tr =
+  let tr' = ptr tr
+   in (tr' shape) tr
+
+--translation :: E (V2 Float) -> ((Transform -> a) -> (Transform -> a))
+
 spiral :: (Transform -> a) -> (Transform -> a)
 spiral shape tr@(Transform xy t) =
   let tpart = (translation' (V2 (t / 7.0) 0))
       rpart = (rotation' t)
    -- in (c . (tpart . rpart)) tr
-   -- in shape ((tpart . rpart) tr)
-   in shape ((spiraler tr) tr)
+   in shape ((tpart . rpart) tr)
+   -- in shape ((spiraler tr) tr)
 
 spiraler :: Transform -> Transform -> Transform
 spiraler (Transform xy t) =
@@ -79,7 +100,7 @@ seqSpiral :: Shape
 seqSpiral =
   let c = scale 0.05 circleOutline
       s = scale 0.05 squareOutline
-      orig = spiral2 c
-      later = timeDelay (-1.0) $ spiral2 s
+      orig = spiral3 c
+      later = timeDelay (-1.0) $ spiral3 s
       both = union orig later
    in union (scale 0.05 circle) both

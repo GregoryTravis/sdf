@@ -40,7 +40,7 @@ scale' :: E Float -> Transformer
 scale' s (Transform xy t) = Transform (xy /^ s) t
 
 --translation :: E (V2 Float) -> UnOp a
-translation :: E (V2 Float) -> ((Transform -> a) -> (Transform ->a))
+translation :: E (V2 Float) -> ((Transform -> a) -> (Transform -> a))
 translation dxy = transform (translation' dxy)
 
 --translation' :: E (V2 Float) -> Transformer
