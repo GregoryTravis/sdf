@@ -35,72 +35,9 @@ twoCycles =
 circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
-spiral4 :: UnOp a
-spiral4 =
-  let tpart t = V2 (t / 7.0) 0
-      rpart t = t
-   in (tRotation rpart) . (tTranslation tpart)
-
--- spiral3 :: (Transform -> a) -> (Transform -> a)
-spiral3 :: UnOp a
-spiral3 =
-      -- Transform -> ((Transform -> a) -> (Transform -> a))
-      -- Transform -> UnOp a
-  let tpart = \(Transform xy t) -> (translation (V2 (t / 7.0) 0))
-      rpart = \(Transform xy t) -> (rotation t)
-      both = rpart `com3` tpart
-   in ptransform both
-
--- com3 :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
---         (Transform -> ((Transform -> a) -> (Transform -> a))) ->
---         (Transform -> ((Transform -> a) -> (Transform -> a)))
-com3 :: Transformable (UnOp a) -> Transformable (UnOp a) -> Transformable (UnOp a)
-com3 a b tr = (a tr) . (b tr)
-
--- ptransform :: (Transform -> ((Transform -> a) -> (Transform -> a))) ->
---               ((Transform -> a) -> (Transform -> a))
-ptransform :: Transformable (UnOp a) -> UnOp a
-ptransform ptr shape tr =
-  let tr' = ptr tr
-   in (tr' shape) tr
-
---translation :: E (V2 Float) -> ((Transform -> a) -> (Transform -> a))
-
-spiral :: (Transform -> a) -> (Transform -> a)
-spiral shape tr@(Transform xy t) =
-  let tpart = (translation' (V2 (t / 7.0) 0))
-      rpart = (rotation' t)
-   -- in (c . (tpart . rpart)) tr
-   in shape ((tpart . rpart) tr)
-   -- in shape ((spiraler tr) tr)
-
-spiraler :: Transform -> Transform -> Transform
-spiraler (Transform xy t) =
-  let tpart = (translation' (V2 (t / 7.0) 0))
-      rpart = (rotation' t)
-   in tpart . rpart
-
-spiraler2 :: Transform -> Transform -> Transform
-spiraler2 =
-  let tpart = \(Transform xy t) -> (translation' (V2 (t / 7.0) 0))
-      rpart = \(Transform xy t) -> (rotation' t)
-   in com2 tpart rpart
-
-com2 :: (Transform -> Transform -> Transform) ->
-        (Transform -> Transform -> Transform) ->
-        (Transform -> Transform -> Transform)
-com2 trtr trtr' tr = (trtr tr) . (trtr' tr)
-
-spiral2 :: (Transform -> Dist) -> (Transform -> Dist)
-spiral2 shape tr = something shape spiraler2 tr
-
-something :: Shape -> (Transform -> Transform -> Transform) -> Shape
-something shape ttt tr = shape ((ttt tr) tr)
-
--- transform transformer p = p . transformer
-
-----translation :: E (V2 Float) -> UnOp a
---translation :: E (V2 Float) -> ((Transform -> a) -> (Transform ->a))
+spiral :: UnOp a
+spiral =
+   (tRotation id) . (tTranslation $ \t -> V2 (t / 7.0) 0)
 
 --timeDelay :: E Float -> (Transform -> a) -> (Transform -> a)
 timeDelay :: E Float -> UnOp a
@@ -110,7 +47,7 @@ seqSpiral :: Shape
 seqSpiral =
   let c = scale 0.05 circleOutline
       s = scale 0.05 squareOutline
-      orig = spiral4 c
-      later = timeDelay (-1.0) $ spiral4 s
+      orig = spiral c
+      later = timeDelay (-1.0) $ spiral s
       both = union orig later
    in union (scale 0.05 circle) both
