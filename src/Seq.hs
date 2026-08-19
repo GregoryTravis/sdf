@@ -35,6 +35,12 @@ twoCycles =
 circleOutline = circle `difference` (scale 0.9) circle
 squareOutline = square `difference` (scale 0.9) square
 
+spiral4 :: UnOp a
+spiral4 =
+  let tpart t = V2 (t / 7.0) 0
+      rpart t = t
+   in (tRotation rpart) . (tTranslation tpart)
+
 -- spiral3 :: (Transform -> a) -> (Transform -> a)
 spiral3 :: UnOp a
 spiral3 =
@@ -104,7 +110,7 @@ seqSpiral :: Shape
 seqSpiral =
   let c = scale 0.05 circleOutline
       s = scale 0.05 squareOutline
-      orig = spiral3 c
-      later = timeDelay (-1.0) $ spiral3 s
+      orig = spiral4 c
+      later = timeDelay (-1.0) $ spiral4 s
       both = union orig later
    in union (scale 0.05 circle) both

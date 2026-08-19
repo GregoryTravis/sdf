@@ -3,8 +3,10 @@
 module Transform
 ( scale
 , translation
+, tTranslation
 , translation'
 , rotation
+, tRotation
 , rotation'
 , flipX
 , flipY
@@ -42,6 +44,18 @@ scale' s (Transform xy t) = Transform (xy /^ s) t
 --translation :: E (V2 Float) -> UnOp a
 translation :: E (V2 Float) -> ((Transform -> a) -> (Transform -> a))
 translation dxy = transform (translation' dxy)
+
+tTranslation :: (E Float -> E (V2 Float)) -> ((Transform -> a) -> (Transform -> a))
+tTranslation vMaker shape tr@(Transform _ t) =
+  let transformer = translation' (vMaker t)
+      transform = transformer tr
+   in shape transform
+
+tRotation :: (E Float -> E Float) -> ((Transform -> a) -> (Transform -> a))
+tRotation aMaker shape tr@(Transform _ t) =
+  let transformer = rotation' (aMaker t)
+      transform = transformer tr
+   in shape transform
 
 --translation' :: E (V2 Float) -> Transformer
 translation' :: E (V2 Float) -> (Transform -> Transform)
