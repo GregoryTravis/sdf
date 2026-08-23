@@ -4,6 +4,8 @@ module Transform
 ( scale
 , translation
 , tTranslation
+, tScale
+, tTransform
 , translation'
 , rotation
 , tRotation
@@ -46,13 +48,23 @@ translation :: E (V2 Float) -> ((Transform -> a) -> (Transform -> a))
 translation dxy = transform (translation' dxy)
 
 tTranslation :: (E Float -> E (V2 Float)) -> ((Transform -> a) -> (Transform -> a))
-tTranslation = tTransform translation'
+tTranslation = tTransform' translation'
 
 tRotation :: (E Float -> E Float) -> ((Transform -> a) -> (Transform -> a))
-tRotation = tTransform rotation'
+tRotation = tTransform' rotation'
 
-tTransform :: (b -> (Transform -> Transform)) -> (E Float -> b) -> ((Transform -> a) -> (Transform -> a))
-tTransform transformerer argMaker shape tr@(Transform _ t) =
+tScale :: (E Float -> E Float) -> ((Transform -> a) -> (Transform -> a))
+tScale = tTransform' scale'
+
+-- transform :: (Transform -> Transform) -> (Transform -> a) -> (Transform -> a)
+
+tTransform :: (E Float -> (Transform -> Transform)) -> ((Transform -> a) -> (Transform -> a))
+tTransform tTransformer shape tr@(Transform _ t) =
+  shape ((tTransformer t) tr)
+
+-- TODO rename this
+tTransform' :: (b -> (Transform -> Transform)) -> (E Float -> b) -> ((Transform -> a) -> (Transform -> a))
+tTransform' transformerer argMaker shape tr@(Transform _ t) =
   shape ((transformerer (argMaker t)) tr)
 
 --translation' :: E (V2 Float) -> Transformer

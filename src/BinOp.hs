@@ -7,6 +7,7 @@ module BinOp
 , smoothUnion
 , smoothUnions
 , interp
+, tInterp
 , binopper
 , allBinOps ) where
 
@@ -63,10 +64,18 @@ smoothUnion' usd0 usd1 =
       dist = sh $ inside_distance + outside_distance
    in dist
 
+-- interp :: E Float -> (Transform -> Dist) -> (Transform -> Dist) -> (Transform -> Dist)
 interp :: E Float -> BinOp Dist
 interp alpha = binopper (interp' alpha)
 interp' :: E Float -> E Float -> E Float -> E Float
 interp' alpha a b = (1.0 - alpha) * a + alpha * b
+
+tInterp :: (E Float -> E Float) -> (Transform -> Dist) -> (Transform -> Dist) -> (Transform -> Dist)
+tInterp tAlpha a b tr@(Transform _ time) = interp (tAlpha time) a b tr
+
+-- -- tInterp :: (Transform -> E Float) -> (Transform -> Dist) -> (Transform -> Dist) -> (Transform -> Dist)
+-- tInterp :: E Float -> BinOp Dist
+-- tInterp alpha = binopper (interp' alpha)
 
 allBinOps :: [BinOp Dist]
 allBinOps = [

@@ -81,8 +81,8 @@ mlength = Method0 "length"
 vec4 :: (Show a, GlslType a, GlslType (V3 a), GlslType (V4 a)) => E (V3 a) -> E a -> E (V4 a)
 vec4 = Fun2 "vec4"
 
-time :: E Float
-time = Uniform "time"
+-- time :: E Float
+-- time = Uniform "time"
 gtime :: E Float
 gtime = Uniform "time"
 uv :: E (V2 Float)

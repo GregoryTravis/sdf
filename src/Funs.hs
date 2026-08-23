@@ -6,5 +6,5 @@ import Lib
 import Util hiding (time)
 
 -- Hz
-osc :: E Float -> E Float
-osc rate = sh $ (ssin (time * rate) + 1) / 2
+osc :: E Float -> E Float -> E Float
+osc t rate = sh $ (ssin (t * rate) + 1) / 2

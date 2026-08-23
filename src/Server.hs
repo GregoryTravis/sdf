@@ -34,7 +34,6 @@ stdColorer s = (return . smooth white black . evalShape) s
 app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
-  route "/seq-twoCycles" (htmlHandler ((stdColorer twoCycles) >>= singleHandler))
   route "/seq-seqSpiral" (htmlHandler ((stdColorer seqSpiral) >>= singleHandler))
   route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))

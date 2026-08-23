@@ -111,11 +111,11 @@ randomCommander = nest $ M.fromList
 winky :: Shape
 winky =
   let gr = pfGrid 1.3 1.3 circle
-      tra = sinex 1.0 2.0 time
-      trb = sinex 1.9 os time
-      os = (osc 2.0 * 0.4) + 1.8
-      csa = transform tra gr
-      csb = transform trb gr
+      tra t = sinex 1.0 2.0 t
+      trb t = sinex 1.9 (os t) t
+      os t = (osc t 2.0 * 0.4) + 1.8
+      csa = tTransform tra gr
+      csb = tTransform trb gr
    in intersection csa csb
 
 -- a few circles actually
@@ -130,13 +130,13 @@ sizes rotvel xvel yvel s = trans shapes
          tiny = translation (V2 (-0.7) 0.0) (scale (1.0 / 16.0) s)
          tiny2 = translation (V2 (-0.6) 0.0) (scale (1.0 / 32.0) s)
          small = translation (V2 (-1.5) 0.0) (scale 0.25 s)
-         trans s = translation (V2 (xvel * time) (yvel * time)) $ rotation (rotvel * time) $ s
+         trans s = tTranslation (\t -> (V2 (xvel * t) (yvel * t))) $ tRotation (\t -> (rotvel * t)) $ s
 
 chunky :: IO Color
 chunky =
-  let d = 0.5 + (0.6 * (ssin (time / KF 2.0))) -- 0.8
-      l = translation (V2 (-d) 0.0) circle
-      r = translation (V2 d 0.0) circle
+  let d time = 0.5 + (0.6 * (ssin (time / KF 2.0))) -- 0.8
+      l = tTranslation (\t -> V2 (-(d t)) 0.0) circle
+      r = tTranslation (\t -> V2 (d t) 0.0) circle
       all = l `smoothUnion` r
    in (return . bubble . evalShape) (transform chunkify all)
 
@@ -158,9 +158,9 @@ aCircle = (return . iqBandy . evalShape) circle -- $ flower 4.0
 
 bubbles :: IO Color
 bubbles =
-  let d = 0.5 + (0.6 * (ssin (time / KF 2.0))) -- 0.8
-      l = translation (V2 (-d) 0.0) circle
-      r = translation (V2 d 0.0) circle
+  let d time = 0.5 + (0.6 * (ssin (time / KF 2.0))) -- 0.8
+      l = tTranslation (\t -> V2 (-(d t)) 0.0) circle
+      r = tTranslation (\t -> V2 (d t) 0.0) circle
       all = l `smoothUnion` r
   in (return . bubble . evalShape) all
 
@@ -380,7 +380,7 @@ twoSquares =
       t = translation (V2 0.0 (-rd)) $ rotation (KF (pi/2)) px
       b = translation (V2 0.0 rd) $ rotation (KF (-(pi/2))) px
       square = intersections [l, r, t, b]
-      all = difference (rotation time square) (rotation (-(time / 2)) square)
+      all = difference (tRotation id square) (tRotation (\time -> (-(time / 2))) square)
    in (return . smooth white black . evalShape) all
 
 splitScreenHor :: (E Float -> Color) -> (E Float -> Color) -> (E Float -> Color)
@@ -519,9 +519,9 @@ compMesmer = do
   -- let s0 = flower 3
   --     s1 = flower 4
   --     all = composeCircular s0 s1
-  let left = translation (V2 (-disp) 0) $ scale 0.5 circle
-      right = translation (V2 disp 0) $ scale 0.5 circle
-      disp = 0.5 + (ssin time) * 0.3
+  let left = tTranslation (\t -> V2 (-(disp t)) 0) $ scale 0.5 circle
+      right = tTranslation (\t -> V2 (disp t) 0) $ scale 0.5 circle
+      disp time = 0.5 + (ssin time) * 0.3
       doubs = smoothUnion left right
       --the = doubs
       the = filaoa
@@ -534,9 +534,9 @@ comp0 = do
   -- let s0 = flower 3
   --     s1 = flower 4
   --     all = composeCircular s0 s1
-  let left = translation (V2 (-disp) 0) $ scale 0.5 circle
-      right = translation (V2 disp 0) $ scale 0.5 circle
-      disp = 0.5 + (ssin time) * 0.3
+  let left = tTranslation (\t -> V2 (-(disp t)) 0) $ scale 0.5 circle
+      right = tTranslation (\t -> V2 (disp t) 0) $ scale 0.5 circle
+      disp time = 0.5 + (ssin time) * 0.3
       doubs = smoothUnion left right
       the = doubs
       with = filaoa -- flower 4
@@ -545,20 +545,20 @@ comp0 = do
 
 potdMovement :: E Float -> E Float -> (Shape, Shape)
 potdMovement i j =
-  let xwave = ssin (time * (i+2))
-      ywave = ssin (time * (j+2))
+  let xwave time = ssin (time * (i+2))
+      ywave time = ssin (time * (j+2))
       disp = 1.7
       big = 1
       small = 0.1
       base = scale big circle
-      moving = translation (V2 xwave ywave) $ scale 1.0 (scale small circle) -- cir
+      moving = tTranslation (\t -> V2 (xwave t) (ywave t)) $ scale 1.0 (scale small circle) -- cir
   in (base, moving)
 
 modgriddy :: IO Color
 modgriddy =
   let shp :: E Float -> E Float -> Shape
       shp i j =
-         scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+         scale 0.3 $ translation (V2 1 1) $ tRotation (\time -> i * j * time) $ rainbowShape
       colorzer :: E Float -> E Float -> Transform -> (E Float -> Color)
       colorzer gi gj _ dist =
         let colorz = arr [V4 (aBand 0.1 n gi) (aBand 0.2 n gj) (aBand 0.3 n (gi+gj)) 1.0 | n <- take 5 [0..]]
@@ -580,7 +580,7 @@ nutsoRainbow scail =
             -- my = _y mouse
             -- ai = mix1 mx ai' aj'
             -- aj = mix1 my ai' aj'
-         in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+         in scale 0.3 $ translation (V2 1 1) $ tRotation (\time -> i * j * time) $ rainbowShape
       colors = randBands (0.2, 0.4, 0.75) 0.3 5
       beej = arr [V4 (_x uv) (_y uv) 0.0 1.0]
       -- colorz = arr [V4 (smod (_x uv * 1.0 * KF n) 1.0) (smod (_y uv * 1.0 * KF n) 1.0) 0.2 1.0 | n <- take 5 [0..]]
@@ -609,7 +609,7 @@ cool20251221_2 =
             -- my = _y mouse
             -- ai = mix1 mx ai' aj'
             -- aj = mix1 my ai' aj'
-         in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+         in scale 0.3 $ translation (V2 1 1) $ tRotation (\time -> i * j * time) $ rainbowShape
       colors = randBands (0.2, 0.4, 0.75) 0.3 5
       beej = arr [V4 (_x uv) (_y uv) 0.0 1.0]
       colorz = arr [V4 (smod (_x uv * 1.0 * KF n) 1.0) (smod (_y uv * 1.5 * KF n) 1.0) 0.2 1.0 | n <- take 5 [0..]]
@@ -629,23 +629,22 @@ cool20251221 =
             -- my = _y mouse
             -- ai = mix1 mx ai' aj'
             -- aj = mix1 my ai' aj'
-         in scale 0.3 $ translation (V2 1 1) $ rotation (i * j * time) $ rainbowShape
+         in scale 0.3 $ translation (V2 1 1) $ tRotation (\time -> i * j * time) $ rainbowShape
       colors = randBands (0.2, 0.4, 0.75) 0.3 5
       all = scale 0.2 $ modgrid 1 1 shp
       -- all = scale 0.1 $ grid 1 1 circle
   in (return . bands colors black . evalShape) all
 
 sineMovement =
- let wave = ssin time
+ let wave time = ssin time
      disp = 1.7
      base = circle
-     moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
+     moving = tTranslation (\time -> V2 (disp * (wave time)) 0) $ scale 0.1 base
   in (base, moving)
 
 mouseMovement :: (Shape, Shape)
 mouseMovement =
-  let wave = ssin time
-      disp = 1.7
+  let disp = 1.7
       big = 1
       small = 0.1
       base = scale big circle
@@ -706,16 +705,12 @@ newsmoosh pusher pushee t@(Transform uv _) =
 
 newpotd :: Shape
 newpotd =
-  let wave = ssin time
-      disp = 1.7
+  let disp = 1.7
       big = 0.5
       small = 0.2
       base = scale big circle
       moving = translation (V2 (_x mouse) (-(_y mouse))) $ scale 1.0 (scale small circle) -- cir
-      --moving = translation (V2 (disp * wave) 0) $ scale 0.1 base
-      -- all = (smoosh moving base) `union` (distScale 0.9 moving)
       all = (newsmoosh moving base) `union` moving
-      --all = smoothUnion moving base
    in all
 
 newpotdC :: IO Color
@@ -731,12 +726,12 @@ r2g dist =
 
 bugLacyEdge :: Shape
 bugLacyEdge =
-  let wave = ssin time
+  let wave time = ssin time
       disp = 0.7
       base = circle
       c0 :: Shape
-      c0 = translation (V2 (-disp) wave) base
-      c1 = translation (V2 disp (-wave)) base
+      c0 = tTranslation (\time -> V2 (-disp) (wave time)) base
+      c1 = tTranslation (\time -> V2 disp (-(wave time))) base
       pc :: Transform -> E Float
       pc tr =
         let c0d = c0 tr
@@ -763,10 +758,10 @@ recipe = uniformM
   ]
 
 oscRecipe2 :: Rnd Shape -> Rnd Shape
-oscRecipe2 r = interp (osc 0.5) <$> r <*> r
+oscRecipe2 r = tInterp (\time -> osc time 0.5) <$> r <*> r
 
 oscRecipe3 :: Rnd Shape -> Rnd Shape
-oscRecipe3 r = interp (osc 0.5) <$> r <*> (interp <$> pure (osc 0.33) <*> r <*> r)
+oscRecipe3 r = tInterp (\time -> osc time 0.5) <$> r <*> (tInterp <$> pure (\time -> osc time 0.33) <*> r <*> r)
 
 oscRecipe :: Rnd Shape -> Rnd Shape
 oscRecipe r = uniformM [oscRecipe2 r, oscRecipe3 r]
@@ -845,17 +840,14 @@ _crecipes = do
   -- let s = vlad circle
   -- let s = limonTwaist
   -- let s =  transform (flowerize 5.0) limonTwaist -- (pfGrid 1.5 1.5 circle)
-  let s = scale 0.25 $ transform (siney 0.1 10 time) $ transform (siney 1 1 time) $ pfGrid 1.5 1.5 circle
+  let s = scale 0.25 $ tTransform (\time -> siney 0.1 10 time) $ tTransform (\time -> siney 1 1 time) $ pfGrid 1.5 1.5 circle
   return $ justShape s
 
 anOutline :: E Float
 anOutline =
   let thing = vlad 1.5 1.0 1.0 1.0 1.0 0.25
-      things = smoothUnion (scale 0.5 thing) (rotation time thing)
+      things = smoothUnion (scale 0.5 thing) (tRotation id thing)
   in outline 0.02 0.05 $ evalShape $ things
-  -- let trx = transform (sinex 1.5 1.0 time)
-  --     try = transform (siney 1.0 1.0 time)
-  -- in outline 0.02 0.05 $ evalShape $ trx $ try $ scale 0.25 $ pfGrid 1.5 1.5 circle
 
 -- Distance -> distance
 edge :: E Float -> E Float -> E Float
@@ -880,7 +872,7 @@ rZinny = zinny <$> ps <*> ps <*> g <*> g
 zinny :: E Float -> E Float -> E Float -> E Float -> Shape
 zinny p0 p1 g0 g1 =
   let whoa = transform (flowerize p0) $ transform (whorl 3.0 10.0) $ transform (flowerize p1) (pfGrid g0 g0 circle)
-      g = translation (V2 time 0.0) $ pfGrid g1 g1  circle
+      g = tTranslation (\time -> V2 time 0.0) $ pfGrid g1 g1  circle
    in scale 0.25 $ smoothUnion whoa g
 
 -- Create two grids of the same shape, apply 2 sines (hor and vert) to one, and
@@ -888,10 +880,10 @@ zinny p0 p1 g0 g1 =
 vlad :: E Float -> E Float -> E Float -> E Float -> E Float -> E Float -> Shape
 vlad gr sxa sxb sya syb sc =
   let g = pfGrid gr gr circle
-      trx = transform (sinex sxa sxb time)
-      try = transform (siney sya syb time)
+      trx = tTransform (\time -> sinex sxa sxb time)
+      try = tTransform (\time -> siney sya syb time)
       -- sg = rotation time $ trx $ try g
-      sg = trx $ try $ rotation time g
+      sg = trx $ try $ tRotation id g
    in scale sc $ smoothUnion g sg
 
 classicVlad :: Rnd Shape
@@ -1037,9 +1029,10 @@ randomShape = uniformM
   , randomBinOp <*> randomPrim <*> randomPrim
   ]
 
+-- :: Rnd (Transform -> Dist) -> (Transform -> Dist)
 randomUnOp :: Rnd (UnOp Dist)
 randomUnOp = uniformM
-  [ scale <$> scalers
+  [ tScale <$> scalers
   , translation <$> translators
   , rotation <$> rotators
   , gridder
@@ -1051,10 +1044,11 @@ randomBinOp = uniformM bos
   where bos = (map pure allBinOps) ++ [randInterp]
         randInterp = interp <$> (0.0...1.0)
 
-scalers :: Rnd (E Float)
+scalers :: Rnd (E Float -> E Float)
 scalers = uniformM
-  [ 0.25...4.0
-  , osc <$> (0.25...4.0)
+  [
+    (\x -> (\_ -> x)) <$> 0.25...4.0
+  , (\x -> (\t -> osc t x)) <$> 0.25...4.0
   ]
 
 translators :: Rnd (E (V2 Float))
