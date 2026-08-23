@@ -1147,7 +1147,7 @@ setupEnv = do
 
 realRandom :: IO Color
 realRandom = do
-  e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
+  e <- shpEval <$> (evalRandIO $ sizedProgram 4)
   return $ smooth white black $ evalShape (scale 0.25 e)
 
 realRandomOsc :: IO Color
@@ -1159,7 +1159,7 @@ realRandomOsc = undefined
 realRandomPile :: IO Color
 realRandomPile = pile 4 rr
   where rr = do
-          e <- shpEval <$> (eeesp "Shp" <$> (evalRandIO $ sizedProgram 4))
+          e <- shpEval <$> (evalRandIO $ sizedProgram 4)
           return $ evalShape (scale 0.25 e)
 
 -- interp needs its own stacko
@@ -1219,10 +1219,21 @@ interpUnOp :: Rnd ShpBinOp
 interpUnOp = Interp <$> 0.0...1.0
 unOps :: Rnd ShpUnOp
 unOps = uniformM [sc, tr, ro, gr]
-  where sc = Scale <$> (osc <$> 0.5...2.0)
-        tr = Translation <$> (V2 <$> t <*> t)
-        t = osc <$> (-3.0)...3.0
-        ro = Rotation <$> ang
+  where -- sc = TScale <$> (osc <$> 0.5...2.0)
+        sc = TScale <$> ( (\x -> (\t -> osc t x)) <$> 0.5...2.0 )
+        -- tr = TTranslation <$> (V2 <$> t <*> t)
+        -- t = osc <$> (-3.0)...3.0
+        tr = TTranslation <$> ( (\x y -> (\t -> V2 (osc t x) (osc t y))) <$> (-3.0)...3.0 <*> (-3.0)...3.0 )
+        ro = TRotation <$> ang
         ang = osc <$> (KF (-pi))...(KF pi)
         gr = PfGrid <$> grs <*> grs
         grs = osc <$> 1.1...2.5
+
+  {-
+scalers :: Rnd (E Float -> E Float)
+scalers = uniformM
+  [
+    (\x -> (\_ -> x)) <$> 0.25...4.0
+  , (\x -> (\t -> osc t x)) <$> 0.25...4.0
+  ]
+-}

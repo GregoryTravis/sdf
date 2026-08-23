@@ -25,6 +25,9 @@ data Shp =
   | Scale (E Float) Shp
   | Translation (E (V2 Float)) Shp
   | Rotation (E Float) Shp
+  | TScale (E Float -> E Float) Shp
+  | TTranslation (E Float -> E (V2 Float)) Shp
+  | TRotation (E Float -> E Float) Shp
   | Grid (E Float) (E Float) Shp
   | PfGrid (E Float) (E Float) Shp
   -- binops
@@ -33,15 +36,18 @@ data Shp =
   | Difference Shp Shp
   | SmoothUnion Shp Shp
   | Interp (E Float) Shp Shp
-  deriving Show
+  --deriving Show
 
 shpEval :: Shp -> Shape
 shpEval Circle = circle
 shpEval Square = square
 shpEval (Flower n) = flower n
 shpEval (Scale e s) = scale e (shpEval s)
-shpEval (Translation v s) = translation v (shpEval s)
+shpEval (Translation f s) = translation f (shpEval s)
 shpEval (Rotation e s) = rotation e (shpEval s)
+shpEval (TScale ef s) = tScale ef (shpEval s)
+shpEval (TTranslation vf s) = tTranslation vf (shpEval s)
+shpEval (TRotation ef s) = tRotation ef (shpEval s)
 shpEval (Grid x y s) = grid x y (shpEval s)
 shpEval (PfGrid x y s) = pfGrid x y (shpEval s)
 shpEval (Union a b) = union (shpEval a) (shpEval b)
