@@ -1,6 +1,7 @@
 module Grid
 ( grid
 , pfGrid
+, tPFGrid
 , modgrid ) where
 
 import E
@@ -62,6 +63,7 @@ bugPfGrid2' w h (Transform xy t) =
       yy2 = Cond (smod yi 2 ==. 1) (h - yy) yy
    in Transform (V2 xx2 yy2) t
 
+-- pfGrid :: E Float -> E Float -> Transformable a -> Transformable a
 pfGrid :: E Float -> E Float -> UnOp a
 pfGrid w h = transform (pfGrid' w h)
 
@@ -79,3 +81,16 @@ pfGrid' w h (Transform xy t) =
       xx2 = sh $ Cond (smod (sabs xi) (KF 2.0) ==. (KF 1.0)) (w -^ xx) xx
       yy2 = sh $ Cond (smod (sabs yi) (KF 2.0) ==. (KF 1.0)) (h -^ yy) yy
    in Transform (V2 xx2 yy2) t
+
+-- tPFGrid' :: (E Float -> E Float) -> (E Float -> E Float) -> (Transform -> Transform)
+tPFGrid' :: (E Float -> E Float) -> (E Float -> E Float) -> Transformer
+tPFGrid' wf hf tr@(Transform _ t) = pfGrid' (wf t) (hf t) tr
+
+tPFGrid :: (E Float -> E Float) -> (E Float -> E Float) -> UnOp a
+tPFGrid  wf hf = tTransform (\t -> pfGrid' (wf t) (hf t))
+
+  {-
+tTransform :: (E Float -> Transformer) -> ((Transform -> a) -> (Transform -> a))
+tTransform :: (E Float -> (Transform -> Transform)) -> ((Transform -> a) -> (Transform -> a))
+src/E.hs:type UnOp a = Transformable a -> Transformable a
+-}

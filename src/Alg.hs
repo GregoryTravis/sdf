@@ -30,13 +30,14 @@ data Shp =
   | TRotation (E Float -> E Float) Shp
   | Grid (E Float) (E Float) Shp
   | PfGrid (E Float) (E Float) Shp
+  | TPfGrid (E Float -> E Float) (E Float -> E Float) Shp
   -- binops
   | Union Shp Shp
   | Intersection Shp Shp
   | Difference Shp Shp
   | SmoothUnion Shp Shp
   | Interp (E Float) Shp Shp
-  --deriving Show
+  --deriving Show -- impossible now because f the T* ctors that take a function
 
 shpEval :: Shp -> Shape
 shpEval Circle = circle
@@ -50,6 +51,7 @@ shpEval (TTranslation vf s) = tTranslation vf (shpEval s)
 shpEval (TRotation ef s) = tRotation ef (shpEval s)
 shpEval (Grid x y s) = grid x y (shpEval s)
 shpEval (PfGrid x y s) = pfGrid x y (shpEval s)
+shpEval (TPfGrid xf yf s) = tPFGrid xf yf (shpEval s)
 shpEval (Union a b) = union (shpEval a) (shpEval b)
 shpEval (Intersection a b) = intersection (shpEval a) (shpEval b)
 shpEval (Difference a b) = difference (shpEval a) (shpEval b)

@@ -1226,8 +1226,9 @@ unOps = uniformM [sc, tr, ro, gr]
         tr = TTranslation <$> ( (\x y -> (\t -> V2 (osc t x) (osc t y))) <$> (-3.0)...3.0 <*> (-3.0)...3.0 )
         ro = TRotation <$> ang
         ang = osc <$> (KF (-pi))...(KF pi)
-        gr = PfGrid <$> grs <*> grs
-        grs = osc <$> 1.1...2.5
+        -- gr = PfGrid <$> grs <*> grs
+        -- grs = osc <$> 1.1...2.5
+        gr = TPfGrid <$> ((\x -> (\t -> osc t x)) <$> 1.1...2.5) <*> ((\x -> (\t -> osc t x)) <$> 1.1...2.5)
 
   {-
 scalers :: Rnd (E Float -> E Float)
