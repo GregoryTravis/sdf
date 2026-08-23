@@ -70,6 +70,7 @@ interp alpha = binopper (interp' alpha)
 interp' :: E Float -> E Float -> E Float -> E Float
 interp' alpha a b = (1.0 - alpha) * a + alpha * b
 
+-- interp :: (E Float -> E Float) -> BinOp Dist
 tInterp :: (E Float -> E Float) -> (Transform -> Dist) -> (Transform -> Dist) -> (Transform -> Dist)
 tInterp tAlpha a b tr@(Transform _ time) = interp (tAlpha time) a b tr
 

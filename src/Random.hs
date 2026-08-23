@@ -1076,15 +1076,15 @@ thang :: Rnd Shape
 thang = sspthang' <$> randomShape <*> randomShape <*> (0.1...1.2) <*> ((-0.5)...0.9) <*> (0.5...2.5) <*> (1.0...3.0) <*> (0.1...4.0)
 sspthang' :: Shape -> Shape -> E Float -> E Float -> E Float -> E Float -> E Float -> Shape
 sspthang' rs0 rs1 r0 r1 g0 g1 interpRate = do
-  let rs0' = rotation (osc r0) (pfGrid g0 g0 rs0)
-      rs1' = rotation (osc r1) (pfGrid g1 g1 rs1)
-      p = interp (osc interpRate) rs0' rs1'
+  let rs0' = tRotation (osc r0) (pfGrid g0 g0 rs0)
+      rs1' = tRotation (osc r1) (pfGrid g1 g1 rs1)
+      p = tInterp (osc interpRate) rs0' rs1'
    in scale 0.1 p
 
 -- FAVORITE don't lose this!!
 -- fall in love all over again
 filaoa :: Shape
-filaoa = scale (KF 0.1) $ smoothUnion (scale (time /^ (KF 10.0)) filaoa') (rotation (time /^ (KF 10.0)) (tap filaoa'))
+filaoa = scale (KF 0.1) $ smoothUnion (tScale (\time -> time /^ (KF 10.0)) filaoa') (tRotation (\time -> time /^ (KF 10.0)) (tap filaoa'))
   where filaoa' = pfGrid (KF 2.25) (KF 2.25) circle
         filaoa' :: Shape
 
@@ -1096,17 +1096,17 @@ rAnotherGreatOne = anotherGreatOne <$> (0.1...0.6) <*> (0.8...3.2) <*> ((-1.5)..
 
 anotherGreatOne :: E Float -> E Float -> E Float -> E Float -> E Float -> E Float -> Shape
 anotherGreatOne sr sg cr cg go mo =
-  let ss = rotation (time * sr) $ pfGrid sg sg square
-      cs = rotation (time * cr) $ pfGrid cg cg circle
-      gridz = interp (osc go) ss cs
-      morph = interp (osc mo) gridz filaoa
+  let ss = tRotation (\time -> time * sr) $ pfGrid sg sg square
+      cs = tRotation (\time -> time * cr) $ pfGrid cg cg circle
+      gridz = tInterp (\time -> osc time go) ss cs
+      morph = tInterp (\time -> osc time mo) gridz filaoa
    in morph
 
 -- bloop experiment
 hmm :: Shape
 hmm = do
-  let cir = (translation (V2 (- (time * 0.08)) 0.0)) $ (scale 0.15) circle
-      smaller = (translation (V2 (- (time * 0.08)) 0.0)) $ (scale 0.03) circle
+  let cir = (tTranslation (\time -> (V2 (- time * 0.08)) 0.0)) $ (scale 0.15) circle
+      smaller = (tTranslation (\time -> (V2 (- (time * 0.08))) 0.0)) $ (scale 0.03) circle
       both = smoothUnion square cir
       p' = difference both cir
       p3 = union p' smaller
