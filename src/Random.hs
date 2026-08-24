@@ -1029,7 +1029,6 @@ randomShape = uniformM
   , randomBinOp <*> randomPrim <*> randomPrim
   ]
 
--- :: Rnd (Transform -> Dist) -> (Transform -> Dist)
 randomUnOp :: Rnd (UnOp Dist)
 randomUnOp = uniformM
   [ tScale <$> scalers
@@ -1046,8 +1045,7 @@ randomBinOp = uniformM bos
 
 scalers :: Rnd (E Float -> E Float)
 scalers = uniformM
-  [
-    (\x -> (\_ -> x)) <$> 0.25...4.0
+  [ (\x -> (\_ -> x)) <$> 0.25...4.0
   , (\x -> (\t -> osc t x)) <$> 0.25...4.0
   ]
 
@@ -1219,22 +1217,8 @@ interpUnOp :: Rnd ShpBinOp
 interpUnOp = Interp <$> 0.0...1.0
 unOps :: Rnd ShpUnOp
 unOps = uniformM [sc, tr, ro, gr]
-  where -- sc = TScale <$> (osc <$> 0.5...2.0)
-        sc = TScale <$> ( (\x -> (\t -> osc t x)) <$> 0.5...2.0 )
-        -- tr = TTranslation <$> (V2 <$> t <*> t)
-        -- t = osc <$> (-3.0)...3.0
+  where sc = TScale <$> ( (\x -> (\t -> osc t x)) <$> 0.5...2.0 )
         tr = TTranslation <$> ( (\x y -> (\t -> V2 (osc t x) (osc t y))) <$> (-3.0)...3.0 <*> (-3.0)...3.0 )
         ro = TRotation <$> ang
         ang = osc <$> (KF (-pi))...(KF pi)
-        -- gr = PfGrid <$> grs <*> grs
-        -- grs = osc <$> 1.1...2.5
         gr = TPfGrid <$> ((\x -> (\t -> osc t x)) <$> 1.1...2.5) <*> ((\x -> (\t -> osc t x)) <$> 1.1...2.5)
-
-  {-
-scalers :: Rnd (E Float -> E Float)
-scalers = uniformM
-  [
-    (\x -> (\_ -> x)) <$> 0.25...4.0
-  , (\x -> (\t -> osc t x)) <$> 0.25...4.0
-  ]
--}
