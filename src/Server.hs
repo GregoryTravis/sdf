@@ -35,6 +35,7 @@ app :: App ()
 app = do
   route "/" (htmlHandler (crecipes >>= singleHandler))
   route "/seq-seqSpiral" (htmlHandler ((stdColorer seqSpiral) >>= singleHandler))
+  route "/seq-seqTwoSteps" (htmlHandler ((stdColorer seqTwoSteps) >>= singleHandler))
   route "/legg" (htmlHandler (legg >>= singleHandler))
   route "/c" (htmlHandler (aCircle >>= singleHandler))
   route "/lcd" (htmlHandler (lcd >>= singleHandler))

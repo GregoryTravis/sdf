@@ -42,3 +42,11 @@ seqSpiral =
       later = timeDelay (-1.0) $ spiral s
       both = union orig later
    in union (scale 0.05 circle) both
+
+seqTwoSteps :: Shape
+seqTwoSteps =
+  let c = scale 0.05 circleOutline
+      or = scale 0.05 squareOutline
+      one = tRotation id $ translation (V2 (-0.2) 0) c
+      two = translation (V2 0.4 0) $ tRotation negate $ translation (V2 (-0.2) 0) c
+   in or `union` (sequ one 3.141592653589793 two)
